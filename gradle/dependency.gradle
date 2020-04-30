@@ -1,0 +1,91 @@
+// 新建一个dependency的时候，gradle不会下载文件
+// 只会在module 的build.gradle使用dependency的时候，才会下载文件构建项目
+ext {
+    version = [
+            guava: '27.0-jre',
+            log4j: '2.11.1',
+            commonsCollection4: '4.3',
+            commonsLang3: '3.8.1',
+            commonsIo: '2.6',
+            jodaTime: '2.10.1',
+            springframework: '5.0.5.RELEASE',
+            mysqlConnectorJava: '8.0.13',
+            mybatis: '3.5.0',
+            mybatisSpring: '2.0.0',
+            hikariCP: '3.3.1',
+            javaxValidation: '2.0.1.Final',
+            swagger: '2.9.2',
+            javax: '4.0.1',
+            okhttp3: '4.0.0',
+            mockwebserver: '4.0.0',
+            jackson: '2.9.9',
+            jedis: '3.1.0',
+            netty: '4.1.42.Final',
+            slf4j: '1.7.28',
+    ]
+
+    libs = [
+            // tool
+            "commons-lang": "org.apache.commons:commons-lang3:$version.commonsLang3",
+            "guava": "com.google.guava:guava:$version.guava",
+            "commons-io": "commons-io:commons-io:$version.commonsIo",
+            "joda": "joda-time:joda-time:$version.jodaTime",
+            "commons-collections4": "org.apache.commons:commons-collections4:$version.commonsCollection4",
+            "validation-api": "javax.validation:validation-api:$version.javaxValidation",
+            "jackson-databind": "com.fasterxml.jackson.core:jackson-databind:$version.jackson",
+
+            // logging
+            "log4j-api": "org.apache.logging.log4j:log4j-api:$version.log4j",
+            "log4j-core": "org.apache.logging.log4j:log4j-core:$version.log4j",
+            "slf4j-api": "org.slf4j:slf4j-api:$version.slf4j",
+            "slf4j-log4j12": "org.slf4j:slf4j-log4j12:$version.slf4j",
+
+            // spring boot related
+            "spring-boot-starter": "org.springframework.boot:spring-boot-starter:$springBootVersion",
+            "spring-boot-starter-test": "org.springframework.boot:spring-boot-starter-test:$springBootVersion",
+            "spring-boot-starter-web": "org.springframework.boot:spring-boot-starter-web:$springBootVersion",
+            "spring-boot-starter-aop": "org.springframework.boot:spring-boot-starter-aop:$springBootVersion",
+            "spring-boot-starter-undertow": "org.springframework.boot:spring-boot-starter-undertow:$springBootVersion",
+            "spring-boot-starter-log4j2": "org.springframework.boot:spring-boot-starter-log4j2:$springBootVersion",
+            "spring-boot-starter-actuator": "org.springframework.boot:spring-boot-starter-actuator:$springBootVersion",
+            "spring-boot-starter-websocket": "org.springframework.boot:spring-boot-starter-websocket:$springBootVersion",
+
+            // commonDatabase
+            "spring-jdbc": "org.springframework:spring-jdbc:$version.springframework",
+            "mysql-connector-java": "mysql:mysql-connector-java:$version.mysqlConnectorJava",
+            "mybatis": "org.mybatis:mybatis:$version.mybatis",
+            "mybatis-spring": "org.mybatis:mybatis-spring:$version.mybatisSpring",
+            "HikariCP": "com.zaxxer:HikariCP:$version.hikariCP",
+
+            // swagger
+            "springfox-swagger2": "io.springfox:springfox-swagger2:$version.swagger",
+            "springfox-swagger-ui": "io.springfox:springfox-swagger-ui:$version.swagger",
+
+            // servlet
+            "servlet-api": "javax.servlet:javax.servlet-api:$version.javax",
+
+            // oxm
+            "spring-oxm": "org.springframework:spring-oxm:$version.springframework",
+
+            // websocket
+            "spring-messaging": "org.springframework:spring-messaging:$version.springframework",
+            "spring-websocket": "org.springframework:spring-websocket:$version.springframework",
+
+            // okHttp
+            "okhttp3": "com.squareup.okhttp3:okhttp:$version.okhttp3",
+            "mockwebserver": "com.squareup.okhttp3:mockwebserver:$version.mockwebserver",
+
+            // netty
+            "netty-handler": "io.netty:netty-handler:$version.netty",
+            "netty-example": "io.netty:netty-example:$version.netty",
+
+            // spring
+            "spring-web": "org.springframework:spring-web:$version.springframework",
+            
+            // redis
+            "jedis": "redis.clients:jedis:$version.jedis",
+
+            // kotlin
+            "kotlin-stdlib": "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion",
+    ]
+}
