@@ -894,3 +894,62 @@ kotlin使用对象表达式和对象声明来实现。
         }
     </p>
     
+### 区间
+&emsp;&emsp; 可以通过rangeTo()函数，及其操作符形式的..创建两个值的区间。1..4相当于 1 <= i && i <= 4。反向迭代数字，使用downTo。
+可以通过任意步长迭代数字，通过step函数完成。要迭代不包含结束元素的数字区间，使用util函数。
+ 
+ ### 序列
+&emsp;&emsp; kotlin使用Sequence<T>，提供与Iterable相同的函数。当Iterable处理包含多个步骤的时候，会每个处理步骤完成后返回结果，
+在这个集合上执行下一个步骤。序列的多步处理在可能的情况下会延迟执行：仅当请求整个处理链的结果时才会进行实际计算。Sequence对每个元素逐个执行所有的步骤，
+而Iterable对集合每个步骤进行处理，再执行下一步骤。
+  
+    <p>
+        list.map { it + 1 }.first { it % 100 == 0 } // 对于list，这一步会先执行map，再用集合结果再次执行first，两次while循环。
+        list.asSequence().map { it + 1 }.first { it % 100 == 0 } // 对于序列，会对每个元素先后执行map、first，一次while循环。
+    </p>
+    
+### 集合转换
+&emsp;&emsp; 双路合并是根据两个集合中，具有相同位置的元素构建配对。使用zip()扩展函数完成。也可以使用unzip()，构建两个列表。
+
+    <p>
+        val colors = listOf("red", "brown", "grey")
+        val twoAnimals = listOf("fox", "bear")
+        
+        colors.zip(twoAnimals)  // [(red, fox), (brown, bear)]
+    </p>
+    
+<br>
+&emsp;&emsp; 利用associateWith()，创建一个Map，其中原始集合的元素是键，并通过给定的转换函数从中产生值。如果两个元素相等，
+那么最后一个保留在map中。associateBy() 根据元素的值返回键，如果两个元素相等，那么最后一个保留在Map中。
+
+    <p>
+        val numbers = listOf("one", "two", "three")
+        println(numbers.associateWith { it.length })
+        
+        println(numbers.associateBy { it.first().toUpperCase() })
+    </p>
+    
+<br>
+&emsp;&emsp; 使用flatten()，这个函数返回嵌套集合中的所有元素的一个list。flatMap返回单个列表其中包含所有元素的值。
+
+<br>
+&emsp;&emsp; joinToString()根据提供的参数，从集合元素构建单个String。joinTo()执行同样的操作，但是将结果附加到给定的Appendable对象。
+可以自定义separator来设置要构建的字符串格式，可以指定limit，大小超出limit，所有其他的元素将被truncated参数的单个值替换。
+
+    val numbers = listOf("one", "two", "three")
+    println(numbers.joinToString()) // one, two, three
+    
+    val listString = Stringbuffer("The list of numbers: ")
+    numbers.joinTo(listString) // The list of numbers: one, two, three
+    
+    val numbers2 = (1..100).toList()
+    println(numbers2.joinToString(limit = 5, truncated = "<...>")) // 1, 2, 3, 4, 5, <...>
+    
+    println(numbers.joinToString { "Element: ${it.toUpperCase()}" })
+
+<br>
+&emsp;&emsp; partition() 通过一个谓词过滤集合，并且将不匹配的元素存放在一个单独的列表中。
+    
+    val numbers = listOf("one", "two", "three")
+    val (match, reset) = numbers.partition { it.length > 3 }
+    
