@@ -5,6 +5,7 @@
 * [3.类与对象](#3)
 * [4.函数与Lambda表达式](#4)
 * [5.集合](#5)
+* [6.协程](#6)
 
 <h2 id="1">1.惯用法</h2>
 &emsp;&emsp; 创建DTO类(POJO)，以data开头，会自动包含以下功能equals()、hashCode()、toString()、copy()。
@@ -952,4 +953,120 @@ kotlin使用对象表达式和对象声明来实现。
     
     val numbers = listOf("one", "two", "three")
     val (match, reset) = numbers.partition { it.length > 3 }
+    
+### 分组
+&emsp;&emsp; kotlin的groupBy()使用一个lambda函数，并返回一个Map。在带有两个lambda的groupBy()中，由keySelector函数生成的键映射到值转换函数的结果，
+而不是原始元素。groupBy实际已经对每个元素进行了遍历，通过keySelector构建了一个LinkedHashMap<K, MutableList<T>>()。此时分组全操作已经完成。
+    
+       val numbers = listOf("one", "two", "three", "four", "five")
+       println(numbers.groupBy { it.first.toUpperCase() }) 
+       // { O=[one], T=[two, three], F=[four, five] }
+       
+       println(numbers.groupBy(keySelector = { it.first() }, valueTransform = { it.toUpperCase() }))
+       // { o=[ONE], t=[TWO, THREE], f=[FOUR, FIVE] }
+
+<br>
+&emsp;&emsp; 可以使用groupingBy()函数进行分组，这个函数实际返回的是一个Grouping类型的实例，此时只是产生了一个Grouping类型实例，
+并没有实际遍历元素进行分组操作。Grouping类型实例，支持eachCount()、fold()、reduce()、aggregate()操作，也就是在调用这些函数时，
+才实际执行了遍历分组操作。
+
+    val numbers = listOf("one", "two", "three", "four", "five")
+    println(numbers.groupingBy { it.first() }.eachCount() )
+    // { o=1, t=2, f=2, s=1 }
+    
+### 取集合的一部分
+&emsp;&emsp; 使用slice()，返回具有给定索引的集合元素列表。从头开始获取指定数量的元素使用take()，从尾开始获取指定数量的元素使用takeLast()。
+要从头或尾去除给定数量的元素，使用drop()或dropLast()。还可以使用takeWhile()、takeLastWhile()、dropWhile()、dropLastWhile()，定义要获取或去除的元素直到与谓词匹配。
+    
+        val numbers = listOf(1, 2, 3, 4, 5)
+        println(numbers.slice(0..4 step 2))
+        println(numbers.take(2))
+        println(numbers.takeLast(2))
+        println(numbers.drop(2))
+        println(numbers.dropLast(2))
+        
+<br>
+&emsp;&emsp; chunked()函数可以将集合分解为给定大小的块。windowed() 返回滑动窗口，与chunked()不同。zipWithNext() 相当于windowed()窗口大小为2。
+
+    val numbers = (0..13).toList()
+    println(numbers.chunked(3)) // [[0, 1, 2], ... , [12, 13]]
+    
+    println(numbers.chunked(3) { it.sum() }) // [3, 12, 21, 30, 25]
+
+### 取单个元素
+&emsp;&emsp; 可以使用elementAt()取特定位置的元素，在使用list的情况下，使用get()或[] 更习惯。还可以使用elementAtOrNull() 
+或者elementAtOrElse()。还可以使用first()、last()、firstOrNull()、lastOrNull()。可以使用find()代替firstOrNull()，使用findLast()代替lastOrNull()。
+
+<br>
+&emsp;&emsp; 可以使用random()，来获取集合中的一个随机元素。使用contains()判断集合中是否存在某个元素，如果一个集合元素等于equals()那么返回true。
+可以使用in 调用contains()，一次检查多个实例的存在，可以使用containsAll()。使用isEmpty()、isNotEmpty()来判断集合中是否包含任何元素。
+
+    val numbers = listOf(1, 2, 3, 4)
+    println(numbers.random()) // 1
+    
+    val numbers = listOf("one", "two")
+    println(numbers.contains("one"))
+    println("zero" in numbers) // in 实际上是调用了contains() 函数。
+    
+### 排序
+&emsp;&emsp; 如需为用户定义的类型定义一个自然顺序，那么需要让这个类继承Comparable接口，实现compareTo()函数。如果要为类型定义自定义顺序，
+可以为其创建一个Comparator，定义一个Comparator简短的方式是标准库中的compareBy()函数。基本的函数sorted()和sortedDescending()返回集合的元素，
+这些元素按照自然顺序升序和降序排列，这些函数适用于Comparable元素的集合。
+
+    val lengthComparator = Comparator { str1: String, str2: String -> str1.length - str2.length }
+    println(listOf("aaa", "bb", "c").sortedWith(lengthComparator))
+    println(listOf("aaa", "bb", "c").sortedWith(compareBy { it.length }))
+    
+<br>
+&emsp;&emsp; 为了按照自定义顺序排列，可以使用函数sortedBy()和sortedByDescending()它们将接受一个将集合元素映射为Comparable值的选择器函数，
+并以该值的自然顺序对集合排序。倒序使用reversed()函数，随机顺序使用shuffled()函数。
+
+    val numbers = listOf("one", "two", "three")
+    val sortedNumbers = numbers.sortedBy { it.length }
+    
+<h2 id="6">6.协程</h2>
+&emsp;&emsp; 开启一个协程，实现Hello，World！输出。
+
+    val job = GlobalScope.launch { // 启动一个新的协程，并且保持对这个Job的引用
+        delay(1000L)
+        println("World!")
+    }
+    println("Hello,")
+    job.join() // 等待直到子协程执行结束
+    
+<br>
+&emsp;&emsp; 当使用GlobalScope.launch时，会创建一个顶层协程，如果忘记保持对新启动的协程的引用，它还会继续运行。我们可以使用结构化并发，
+这样就不用显式的join，因为外部协程直到在其作用域中启动的所有协程都执行完毕后才会结束。
+
+    fun main() = runBlocking {  // this: CoroutineScope
+        launch {                // 在runBlocking作用域中启动一个新协程。
+            delay(1000L)
+            println("World!")
+        }
+        println("Hello,")
+    }
+    
+<br>
+&emsp;&emsp; 可以使用coroutineScope构建自己的作用域，会创建一个协程作用域并且在所有以启动子协程执行完毕前不会结束。runBlocking与coroutineScope看起来很像，
+都会等待其协程体及所有子协程结束，区别在于runBlocking会阻塞当前线程等待，而coroutineScope只是挂起。会释放底层线程用于其他用途。runBlocking是常规函数，
+coroutineScope是挂起函数。
+
+    fun main() = runBlocking { // this: CoroutineScope
+        launch { 
+            delay(200L)
+            println("Task from runBlocking")
+        }
+        
+        coroutineScope { // 创建一个协程作用域
+            launch {
+                delay(500L) 
+                println("Task from nested launch")
+            }
+        
+            delay(100L)
+            println("Task from coroutine scope") // 这一行会在内嵌 launch 之前输出
+        }
+        
+        println("Coroutine scope is over") // 这一行在内嵌 launch 执行完毕后才输出
+    }
     

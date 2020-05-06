@@ -15,4 +15,7 @@ class OverloadDemo {
 
 fun main() {
     OverloadDemo().printStr("hello")
+    listOf("aaa", "bbb").groupBy {  }
+    listOf("one", "two").groupingBy {  }.eachCount()
+    println("one" in listOf("one"))
 }
