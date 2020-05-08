@@ -9,6 +9,20 @@ import kotlinx.coroutines.runBlocking
  *
  * @author lix wang
  */
+inline fun printData(crossinline printer: () -> Unit) {
+    println("print data start")
+    printer()
+    println("print data over")
+}
+
+fun printFun() {
+    printData {
+        println("print data")
+        return@printData
+    }
+    println("printer end")
+}
+
 fun main() = runBlocking {
     launch {
         delay(200L)
@@ -23,4 +37,5 @@ fun main() = runBlocking {
         println("Task from coroutine scope")
     }
     println("Coroutine scope is over")
+//    printFun()
 }

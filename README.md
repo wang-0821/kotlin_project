@@ -854,7 +854,8 @@ kotlin使用对象表达式和对象声明来实现。
 
 <br>
  &emsp;&emsp; 有些内联函数，调用传给它们的不是直接来自函数体，而是来自另一个执行上下文的lambda表达式参数，这种情况下该lambda表达式需要使用
- crossinline修饰符标记。
+ crossinline修饰符标记。 通常来讲如果一个函数是内联函数，那么它的形參也是inline的，例如下面的body参数，内联函数是可以直接return的，
+ 也就是如果在body中return，会直接结束掉f()整个函数，使用 crossinline，能禁止直接return，必须使用return@body。
  
     <p>
         inline fun f(corssinline body() -> Unit) {
@@ -1049,7 +1050,14 @@ kotlin使用对象表达式和对象声明来实现。
 <br>
 &emsp;&emsp; 可以使用coroutineScope构建自己的作用域，会创建一个协程作用域并且在所有以启动子协程执行完毕前不会结束。runBlocking与coroutineScope看起来很像，
 都会等待其协程体及所有子协程结束，区别在于runBlocking会阻塞当前线程等待，而coroutineScope只是挂起。会释放底层线程用于其他用途。runBlocking是常规函数，
-coroutineScope是挂起函数。
+coroutineScope是挂起函数。在GlobalScope中启动的活动协程不会使进程保活，它们就像是守护线程。
+<br>
+&emsp;&emsp; 这里很多人奇怪，为什么明明coroutineScope是挂起函数，最后打印的却不是"Task from nested launch" 而是"Coroutine scope is over"，
+因为runBlocking是会阻塞当前线程的，首先第一个地方使用launch创建了协程，执行了start，此时视为它已经执行完，然后coroutineScope创建了作用域，在作用域中创建了协程，
+执行start，此时coroutineScope.launch也视为执行完毕。此时实际还有两个协程任务没执行完(想象下Thread.start() 线程启动了，但具体任务还需要在后台隐式执行)，
+这两个协程任务都处于delay状态，由于coroutineScope遇到delay会挂起，于是可以继续向下执行，此时遇到第三个delay，由于coroutineScope要所有子协程执行完才算结束，
+因此即时此时有3处delay，还是没办法执行"Coroutine scope is over"，于是根据delay时间，先后打印出不同结果。等所有子协程执行完，coroutineScope才算执行完毕，
+此时可以继续向下执行，因此最后打印的一定是"Coroutine scope is over"。
 
     fun main() = runBlocking { // this: CoroutineScope
         launch { 
@@ -1070,3 +1078,78 @@ coroutineScope是挂起函数。
         println("Coroutine scope is over") // 这一行在内嵌 launch 执行完毕后才输出
     }
     
+    // 输出结果为：
+    Task from coroutine scope
+    Task from runBlocking
+    Task from nested launch
+    Coroutine scope is over
+    
+### 取消与超时
+&emsp;&emsp; 协程的launch函数返回了一个可以用来被取消运行中的协程的job，通过job可以取消协程。可以使用cancelAndJoin代替cancel和join。
+    
+    val job = launch {
+        repeat(1000) { i ->
+            println("job: I'm sleeping $i...")
+            delay(500L)
+        }
+    }
+    delay(1300L)
+    println("main: I'm tired of waiting!")
+    job.cancel() // 取消该作业
+    job.join() // 等待该作业执行结束
+    println("main: Now I can quit.")
+
+<br>
+&emsp;&emsp; 协程取消是协作的，一段协程代码必须协作才能被取消。所有kotlinx.coroutines中的挂起函数都是可以被取消的，它们会检查协程的取消，
+并在取消时抛出CancellationException。但是如果协程正在执行计算任务，并且没有检查取消的话，那么是不能被取消的。可以使用yield和显示的检查取消状态，
+来使执行计算的代码被取消。如果想要挂起一个被取消的协程，那么需要将相应的代码包装在withContext(NonCancellable) {} 中。
+
+    fun cancelUseFinally() = runBlocking {
+        val job = launch {
+            try {
+                repeat(1000) {
+                    println("job: I'm sleeping $it...")
+                    delay(500L)
+                }
+            } finally {
+                withContext(NonCancellable) {
+                    println("job: I'm running finally")
+                    delay(1000L)
+                    println("job: Anf I've just delayed for 1 sec because I'm non-cancellable")
+                }
+                // 加了这个delay下面不会再继续执行，因为delay是挂起函数，会检查结束状态，从而不会继续往下执行，会直接cancel接下来的操作。
+                delay(200L)
+                println("job: I'm running finally2")
+            }
+        }
+        delay(1300L)
+        println("main: I'm tired of waiting!")
+        job.cancelAndJoin()
+        println("main: Now I can quit.")
+    }
+    
+<br>
+&emsp;&emsp; 在实践中绝大多数取消一个协程的理由是它可能超时，使用withTimeout函数，如果超时会抛出TimeoutCancellationException。
+如果需要做一些各类使用超时的特别的额外操作，那么可以使用withTimeoutOrNull函数，withTimeoutOrNull通过返回null来进行超时操作，
+从而来替代抛出一个异常。实际上withTimeoutOrNull执行方式与withTimeout一样，只是在抛出异常后捕获了异常，然后返回了null。
+
+    val result = withTimeoutOrNull(1300L) {
+        repeat(1000) {
+            println("I'm sleeping $it...")
+            delay(500L)
+        }
+        "Done"
+    }
+    println("Result is $result")
+    
+### 组合挂起函数
+&emsp;&emsp; async类似与launch，launch返回一个Job且不带任何结果附加值，async返回一个轻量级的非阻塞Deferred，Deferred也是一个Job，可以取消。
+async也可以将start参数设置为CoroutineStart.LAZY，此时只有在await时或者显示的执行start时才会启动。async被定义为了CoroutineScope上的扩展，
+我们使用async的结构化并发时，需要将async写在作用域中。
+
+    // 此时如果在computeSum函数内部出现了错误，并且抛出了一个异常，那么所有在作用域中启动的协程都会被取消。
+    suspend fun computeSum(): Int = coroutineScope {
+        val one = async { doSomethingOne() }
+        val two = async { doSomethingTwo() }
+        one.await() + two.await()
+    }
