@@ -9,18 +9,20 @@ import kotlinx.coroutines.runBlocking
  *
  * @author lix wang
  */
-inline fun printData(crossinline printer: () -> Unit) {
-    println("print data start")
-    printer()
-    println("print data over")
-}
-
-fun printFun() {
-    printData {
-        println("print data")
-        return@printData
+class HelloWorldCoroutines2 {
+    inline fun printData(crossinline printer: () -> Unit) {
+        println("print data start")
+        printer()
+        println("print data over")
     }
-    println("printer end")
+
+    fun printFun() {
+        printData {
+            println("print data")
+            return@printData
+        }
+        println("printer end")
+    }
 }
 
 fun main() = runBlocking {

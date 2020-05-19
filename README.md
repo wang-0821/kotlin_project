@@ -587,7 +587,7 @@ kotlin的泛型类型，也只是在编译期进行类型安全性检查，在�
     </p>
     
 ### 枚举类
-&emsp;&emsp; 枚举类可以实现接口，但是不能继承其他类。
+&emsp;&emsp; 枚举类可以实现接口，但是不能继承其他类。可以使用EnumClass.valueOf(value: String): EnumClass
 
     <p>
         enum class Color(val rgb: Int) {
@@ -1153,3 +1153,172 @@ async也可以将start参数设置为CoroutineStart.LAZY，此时只有在await�
         val two = async { doSomethingTwo() }
         one.await() + two.await()
     }
+    
+### 协程上下文与调度器
+&emsp;&emsp; 协程运行在以CoroutineContext类型为代表的上下文中。协程上下文是不同元素的集合，主元素是协程中的Job。协程上下文包含一个协程调度器。
+当调用launch { ... } 不传参数时，它会从启动了它的CoroutineScope中继承上下文及调度器。当使用EmptyCoroutineContext时，
+会返回Dispatchers.Default CoroutineContext。默认调度器使用共享的后台线程池。调度器有Dispatchers.Uncofined、Dispatchers.Default、
+newSingleThreadContext。newSingleThreadContext为协程的运行启动了一个线程，一个专用的线程是很昂贵的资源，在真实的应用程序中两者都必须被释放。
+
+<br>
+<br>
+&emsp;&emsp; Dispatchers.Unconfined协程调度器在调用它的线程启动了一个协程，但它只是运行到第一个挂起点。挂起后，它恢复线程中的协程。
+也就是非限制协程调度器(Unconfined)会立即被调度执行，运行在当前线程上。
+
+    launch(Dispatchers.Unconfined) { // 非受限的——将和主线程一起工作
+        println("Unconfined      : I'm working in thread ${Thread.currentThread().name}")
+        delay(500)
+        println("Unconfined      : After delay in thread ${Thread.currentThread().name}")
+    }
+    launch { // 父协程的上下文，主 runBlocking 协程
+        println("main runBlocking: I'm working in thread ${Thread.currentThread().name}")
+        delay(1000)
+        println("main runBlocking: After delay in thread ${Thread.currentThread().name}")
+    }
+
+<br>
+&emsp;&emsp; 当在一个协程中使用launch启动一个子协程时，子协程会继承父协程的上下文coroutineContext，如果是GlobalScope启动，
+那么这个协程没有父协程，会使用独立的作用域。当父协程被取消，那么所有它的子协程也会被递归取消。
+
+<br>
+&emsp;&emsp; 我们可以使用 + 操作符来在协程上下文中定义多个元素。
+    
+    launch(Dispatchers.Default + CoroutineName("test")) {
+        println("I'm working in thread ${Thread.currentThread().name()}")
+    }
+    
+<br>
+&emsp;&emsp; 线程局部数据，可以使用ThreadLocal、asContextElement可以创建额外的上下文元素，保留给定ThreadLocal的值，
+并在每次协程切换其上下文时回复它。
+
+### 异步流
+&emsp;&emsp; flow { ... } 构建块中的代码可以挂起，流使用emit函数发射值，流使用collect函数收集值。Flow是一种类似序列的冷流，
+flow构建器中的代码直到流被收集的时候才运行。flowOf构建器定义了一个发射固定值集的流。使用asFlow()可以将各种集合与序列转换为流。
+可以使用transform对流进行转换。可以使用take操作符，来限制操作符。flow与stream、Iterable<T>.filter等不同，flow只循环一次，
+而另外的每个操作都循环一次生成一个新的集合。
+
+    (1..3).asFlow().collect{ value -> println(value) }
+    
+    // transform 对流进行转换
+    runBlocking {
+        listOf(1, 2, 3).asFlow().transform { request ->
+            emit("Marking request $request")
+        }.collect { response -> println(response) }
+    }
+    
+    // 只会执行前N个emit函数
+    runBlocking {
+            flow {
+                try {
+                    emit(1)
+                    emit(2)
+                    println("This line will not execute")
+                    emit(3)
+                } finally {
+                    println("Finally in numbers")
+                }
+            }.take(2).collect { value -> println(value) }
+        }
+    
+<br>
+&emsp;&emsp; flow { ... } 构建器中的代码必须遵循上下文保存属性，不允许从其他上下文中发射(emit)。可以通过flowOn函数，更改流发射的上下文。
+可以使用buffer操作符来并发运行flow中发射元素的代码以及收集代码，而不是顺序运行。当收集器很慢时，可以使用conflate操作符，跳过中间值。
+当发射器和收集器都很慢时，合并是加快处理速度的一种方式，通过删除发射值来实现；另一种方式是取消缓慢的收集器，并在每次发射新值的时候重新启动它。
+    
+    fun foo(): Flow<Int> = flow {
+        // 在流构建器中更改消耗 CPU 代码的上下文的错误方式
+            kotlinx.coroutines.withContext(Dispatchers.Default) {
+                for (i in 1..3) {
+                    Thread.sleep(100) // 假装我们以消耗 CPU 的方式进行计算
+                    emit(i) // 发射下一个值
+                }
+            }
+    }
+    
+    //   Collecting 1
+    //   Collecting 2
+    //   Collecting 3
+    //   Done 3
+    //   Collected in 708 ms
+    // 说明每次产生发射新值的时候，收集器都被取消了。
+    val time = measureTimeMillis {
+        foo()
+            .collectLatest { value -> // 取消并重新发射最后一个值
+                println("Collecting $value") 
+                delay(300) // 假装我们花费 300 毫秒来处理它
+                println("Done $value") 
+            } 
+    }   
+    println("Collected in $time ms")
+    
+    // 此时会抛异常，因为更改了上下文
+    foo().collect { value -> println(value) } 
+    
+    fun foo(): Flow<Int> = flow {
+        for (i in 1..3) {
+            Thread.sleep(100) // 假装我们以消耗 CPU 的方式进行计算
+            log("Emitting $i")
+            emit(i) // 发射下一个值
+        }
+    }.flowOn(Dispatchers.Default) // 在流构建器中改变消耗 CPU 代码上下文的正确方式
+    
+    foo().collect { value ->
+        log("Collected $value") 
+    } 
+    
+<br>
+&emsp;&emsp; 使用zip操作符来合并两个流中的相关值。每当上游流产生值时都需要重新计算，这种操作使用combine。使用flatMapConcat在等待内部流完成之前，
+开始收集下一个值。
+    
+    val nums = (1..3).asFlow() // 数字 1..3
+    val strs = flowOf("one", "two", "three") // 字符串
+    nums.zip(strs) { a, b -> "$a -> $b" } // 组合单个字符串
+        .collect { println(it) } // 收集并打印
+    // 结果 
+    // 1 -> one
+    // 2 -> two
+    // 3 -> three
+    
+    val nums = (1..3).asFlow().onEach { delay(300) } // 发射数字 1..3，间隔 300 毫秒
+    val strs = flowOf("one", "two", "three").onEach { delay(400) } // 每 400 毫秒发射一次字符串
+    val startTime = System.currentTimeMillis() // 记录开始的时间
+    nums.combine(strs) { a, b -> "$a -> $b" } // 使用“combine”组合单个字符串
+        .collect { value -> // 收集并打印
+            println("$value at ${System.currentTimeMillis() - startTime} ms from start") 
+        } 
+    // 结果   
+    // 1 -> one at 452 ms from start
+    // 2 -> one at 651 ms from start
+    // 2 -> two at 854 ms from start
+    // 3 -> two at 952 ms from start
+    // 3 -> three at 1256 ms from start
+    
+<br>
+&emsp;&emsp; 流异常时，可以使用catch{ ... }。 流完成时，可以使用onCompletion。启动流可以使用onEach。
+
+### 通道
+&emsp;&emsp; Channel是一个和BlockingQueue非常相似的概念。替代了阻塞的put操作，提供了挂起的send，还替代了阻塞的take操作，并提供了挂起的receive。
+
+    val channel = Channel<Int>()
+    launch {
+        // 这里可能是消耗大量 CPU 运算的异步逻辑，我们将仅仅做 5 次整数的平方并发送
+        for (x in 1..5) channel.send(x * x)
+    }
+    // 这里我们打印了 5 次被接收的整数：
+    repeat(5) { println(channel.receive()) }
+    println("Done!")
+    
+<br>
+&emsp;&emsp; 一个通道可以通过被关闭来表明没有更多的元素会进入通道，可以创建带缓冲区大小的通道，允许发送者在被挂起前发送多个元素。
+通道遵循先进先出的原则。可以使用工厂方法ticker创建计时器通道，计时器通道每经过特定的延迟都会从该通道进行消费并产生Unit
+
+    val channel = Channel<Int>(4) // 启动带缓冲的通道
+    val sender = launch { // 启动发送者协程
+        repeat(10) {
+            println("Sending $it") // 在每一个元素发送前打印它们
+            channel.send(it) // 将在缓冲区被占满时挂起
+        }
+    }
+    // 没有接收到东西……只是等待……
+    delay(1000)
+    sender.cancel() // 取消发送者协程
