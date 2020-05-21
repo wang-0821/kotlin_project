@@ -6,6 +6,8 @@
 * [4.函数与Lambda表达式](#4)
 * [5.集合](#5)
 * [6.协程](#6)
+* [7.多平台程序设计](#7)
+* [8.语言结构](#8)
 
 <h2 id="1">1.惯用法</h2>
 &emsp;&emsp; 创建DTO类(POJO)，以data开头，会自动包含以下功能equals()、hashCode()、toString()、copy()。
@@ -1322,3 +1324,343 @@ flow构建器中的代码直到流被收集的时候才运行。flowOf构建器�
     // 没有接收到东西……只是等待……
     delay(1000)
     sender.cancel() // 取消发送者协程
+    
+### 共享的可变状态与并发
+&emsp;&emsp; 在kotlin中volatile是一种注解。volatile只能保证内存可见性，被volatile修饰的变量，被赋值后，会多执行一行"lock addl $0x0, (%esp)"，
+这个操作相当于内存屏障，重排序时不能把后面的指令重排序到内存屏障之前，因此能保证内存可见性。可以使用原子操作，保证线程安全。
+
+    @Volatile // 在 Kotlin 中 `volatile` 是一个注解
+    var counter = 0
+    
+    suspend fun massiveRun(action: suspend () -> Unit) {
+        val n = 100  // 启动的协程数量
+        val k = 1000 // 每个协程重复执行同一动作的次数
+        val time = measureTimeMillis {
+            coroutineScope { // 协程的作用域
+                repeat(n) {
+                    launch {
+                        repeat(k) { action() }
+                    }
+                }
+            }
+        }
+        println("Completed ${n * k} actions in $time ms")    
+    }
+    
+    // 结果counter可能并不是100000，因为大量自增操作时，volatile并不能提供原子性。
+    fun main() = runBlocking {
+        withContext(Dispatchers.Default) {
+            massiveRun {
+                counter++
+            }
+        }
+        println("Counter = $counter")
+    }
+    
+<br>
+&emsp;&emsp; 以细粒度限制线程可以解决共享可变状态。这种方式将对特定共享状态的所有访问权限制在单个线程中。
+
+    // 限定这个上下文只运行在一个线程中
+    val counterContext = newSingleThreadContext("CounterContext")
+    val counter = 0
+    fun main() = runBlocking {
+        withContext(Dispatchers.Default) {
+            massiveRun {
+                // 将每次自增操作限制在单线程上下文中
+                withContext(counterContext) {
+                    counter++
+                }
+            }
+        }
+        println("Counter = $counter")
+    }
+    
+<br>
+&emsp;&emsp; 以粗粒度限制线程，相比上面细粒度限制线程，运行更快。
+    
+    val counterContext = newSingleThreadContext("CounterContext")
+    var counter = 0
+    
+    fun main() = runBlocking {
+        // 将一切都限制在单线程上下文中
+        withContext(counterContext) {
+            massiveRun {
+                counter++
+            }
+        }
+        println("Counter = $counter")
+    }
+    
+<br>
+&emsp;&emsp; 在协程中可以使用Mutex来代替synchronized或者ReentrantLock。Mutex具有lock和unlock方法，Mutex.lock()是挂起函数，不会阻塞线程。
+Mutex还有withLock扩展函数，用来代替日常用的mutex.lock() try { ... } finally { mutex.unlock() } 模式。
+
+    val mutex = Mutex()
+    var counter = 0
+    
+    fun main() = runBlocking {
+        withContext(Dispatchers.Default) {
+            massiveRun {
+                // 用锁保护每次自增
+                mutex.withLock {
+                    counter++
+                }
+            }
+        }
+        println("Counter = $counter")
+    }
+    
+<br>
+&emsp;&emsp; actor是由协程、被限制并封装到该协程中的状态以及一个与其他协程通信的通道组合而成的一个实体。
+
+<h2 id="7">7.多平台程序设计</h2>
+&emsp;&emsp; kotlin提供了一种预期声明(expect)和实际声明的机制(actual)。利用这种机制公共模块可以定义预期声明，
+平台模块可以提供与预期声明相对应的实际声明。公共模块中预期声明与其对应的实际声明始终具有完全相同的完整限定名。
+预期声明标有expect关键字，实际声明标有actual关键字。与预期声明的任何部分匹配的所有实际声明都要标记为actual。预期声明不包含任何实现代码。
+
+    expect class Foo(bar: String) {
+        fun frob()
+    }
+    
+    actual class Foo actual constructor(val bar: String) {
+        actual fun frob() {
+            println("Forbbing the $bar")
+        }
+    }
+    
+    // 公共
+    expect fun formatString(source: String, vararg args: Any): String
+    
+    expect annotation class Test
+    
+    // JVM
+    actual fun formatString(source: String, vararg args: Any) =
+        String.format(source, *args)
+        
+    actual typealias Test = org.junit.Test
+
+<h2 id="8">8.语言结构</h2>
+### 类型检测与转换
+&emsp;&emsp; 可以使用is、!is来进行类型检测。使用as进行类型转换，如果转换失败会抛异常，可以使用as?进行安全的类型转换，如果转换失败返回null。
+
+    val x: String? = y as? String
+    
+    inline fun <reified A, reified B> Pair<*, *>.asPairOf(): Pair<A, B>? {
+        if (first !is A || second !is B) return null
+        return first as A to second as B
+    }
+    
+    val somePair: Pair<Any?, Any?> = "items" to listOf(1, 2, 3)
+    
+    val stringToSomething = somePair.asPairOf<String, Any>()
+    val stringToInt = somePair.asPairOf<String, Int>()
+    val stringToList = somePair.asPairOf<String, List<*>>()
+    val stringToStringList = somePair.asPairOf<String, List<String>>() // 破坏类型安全！
+    
+    inline fun <reified T> List<*>.asListOfType(): List<T>? =
+        if (all { it is T })
+            @Suppress("UNCHECKED_CAST")
+            this as List<T> else
+            null
+            
+### 注解
+&emsp;&emsp; 注解使用annotation修饰符放在类的前面。如果对类的主构造函数进行标注，那么需要在构造函数声明中添加constructor关键字，
+并将注解添加到其前面。注解也可以标注属性访问器。
+
+    @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION,
+            AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.EXPRESSION)
+    @Retention(AnnotationRetention.SOURCE)
+    @MustBeDocumented
+    annotation class Fancy
+    
+    @Fancy class Foo {
+        @Fancy fun baz(@Fancy foo: Int): Int {
+            return (@Fancy 1)
+        }
+    }
+    
+    // 注解主构造函数
+    class Foo @Inject constructor(dependency: MyDependency) { ... }
+    
+    // 注解属性访问器
+    class Foo {
+        var x: MyDependency? = null
+            @Inject set
+    }
+    
+<br>
+&emsp;&emsp; 如果需要将一个类指定为注解的参数，请使用Kotlin类(KClass)，kotlin编译器会自动将其转换为java类，以便java代码能正常访问该注解与参数。
+
+    annotation class Ann(val arg1: KClass<*>, val arg2: KClass<out Any>)
+    
+    @Ann(String::class, Int::class) class MyClass
+    
+<br>
+&emsp;&emsp; 注解也可以用于lambda表达式，它们会被应用于生成lambda表达式体的invoke()方法上。注解可以被用于file、property、field、get、
+set、receiver、param、setparam、delegate。
+
+    annotation class Suspendable
+    val f = @Suspendable { Fiber.sleep(10) }
+    
+    class Example {
+        @set:[Inject VisibleForTesting]
+        var collaborator: Collaborator
+    }
+    
+### 反射
+&emsp;&emsp; 最基本的反射功能是获取Kotlin类的运行时引用。
+    
+    // 该引用是KClass类型的值，如果要获得java类引用，需要在KClass实例上使用.java属性
+    val c = MyClass::class
+
+<br>
+&emsp;&emsp; 可以使用::操作符来调用函数。
+
+    // 这里的::isOdd 是函数 (Int) -> Boolean 的一个值
+    fun isOdd(x: Int) = x % 2 != 0
+    val number = listOf(1, 2, 3)
+    println(numbers.filter(::isOdd))
+    
+    val x = 1
+    
+    fun main() {
+        println(::x.get()) // 1
+        println(::x.name)  // x  返回属性名
+    }
+    
+    var y = 1
+    
+    fun main() {
+        ::y.set(2)
+        println(y)  // 2 
+    }
+    
+    // 访问类的成员的属性
+    class A(val p: Int)
+    val prop = A::p
+    println(prop.get(A(1)))
+    
+<br>
+&emsp;&emsp; java平台上，标准库包含反射类的扩展，提供了与java反射对象之间的映射。
+
+    class A(val p: Int)
+    
+    // 查找一个用作Kotlin属性getter的幕后字段或java方法
+    fun main() {
+        println(A::p.javaGetter) // 输出 "public final int A.getP()"
+        println(A::p.javaField)  // 输出 "private final int A.p"
+    }
+    // 获得对应于java类的kotlin类，使用.kotlin扩展属性
+    fun getKClass(o: Any): KClass<Any> = o.javaClass.kotlin
+    
+    val numberRegex = "\\d+".toRegex()
+    val strings = listOf("abc", "124", "a70")
+    println(strings.filter(numberRegex::matches))
+    
+<br>
+&emsp;&emsp; apply 及 also的返回值是上下文对象本身。因此特曼可以作为辅助步骤包含在调用链中：可以继续在同一个对象上进行函数调用。
+let、run 及 with 返回 lambda 表达式的结果。所以，在需要使用其结果给一个变量赋值，或者在需要对其结果进行链式操作等情况下，可以使用它们。
+
+    val numberList = mutableListOf<Double>()
+    numberList.also { println("Populating the list") }
+        .apply {
+            add(2.71)
+            add(3.14)
+            add(1.0)
+        }
+        .also { println("Sorting the list") }
+        .sort()
+        
+    fun getRandomInt(): Int {
+        return Random.nextInt(100).also {
+            writeToLog("getRandomInt() generated value $it")
+        }
+    }
+    
+    val i = getRandomInt()
+    
+    val numbers = mutableListOf("one", "two", "three")
+    val countEndsWithE = numbers.run { 
+        add("four")
+        add("five")
+        count { it.endsWith("e") }
+    }
+    println("There are $countEndsWithE elements that end with e.")
+    
+    val numbers = mutableListOf("one", "two", "three")
+    with(numbers) {
+        val firstItem = first()
+        val lastItem = last()        
+        println("First item: $firstItem, last item: $lastItem")
+    }
+    
+<br>
+&emsp;&emsp; 上下文对象作为 lambda 表达式的参数（it）来访问。返回值是 lambda 表达式的结果。
+    
+    val numbers = mutableListOf("one", "two", "three", "four", "five")
+    numbers.map { it.length }.filter { it > 3 }.let(::println)
+    
+<br>
+&emsp;&emsp; with 一个非扩展函数：上下文对象作为参数传递，但是在 lambda 表达式内部，它可以作为接收者（this）使用。 返回值是lambda 表达式结果。
+
+    val numbers = mutableListOf("one", "two", "three")
+    with(numbers) {
+        println("'with' is called with argument $this")
+        println("It contains $size elements")
+    }
+   
+<br>
+&emsp;&emsp; run 上下文对象 作为接收者（this）来访问。 返回值 是 lambda 表达式结果。
+    
+    val service = MultiportService("https://example.kotlinlang.org", 80)
+    
+    val result = service.run {
+        port = 8080
+        query(prepareRequest() + " to port $port")
+    }
+    
+    // 同样的代码如果用 let() 函数来写:
+    val letResult = service.let {
+        it.port = 8080
+        it.query(it.prepareRequest() + " to port ${it.port}")
+    }
+    
+<br>
+&emsp;&emsp; apply 上下文对象 作为接收者（this）来访问。 返回值 是上下文对象本身。
+
+    val adam = Person("Adam").apply {
+        age = 32
+        city = "London"        
+    }
+    println(adam)
+    
+<br>
+&emsp;&emsp; also 上下文对象作为 lambda 表达式的参数（it）来访问。 返回值是上下文对象本身。
+    
+    val numbers = mutableListOf("one", "two", "three")
+    numbers
+        .also { println("The list elements before adding new one: $it") }
+        .add("four")
+        
+<br>
+&emsp;&emsp; 对一个非空（non-null）对象执行 lambda 表达式：let。将表达式作为变量引入为局部作用域中：let。对象配置：apply。
+对象配置并且计算结果：run。在需要表达式的地方运行语句：非扩展的 run。附加效果：also。一个对象的一组函数调用：with。
+        
+    函数	    对象引用	    返回值	            是否是扩展函数
+    let	    it	        Lambda表达式结果	        是
+    run	    this	    Lambda表达式结果	        是
+    run	    -	        Lambda表达式结果	        不是：调用无需上下文对象
+    with	this	    Lambda表达式结果	        不是：把上下文对象当做参数
+    apply	this	    上下文对象	            是
+    also	it	        上下文对象	            是
+    
+<br>
+&emsp;&emsp; 除了作用域函数外，标准库还包含函数 takeIf 及 takeUnless。这俩函数使你可以将对象状态检查嵌入到调用链中。
+若该对象与谓词匹配，则 takeIf 返回此对象。否则返回 null。
+
+    val number = Random.nextInt(100)
+    
+    val evenOrNull = number.takeIf { it % 2 == 0 }
+    val oddOrNull = number.takeUnless { it % 2 == 0 }
+    println("even: $evenOrNull, odd: $oddOrNull")
+    

@@ -17,7 +17,7 @@ import kotlin.system.measureTimeMillis
  */
 class SuspendCall {
     suspend fun doSomething1(): Int {
-        delay(1000L)
+        delay(10000L)
         return 13
     }
 
@@ -35,13 +35,18 @@ class SuspendCall {
         println("Computed in $time ms")
     }
 
-    fun asyncSuspendCall() = runBlocking {
+    fun asyncSuspendCall() = GlobalScope.launch {
         val time = measureTimeMillis {
             val one  = async { doSomething1() }
             val two = async { doSomething2() }
             println("The answer is ${one.await() + two.await()}")
+            printSuspend()
         }
         println("Computed in $time ms")
+    }
+
+    suspend fun printSuspend() {
+        println("suspend method")
     }
 
     fun doSomethingUsefulOneAsync() = GlobalScope.async {
@@ -80,9 +85,9 @@ class SuspendCall {
 
 fun main() {
     val obj = SuspendCall()
-    obj.syncSuspendCall()
-    obj.asyncSuspendCall()
-    obj.asyncSuspendCall2()
-    runBlocking { obj.computeSum() }
-    obj.defineCoroutineName()
+//    obj.syncSuspendCall()
+    val job = obj.asyncSuspendCall()
+//    obj.asyncSuspendCall2()
+//    runBlocking { obj.computeSum() }
+//    obj.defineCoroutineName()
 }

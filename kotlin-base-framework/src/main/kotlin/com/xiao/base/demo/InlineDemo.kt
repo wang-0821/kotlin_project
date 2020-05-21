@@ -4,7 +4,7 @@ package com.xiao.base.demo
  *
  * @author lix wang
  */
-class InlineDemo {
+class InlineDemo() {
     inline fun f(crossinline body: () -> Unit) {
         val f = Runnable { body() }
         f.run()

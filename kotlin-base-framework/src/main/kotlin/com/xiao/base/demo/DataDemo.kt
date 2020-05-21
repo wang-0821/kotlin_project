@@ -9,7 +9,7 @@ data class DataDemo(val name: String) {
 }
 
 fun main() {
-    var dataDemo = DataDemo("name")
+    var dataDemo = DataDemo("name").also {  }
     dataDemo.age = 10
 
     println(dataDemo.toString())
