@@ -12,7 +12,10 @@ interface ContextAware : Context {
         return Context.get(key)
     }
 
-    class EmptyContext : AbstractContext(EmptyContext) {
+    class EmptyContext : Context {
+        override val key: Context.Key<*>
+            get() = Key
+
         companion object Key : Context.Key<EmptyContext>
     }
 }
