@@ -1,12 +1,12 @@
-package com.xiao.rpc.protocol
+package com.xiao.rpc
 
 /**
  *
  * @author lix wang
  */
-enum class ProtocolType(val prefix: String) {
-    HTTP("http"),
-    HTTPS("https");
+enum class ProtocolType(val prefix: String, val port: Int) {
+    HTTP("http", 80),
+    HTTPS("https", 443);
 
     companion object {
         fun getType(text: String?): ProtocolType? {

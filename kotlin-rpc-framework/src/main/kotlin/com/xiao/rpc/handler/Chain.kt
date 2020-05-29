@@ -1,20 +1,25 @@
 package com.xiao.rpc.handler
 
 import com.xiao.base.exception.KtException
+import com.xiao.rpc.Request
+import com.xiao.rpc.Response
+import com.xiao.rpc.RouteContext
 import com.xiao.rpc.exception.ExecuteException
-import com.xiao.rpc.protocol.Request
-import com.xiao.rpc.protocol.Response
 
 /**
  *
  * @author lix wang
  */
-abstract class Chain(val request: Request) {
+class Chain(val request: Request) {
     private var handlers: MutableList<Handler> = mutableListOf()
     private var index = 0
 
-    fun addHandler(handler: Handler) {
-        handlers.add(handler)
+    fun refreshContext() {
+        RouteContext()
+    }
+
+    fun initHandlers() {
+        handlers.add(EstablishHandler(this))
     }
 
     @Throws(KtException::class)
