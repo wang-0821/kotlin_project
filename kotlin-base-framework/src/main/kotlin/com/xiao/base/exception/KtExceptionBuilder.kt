@@ -6,10 +6,12 @@ package com.xiao.base.exception
  */
 open class KtExceptionBuilder: Exception {
     constructor()
-    constructor(cause: Throwable): super(cause)
+    constructor(cause: Throwable): super(cause) {
+        this.cause = cause
+    }
 
-    var statusCode: Int = 0
-    var errorCode: String = ""
+    var statusCode: Int? = null
+    var errorCode: String? = null
     override var message: String? = null
     override var cause: Throwable? = null
 
@@ -31,5 +33,12 @@ open class KtExceptionBuilder: Exception {
     fun cause(cause: Throwable?): KtExceptionBuilder {
         this.cause = cause
         return this
+    }
+
+    override fun toString(): String {
+        return "${javaClass.simpleName}(" +
+                "statusCode=${statusCode ?: (cause as? KtException)?.statusCode?.toString().orEmpty()}, " +
+                "errorCode='${errorCode ?: (cause as? KtException)?.errorCode.orEmpty()}', " +
+                "message=${message ?: (cause as? KtException)?.message.orEmpty()})"
     }
 }

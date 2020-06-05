@@ -1,4 +1,4 @@
-package com.xiao.rpc
+package com.xiao.base.context
 
 /**
  *
@@ -6,7 +6,7 @@ package com.xiao.rpc
  */
 interface ContextAware : Context {
     override val key: Context.Key<*>
-        get() = EmptyContext.Key
+        get() = EmptyContext
 
     fun <E : Context> get(key: Context.Key<E>): E? {
         return Context.get(key)

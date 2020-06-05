@@ -1,9 +1,5 @@
 package com.xiao.rpc.io
 
-import java.net.HttpURLConnection
-import java.net.URL
-import java.nio.ByteBuffer
-
 /**
  *
  * @author lix wang
@@ -26,23 +22,4 @@ class Buffer {
             }
         }
     }
-
-    fun buffer(): ByteBuffer = ByteBuffer.allocateDirect(bufferSize)
-
-    fun foo() {
-        val uri = "https://www.baidu.com"
-        val url = URL(uri)
-        val connection: HttpURLConnection = url.openConnection() as HttpURLConnection
-        connection.requestMethod = "GET"
-        connection.connect()
-        val responseCode = connection.responseCode
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            val text = connection.inputStream.bufferedReader().readText()
-            println(text)
-        }
-    }
-}
-
-fun main() {
-    Buffer().foo()
 }
