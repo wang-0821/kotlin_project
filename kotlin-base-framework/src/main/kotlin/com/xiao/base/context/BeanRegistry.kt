@@ -1,6 +1,6 @@
 package com.xiao.base.context
 
-import com.xiao.base.annotation.InitialInject
+import com.xiao.base.annotation.ContextInject
 import com.xiao.base.exception.HttpStatus
 import com.xiao.base.exception.KtException
 import java.util.concurrent.ConcurrentHashMap
@@ -23,7 +23,7 @@ interface BeanRegistry : Context {
     companion object Key : Context.Key<BeanRegistry>
 }
 
-@InitialInject
+@ContextInject
 class ContextBeanFactory : BeanRegistry, AbstractContext(BeanRegistry) {
     private val contextBeanPool = ConcurrentHashMap<String, Any>()
     private val beanNamesByType = ConcurrentHashMap<Class<*>, MutableSet<String>>()

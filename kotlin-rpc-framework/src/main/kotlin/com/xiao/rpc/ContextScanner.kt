@@ -13,7 +13,7 @@ object ContextScanner {
         if (refreshed) {
             return
         }
-        PathResourceResolver().scanByPackage(getPackageName(this::class.java.name))
+        PathResourceResolver().scanByPackage(getPackageName(this::javaClass.name))
     }
 
     private fun getPackageName(fqClassName: String): String {
