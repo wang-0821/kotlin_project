@@ -12,6 +12,9 @@ ext {
             // kotlin
             "kotlin-stdlib": "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion",
 
+            // kotlin-reflect used to implement KClass methods
+            "kotlin-reflect": "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion",
+
             // kotlin coroutines
             "kotlin-coroutines-core": "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version.kotlinx",
     ]

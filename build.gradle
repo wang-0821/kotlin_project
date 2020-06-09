@@ -60,6 +60,7 @@ subprojects {
 
 	dependencies {
 		compile libs['kotlin-stdlib']
+		compile libs['kotlin-reflect']
 		testCompile libs['spring-boot-starter-test']
 	}
 

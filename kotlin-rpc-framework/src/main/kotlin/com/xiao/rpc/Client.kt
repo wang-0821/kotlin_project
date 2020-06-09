@@ -1,5 +1,6 @@
 package com.xiao.rpc
 
+import com.xiao.base.context.ContextScanner
 import com.xiao.rpc.exception.ConnectionException
 import com.xiao.rpc.handler.Chain
 
@@ -77,7 +78,14 @@ class Client {
     }
 
     private fun refreshContext() {
-        ContextScanner.doScan()
+        ContextScanner.scanAndExecute(getPackageName(this::class.java.name))
+    }
+
+    companion object  {
+        private fun getPackageName(fqClassName: String): String {
+            val lastDotIndex: Int = fqClassName.lastIndexOf(".")
+            return if (lastDotIndex != -1) fqClassName.substring(0, lastDotIndex) else ""
+        }
     }
 }
 

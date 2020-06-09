@@ -9,6 +9,7 @@ import kotlin.reflect.KClass
  */
 @Target(AnnotationTarget.ANNOTATION_CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class AnnotationScanner(
-    val typeFilter: KClass<out TypeFilter> = DefaultTypeFilter::class
+annotation class AnnotationScan(
+    val includeTypeFilter: KClass<out TypeFilter> = DefaultIncludeTypeFilter::class,
+    val excludeTypeFilter: KClass<out TypeFilter> = DefaultExcludeTypeFilter::class
 )

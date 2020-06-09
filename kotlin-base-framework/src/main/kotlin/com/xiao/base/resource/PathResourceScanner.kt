@@ -8,7 +8,7 @@ import java.util.*
  *
  * @author lix wang
  */
-class PathResourceResolver(private val resourceLoader: ResourceLoader = DefaultResourceLoader) {
+class PathResourceScanner(private val resourceLoader: ResourceLoader = DefaultResourceLoader) {
     fun scanByPackage(basePackage: String): List<KtResource> {
         if (basePackage.isNullOrBlank()) {
             return emptyList()
@@ -89,7 +89,6 @@ class PathResourceResolver(private val resourceLoader: ResourceLoader = DefaultR
             } ?: kotlin.run {
                 Class.forName(path).kotlin
             }
-            println("${file.name} -> $kClass")
             KtResource(file, file.path, kClass)
         } catch (e: Exception) {
             null

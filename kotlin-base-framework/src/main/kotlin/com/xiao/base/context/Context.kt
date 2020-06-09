@@ -39,8 +39,7 @@ interface Context {
     }
 }
 
-abstract class AbstractContext(override val key: Context.Key<*>) :
-    Context {
+abstract class AbstractContext(override val key: Context.Key<*>) : Context {
     init {
         register(key)
     }

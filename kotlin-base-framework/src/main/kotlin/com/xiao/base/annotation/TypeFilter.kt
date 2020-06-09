@@ -9,12 +9,14 @@ import com.xiao.base.resource.KtResource
 
 typealias TypeFilter = (KtResource) -> Boolean
 
-object DefaultTypeFilter: TypeFilter {
+object DefaultIncludeTypeFilter: TypeFilter {
     override fun invoke(p1: KtResource): Boolean {
-        return !p1.clazz.java.isInterface
-                && !p1.clazz.java.isAnonymousClass
-                && !p1.clazz.java.isEnum
-                && !p1.clazz.java.isMemberClass
-                && !p1.clazz.java.isLocalClass
+        return true
+    }
+}
+
+object DefaultExcludeTypeFilter : TypeFilter {
+    override fun invoke(p1: KtResource): Boolean {
+        return p1.clazz.java.isAnnotation
     }
 }
