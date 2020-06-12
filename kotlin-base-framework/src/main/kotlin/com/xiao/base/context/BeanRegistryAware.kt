@@ -16,8 +16,13 @@ interface BeanRegistryAware : ContextAware {
     }
 
     @Throws(KtException::class)
-    fun <T : Any> registerSingleton(clazz: Class<T>, bean: T) {
-        get(BeanRegistry.Key)?.registerSingleton(clazz, bean)
+    fun <T : Any> registerSingleton(bean: T) {
+        get(BeanRegistry.Key)?.registerSingleton(bean)
+    }
+
+    @Throws(KtException::class)
+    fun <T : Any> registerSingleton(name: String, bean: T) {
+        get(BeanRegistry.Key)?.registerSingleton(name, bean)
     }
 
     override val key: Context.Key<*>

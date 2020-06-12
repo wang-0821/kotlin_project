@@ -1,8 +1,7 @@
 package com.xiao.rpc
 
-import com.xiao.base.exception.KtException
-import com.xiao.rpc.exception.DnsException
-import java.net.InetAddress
+import com.xiao.rpc.factory.SocketFactorySelector
+import java.io.IOException
 import java.net.InetSocketAddress
 
 /**
@@ -11,13 +10,14 @@ import java.net.InetSocketAddress
  */
 class Route(val address: Address, val inetSocketAddress: InetSocketAddress)
 
-@Throws(KtException::class)
-fun Address.acquireRoutes(): Set<Route> {
-    try {
-        return InetAddress.getAllByName(this.host).asSequence()
-            .map { InetSocketAddress(it, this.port) }
-            .map { Route(this, it) }.toSet()
-    } catch (e: Exception) {
-        throw DnsException.dnsDomainResolveException("failed address: $this")
+@Throws(IOException::class)
+fun Route.acquireSocket(timeout: Int = -1): StateSocket {
+    val socketFactory = SocketFactorySelector.select()
+    val socket = socketFactory.createSocket(this)
+    if (timeout > 0) {
+        socket.connect(socket.route.inetSocketAddress, timeout)
+    } else {
+        socket.connect(socket.route.inetSocketAddress)
     }
+    return socket
 }

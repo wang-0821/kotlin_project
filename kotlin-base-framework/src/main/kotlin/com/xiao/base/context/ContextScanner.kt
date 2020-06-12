@@ -45,7 +45,7 @@ object ContextScanner : BeanRegistryAware {
             val contextInject = resource.annotationsByType(ContextInject::class).first()
             val handler = contextInject.handler.objectInstance ?: contextInject.handler.objectInstance
             handler?.let {
-                it(resource.resource)
+                it(resource)
             }
         }
         return annotatedKtResources.filterNot { contextInjectResources.contains(it) }
@@ -57,7 +57,7 @@ object ContextScanner : BeanRegistryAware {
             val component = resource.annotationsByType(Component::class).first()
             val handler = component.handler.objectInstance ?: component.handler.objectInstance
             handler?.let {
-                it(resource.resource)
+                it(resource)
             }
         }
     }

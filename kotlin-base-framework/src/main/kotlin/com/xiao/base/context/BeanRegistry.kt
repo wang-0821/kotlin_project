@@ -15,10 +15,13 @@ interface BeanRegistry : Context {
     fun <T : Any> getByName(beanName: String): T?
 
     @Throws(KtException::class)
-    fun <T : Any> register(beanName: String, clazz: Class<T>, bean: T)
+    fun <T : Any> register(beanName: String, bean: T)
 
     @Throws(KtException::class)
-    fun <T : Any> registerSingleton(clazz: Class<T>, bean: T)
+    fun <T : Any> registerSingleton(bean: T)
+
+    @Throws(KtException::class)
+    fun <T : Any> registerSingleton(name: String, bean: T)
 
     companion object Key : Context.Key<BeanRegistry>
 }
@@ -43,27 +46,30 @@ class ContextBeanFactory : BeanRegistry, AbstractContext(BeanRegistry) {
         return contextBeanPool[beanName] as? T
     }
 
-    @Synchronized override fun <T : Any> register(beanName: String, clazz: Class<T>, bean: T) {
-        beanNamesByType[clazz]?.let {
+    @Synchronized override fun <T : Any> register(beanName: String, bean: T) {
+        beanNamesByType[bean::class.java]?.let {
             if (!it.add(beanName)) {
                 throw KtException().statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-                    .message("Duplicate beanName of ${clazz.simpleName}")
+                    .message("Duplicate beanName of ${beanName}")
             }
         } ?: kotlin.run {
-            beanNamesByType[clazz] = mutableSetOf(beanName)
+            beanNamesByType[bean::class.java] = mutableSetOf(beanName)
         }
 
         contextBeanPool[beanName] = bean
     }
 
-    @Synchronized override fun <T : Any> registerSingleton(clazz: Class<T>, bean: T) {
-        beanNamesByType[clazz]?.let {
+    @Synchronized override fun <T : Any> registerSingleton(bean: T) {
+        register(bean::class.java.simpleName, bean)
+    }
+
+    @Synchronized override fun <T : Any> registerSingleton(name: String, bean: T) {
+        beanNamesByType[bean::class.java]?.let {
             throw KtException().statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-                .message("Duplicate bean of ${clazz.simpleName}")
+                .message("Duplicate bean of ${bean::class.java.simpleName}")
         } ?: kotlin.run {
-            val beanName = clazz.simpleName
-            beanNamesByType[clazz] = mutableSetOf(beanName)
-            contextBeanPool[beanName] = bean
+            beanNamesByType[bean::class.java] = mutableSetOf(name)
+            contextBeanPool[name] = bean
         }
     }
 }

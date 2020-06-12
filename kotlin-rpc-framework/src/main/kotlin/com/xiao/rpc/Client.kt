@@ -1,8 +1,11 @@
 package com.xiao.rpc
 
 import com.xiao.base.context.ContextScanner
-import com.xiao.rpc.exception.ConnectionException
 import com.xiao.rpc.handler.Chain
+import com.xiao.rpc.handler.ConnectTimeoutHandler
+import com.xiao.rpc.handler.ReadTimeoutHandler
+import com.xiao.rpc.handler.WriteTimeoutHandler
+import com.xiao.rpc.tool.UrlParser
 
 /**
  *
@@ -15,14 +18,12 @@ class Client {
     private set
     var writeTimeout = 5000
     private set
-    var socketFactory: SocketFactory = DefaultSocketFactory
-    private set
 
-    var connectTimeoutHandler: ((ConnectionException.ConnectTimeoutExceptionConnection) -> Unit)? = null
+    var connectTimeoutHandler: ConnectTimeoutHandler? = null
     private set
-    var readTimeoutHandler: ((ConnectionException.ReadTimeoutExceptionConnection) -> Unit)? = null
+    var readTimeoutHandler: ReadTimeoutHandler? = null
     private set
-    var writeTimeoutHandler: ((ConnectionException.WriteTimeoutExceptionConnection) -> Unit)? = null
+    var writeTimeoutHandler: WriteTimeoutHandler? = null
     private set
 
     init {
@@ -31,10 +32,7 @@ class Client {
 
     class Call(private val client: Client, private val request: Request) {
         fun execute(): Response {
-            val chain = Chain(client, request)
-            chain.initHandlers()
-            chain.initContext()
-            return chain.execute()
+             return Chain(client, request).execute()
         }
     }
 
@@ -57,23 +55,18 @@ class Client {
         return this
     }
 
-    fun connectTimeoutHandler(handler: (ConnectionException.ConnectTimeoutExceptionConnection) -> Unit): Client {
+    fun connectTimeoutHandler(handler: ConnectTimeoutHandler): Client {
         this.connectTimeoutHandler = handler
         return this
     }
 
-    fun readTimeoutHandler(handler: (ConnectionException.ReadTimeoutExceptionConnection) -> Unit): Client {
+    fun readTimeoutHandler(handler: ReadTimeoutHandler): Client {
         this.readTimeoutHandler = handler
         return this
     }
 
-    fun writeTimeoutHandler(handler: (ConnectionException.WriteTimeoutExceptionConnection) -> Unit): Client {
+    fun writeTimeoutHandler(handler: WriteTimeoutHandler): Client {
         this.writeTimeoutHandler = handler
-        return this
-    }
-
-    fun socketFactory(socketFactory: SocketFactory): Client {
-        this.socketFactory = socketFactory
         return this
     }
 

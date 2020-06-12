@@ -1,6 +1,9 @@
-package com.xiao.rpc
+package com.xiao.rpc.tool
 
 import com.xiao.base.exception.KtException
+import com.xiao.rpc.Address
+import com.xiao.rpc.ProtocolType
+import com.xiao.rpc.Request
 import com.xiao.rpc.exception.UrlException
 
 /**
@@ -50,7 +53,8 @@ object UrlParser {
             if (host.isNullOrBlank()) {
                 throw UrlException.unIdentifiedHost()
             }
-            return Request(Address(protocolType, host)).also { request ->
+            return Request(Address(protocolType, host))
+                .also { request ->
                 params?.let {
                     request.requestParams = it
                 }

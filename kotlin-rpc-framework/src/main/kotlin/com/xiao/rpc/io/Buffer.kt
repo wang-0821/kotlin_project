@@ -4,13 +4,10 @@ package com.xiao.rpc.io
  *
  * @author lix wang
  */
-class Buffer {
-    constructor(bufferSize: Int = 0) {
-        this.bufferSize = bufferSize
-    }
+class Buffer(bufferSize: Int = 0) {
 
-    var bufferSize: Int
-    private set(value) {
+    var bufferSize: Int = bufferSize
+        private set(value) {
         field = if (value > 0 && field != value) {
             value
         } else {

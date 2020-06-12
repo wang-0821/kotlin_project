@@ -21,7 +21,7 @@ object ExecuteException {
         .message("No protocol or not support.")
 }
 
-open class RouteException(cause: Throwable) : KtException(cause) {
+sealed class RouteException(cause: Throwable) : KtException(cause) {
     class NoAvailableRouteException(cause: Throwable) : RouteException(cause)
 
     companion object {
@@ -34,7 +34,7 @@ open class RouteException(cause: Throwable) : KtException(cause) {
     }
 }
 
-open class DnsException(cause: Throwable) : KtException(cause) {
+sealed class DnsException(cause: Throwable) : KtException(cause) {
     class DnsDomainResolveException(cause: Throwable) : DnsException(cause)
 
     companion object {
@@ -47,12 +47,12 @@ open class DnsException(cause: Throwable) : KtException(cause) {
     }
 }
 
-open class ConnectionException(cause: Throwable) : KtException(cause) {
-    class ConnectTimeoutExceptionConnection(cause: Throwable) : ConnectionException(cause)
+sealed class SocketException(cause: Throwable) : KtException(cause) {
+    class ConnectTimeoutExceptionConnection(cause: Throwable) : SocketException(cause)
 
-    class ReadTimeoutExceptionConnection(cause: Throwable) : ConnectionException(cause)
+    class ReadTimeoutExceptionConnection(cause: Throwable) : SocketException(cause)
 
-    class WriteTimeoutExceptionConnection(cause: Throwable) : ConnectionException(cause)
+    class WriteTimeoutExceptionConnection(cause: Throwable) : SocketException(cause)
 
     companion object {
         fun connectTimeout(message: String? = null): ConnectTimeoutExceptionConnection {

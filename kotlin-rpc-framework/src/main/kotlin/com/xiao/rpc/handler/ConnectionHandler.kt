@@ -1,19 +1,22 @@
 package com.xiao.rpc.handler
 
-import com.xiao.base.context.ContextAware
 import com.xiao.base.exception.HttpStatus
 import com.xiao.base.exception.KtException
-import com.xiao.rpc.*
-import com.xiao.rpc.exception.ConnectionException
-import com.xiao.rpc.io.ConnectionSelector
-import com.xiao.rpc.io.Exchange
+import com.xiao.rpc.Response
+import com.xiao.rpc.StateSocket
+import com.xiao.rpc.acquireRoutes
+import com.xiao.rpc.acquireSocket
+import com.xiao.rpc.context.SocketContextAware
+import com.xiao.rpc.exception.SocketException
+import com.xiao.rpc.factory.ConnectionFactorySelector
+import com.xiao.rpc.factory.SocketFactorySelector
 import java.io.IOException
 
 /**
  *
  * @author lix wang
  */
-class ConnectionHandler(override val chain: Chain) : Handler, ContextAware {
+class ConnectionHandler(override val chain: Chain) : Handler, SocketContextAware {
     override fun handle(): Response {
         connect(chain)
         return chain.execute()
@@ -25,57 +28,46 @@ class ConnectionHandler(override val chain: Chain) : Handler, ContextAware {
             return
         }
 
-        var routes = chain.exchange?.routes
-        if (routes.isNullOrEmpty()) {
-            routes = chain.request.address.acquireRoutes()
-        }
         if (chain.exchange == null) {
             chain.exchange = Exchange()
         }
-        val connectionFactory = ConnectionSelector.select(chain.request.address.protocol)
+        val connectionFactory = ConnectionFactorySelector.select()
         // check socket cache
-        val socketContext = get(SocketContext.Key)
-        socketContext?.let {
-            var socket: StateSocket?
-            do {
-                socket = it.poll(chain.request.address)
-                socket?.let {
-                    try {
-                        chain.exchange!!.connection = connectionFactory.create(it)
-                    } catch (e : Exception) {
-                        chain.exchange!!.connection = null
-                        socketContext.remove(it)
-                    }
-                }
-            } while (socket != null && chain.exchange!!.connection == null)
-        }
+        do {
+            val socket = poll(chain.request.address)
+            socket?.let {
+                chain.exchange!!.connection = connectionFactory.create(it)
+            }
+        } while (socket != null && chain.exchange!!.connection == null)
 
         // socket context have no valid socket
         chain.exchange!!.connection ?: kotlin.run {
-            for (route in routes) {
-                val socket = chain.client.socketFactory.createSocket(route)
+            var routes = chain.exchange?.routes
+            if (routes.isNullOrEmpty()) {
+                routes = chain.request.address.acquireRoutes()
+            }
+
+            while (routes.iterator().hasNext() && chain.exchange!!.connection == null) {
+                val route = routes.iterator().next()
+                var socket: StateSocket? = null
                 try {
-                    if (chain.client.connectTimeout > 0) {
-                        socket.connect(socket.route.inetSocketAddress, chain.client.connectTimeout)
-                    } else {
-                        socket.connect(socket.route.inetSocketAddress)
-                    }
+                    socket = route.acquireSocket(chain.client.connectTimeout)
                     chain.exchange!!.connection = connectionFactory.create(socket)
-                    socketContext?.add(socket)
-                    break
+                    add(socket)
                 } catch (e: IOException) {
-                    socket.close()
-                    socketContext?.remove(socket)
-                    chain.client.connectTimeoutHandler?.invoke(ConnectionException.connectTimeout("route: $route"))
+                    chain.exchange!!.connection = null
+                    socket?.let {
+                        remove(it)
+                    }
+                    socket?.close()
                 }
             }
         }
 
         if (chain.exchange!!.connection == null) {
-            throw ConnectionException(KtException()
+            throw KtException()
                 .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
                 .message("Connect failed: ${chain.request}")
-            )
         }
     }
 }
