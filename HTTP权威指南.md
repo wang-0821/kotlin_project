@@ -144,3 +144,75 @@ OPTIONS(决定可以在服务器上执行哪些方法)、DELETE。
 
 ### 状态码
 &emsp;&emsp; 200-299表示成功，300-399表示资源已经被移走了，400-499表示客户端请求出错了，500-599表示服务器出错了。
+
+
+### 首部
+&emsp;&emsp; HTTP规范定义了几种首部字段，应用程序也可以随意发明自己所用的首部。首部分为：通用首部、请求首部、响应首部、实体首部、扩展首部。
+长的首部可以分为多行，多出来的每行前面至少要有一个空格或制表符。
+
+    常见的首部实例
+    Date:Tue,3Oct 1997 02:16:03 GMT  服务器产生响应的时间
+    Content-length:15040             实体的主体部分包含了15040字节的数据
+    Content-type:image/gif           实体的主体部分是一个GIF图片
+    Accept:image/gif, image/jpeg, text/html 客户端可以接收GIF、JPEG、HTML
+    
+    表示Server的值为：Test Server Version 1.0
+    HTTP/1.1 200 OK
+    Content-Type:image/gif
+    Content-Length:8572
+    Server:Test Server
+        Version 1.0
+        
+### 通用首部
+&emsp;&emsp; 有些首部只提供了与报文相关的最基本的信息，被称为通用首部，不论报文是什么类型，都为其提供一些有用的信息。
+    
+    Connection  允许客户端和服务器指定与请求／响应连接有关的选项
+    Date        提供日期和时间标志，说明报文是什么时间创建的
+    MIME-Version 给出发送端使用的MIME版本
+    Trailer      如果报文采用分块传输编码方式，就可以用这个首部列出位于报文拖挂(trailer)部分的首部集合
+    Transfer-Encoding  告知接收端为了保证报文的可靠传输，对报文采用了什么编码方式
+    Update       给出了发送端可能想要升级使用的新版本或协议
+    Via          显示了报文经过的中间节点
+    
+### 通用缓存首部
+&emsp;&emsp; HTTP/1.0引入了第一个允许HTTP应用程序缓存对象本地副本的首部。
+    
+    Cache-Control  用于随报文传送缓存指示
+    Pragma         另一种随报文传送指示的方式，但并不专用于缓存
+    
+### 请求首部
+&emsp;&emsp; 请求首部是只在请求报文中有意义的首部。
+    
+    Client-IP  提供了运行客户端的机器的IP地址
+    From       提供了客户端用户的E-mail地址
+    Host       提供了接收请求的服务器的主机名和端口号
+    Referer    提供了包含当前请求URI的文档的URL
+    UA-Color   提供了与客户端显示器的显示颜色有关的信息
+    UA-CPU     给出了客户端CPU的类型或制造商
+    UA-Disp    提供了与客户端显示器能力有关的信息
+    UA-OS      给出了运行在客户端机器上的操作系统名称及版本
+    UA-Pixels  提供了客户端显示器的像素信息
+    User-Agent 将发起请求的应用程序名称告知服务器
+    
+### Accept首部
+&emsp;&emsp; Accept首部为客户端提供一种将其喜好和能力告知服务器的方式。
+    
+    Accept          告诉服务器能发送哪些媒体类型
+    Accept-Charset  告诉服务器能发送哪些字符串
+    Accept-Encoding 告诉服务器能发送哪些编码方式
+    Accept-Language 告诉服务器能发送哪些语音
+    TE              告诉服务器可以使用哪些扩展传输编码
+    
+### 条件请求首部
+&emsp;&emsp; 有时客户端希望为请求加上限制。
+
+    Expect         允许客户端列出某请求所要求的服务器行为
+    If-Match       如果实体标记与文档当前的实体标记相匹配，就获取这份文档
+    If-Modified-Since 除非在某个指定的日期后资源被修改过，否则限制这个请求
+    If-None-Match  如果提供的实体标记与当前文档的实体标记不相符，就获取文档
+    If-Range       允许对文档的某个范围进行条件请求
+    If-Unmodified——Since  除非在某个日期后资源没被修改过，否则限制这个请求
+    Range          如果服务器支持范围请求，就请求资源的指定范围
+    
+### 安全请求首部
+&emsp;&emsp; 
