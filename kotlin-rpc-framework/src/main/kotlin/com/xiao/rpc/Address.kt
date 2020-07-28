@@ -9,27 +9,49 @@ import java.net.InetSocketAddress
  *
  * @author lix wang
  */
-class Address(val protocol: ProtocolType, val host: String) {
-    /**
-     * get request port
-     */
+class Address(val host: String, val scheme: String) {
+    val isTls: Boolean
+        get() = scheme == "https"
+
     var port: Int = -1
         get() {
             return if (field > 0) {
                 field
             } else {
-                protocol.port
+                if (isTls) {
+                    443
+                } else {
+                    80
+                }
             }
         }
-}
 
-@Throws(KtException::class)
-fun Address.acquireRoutes(): Set<Route> {
-    try {
-        return InetAddress.getAllByName(this.host).asSequence()
-            .map { InetSocketAddress(it, this.port) }
-            .map { Route(this, it) }.toSet()
-    } catch (e: Exception) {
-        throw DnsException.dnsDomainResolveException("failed address: $this")
+    @Throws(KtException::class)
+    fun acquireRoutes(): Set<Route> {
+        try {
+            return InetAddress.getAllByName(this.host).asSequence()
+                .map { InetSocketAddress(it, this.port) }
+                .map { Route(this, it) }.toSet()
+        } catch (e: Exception) {
+            throw DnsException.dnsDomainResolveException("failed address: $this")
+        }
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Address
+
+        if (host != other.host || scheme != other.scheme || port != other.port) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = host.hashCode()
+        result = 31 * result + scheme.hashCode()
+        result = 31 * result + port
+        return result
     }
 }

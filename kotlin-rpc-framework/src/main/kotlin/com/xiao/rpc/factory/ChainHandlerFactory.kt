@@ -13,7 +13,7 @@ interface ChainHandlerFactory {
 
 object DefaultChainHandlerFactory : ChainHandlerFactory {
     override fun create(chain: Chain): List<Handler> {
-        return listOf(RouteHandler(chain), ConnectionHandler(chain), ExchangeHandler(chain))
+        return listOf(RouteHandler(chain), SocketHandler(chain), ExchangeHandler(chain))
     }
 }
 

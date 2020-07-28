@@ -12,6 +12,7 @@ import com.xiao.base.resource.PathResourceScanner
  * @author lix wang
  */
 object ContextScanner : BeanRegistryAware {
+    @Volatile
     private var refreshed = false
 
     @Synchronized fun scanAndExecute(basePackage: String) {
@@ -101,4 +102,5 @@ object ContextScanner : BeanRegistryAware {
         java.lang.annotation.Retention::class,
         java.lang.annotation.Target::class
     )
+
 }

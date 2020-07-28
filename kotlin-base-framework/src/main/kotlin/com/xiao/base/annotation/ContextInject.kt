@@ -3,7 +3,7 @@ package com.xiao.base.annotation
 import kotlin.reflect.KClass
 
 /**
- * First executed annotation.
+ * This annotation means annotated class is a context.
  *
  * @author lix wang
  */

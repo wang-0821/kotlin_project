@@ -4,6 +4,7 @@ import com.xiao.base.annotation.ContextInject
 import com.xiao.base.context.AbstractContext
 import com.xiao.base.context.Context
 import com.xiao.rpc.Address
+import com.xiao.rpc.Route
 import com.xiao.rpc.io.Connection
 import java.util.concurrent.ConcurrentHashMap
 
@@ -15,11 +16,11 @@ import java.util.concurrent.ConcurrentHashMap
 class ConnectionContext : AbstractContext(ConnectionContext) {
     companion object Key : Context.Key<ConnectionContext>
 
-    private val connectionPool = ConcurrentHashMap<Address, MutableSet<Connection>>()
+    private val connectionPool = ConcurrentHashMap<Route, MutableSet<Connection>>()
 
-    @Synchronized fun poll(address: Address): Connection? {
+    @Synchronized fun poll(route: Route): Set<Connection>? {
         var connection: Connection? = null
-        connectionPool[address]?.let {
+        connectionPool[route]?.let {
             val iterator = it.iterator()
             while (iterator.hasNext()) {
                 connection = iterator.next()

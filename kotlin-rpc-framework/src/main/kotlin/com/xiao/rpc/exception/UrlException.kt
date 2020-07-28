@@ -8,7 +8,9 @@ import com.xiao.base.exception.KtException
  * @author lix wang
  */
 object UrlException {
-    fun invalidFormat() = KtException().statusCode(HttpStatus.SC_FORBIDDEN).message("Invalid url format")
-    fun noProtocol() = KtException().statusCode(HttpStatus.SC_FORBIDDEN).message("Url has no protocol")
-    fun unIdentifiedHost() = KtException().statusCode(HttpStatus.SC_FORBIDDEN).message("Identify host failed")
+    fun noScheme() = invalid("Url has no scheme.")
+    fun noHost() = invalid("Url has no host.")
+    fun invalidParamFormat() = invalid("Url has invalid param format.")
+
+    private fun invalid(message: String) = KtException().statusCode(HttpStatus.SC_FORBIDDEN).message(message)
 }

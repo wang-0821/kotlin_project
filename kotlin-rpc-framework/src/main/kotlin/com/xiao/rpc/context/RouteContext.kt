@@ -22,13 +22,19 @@ class RouteContext : AbstractContext(RouteContext) {
     }
 
     fun add(address: Address, routes: Set<Route>): Boolean {
-        if (routePool[address] == null) {
-            routePool[address] = mutableSetOf()
+        synchronized(routePool) {
+            if (routePool[address] == null) {
+                routePool[address] = mutableSetOf()
+            }
+            return routePool[address]!!.addAll(routes)
         }
-        return routePool[address]!!.addAll(routes)
     }
 
-    fun remove(route: Route) {
-        routePool[route.address]?.remove(route)
+    fun add(address: Address, route: Route): Boolean {
+        return add(address, setOf(route))
+    }
+
+    fun remove(route: Route): Boolean {
+        return routePool[route.address]?.remove(route) ?: false
     }
 }

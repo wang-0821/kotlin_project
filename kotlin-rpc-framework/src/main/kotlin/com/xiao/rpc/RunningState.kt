@@ -22,11 +22,3 @@ class RunningState {
         val TERMINATE = 2
     }
 }
-
-fun RunningState.validate(): Boolean {
-    val origin = this.state()
-    if (origin == RunningState.INITIAL || origin == RunningState.READY) {
-        return this.changeState(origin, RunningState.READY)
-    }
-    return false
-}

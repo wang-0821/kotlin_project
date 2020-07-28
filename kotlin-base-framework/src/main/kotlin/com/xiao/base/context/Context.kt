@@ -31,6 +31,7 @@ interface Context {
         internal fun <E : Context> get(key: Key<E>): E? {
             val context = container[key]
             return if (context != null) {
+                @Suppress("UNCHECKED_CAST")
                 context as E
             } else {
                 null

@@ -3,9 +3,8 @@ package com.xiao.rpc.context
 import com.xiao.base.annotation.ContextInject
 import com.xiao.base.context.AbstractContext
 import com.xiao.base.context.Context
-import com.xiao.rpc.Address
+import com.xiao.rpc.Route
 import com.xiao.rpc.StateSocket
-import com.xiao.rpc.validate
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -15,16 +14,15 @@ import java.util.concurrent.ConcurrentHashMap
 @ContextInject
 class SocketContext : AbstractContext(SocketContext) {
     companion object Key : Context.Key<SocketContext>
+    private val socketPool = ConcurrentHashMap<Route, MutableSet<StateSocket>>()
 
-    private val socketPool = ConcurrentHashMap<Address, MutableSet<StateSocket>>()
-
-    @Synchronized fun poll(address: Address): StateSocket? {
+    fun poll(route: Route): StateSocket? {
         var socket: StateSocket? = null
-        socketPool[address]?.let {
+        socketPool[route]?.let {
             val iterator = it.iterator()
             while (iterator.hasNext()) {
                 socket = iterator.next()
-                if (socket!!.validate()) {
+                if (socket!!.validateAndUse()) {
                     break
                 } else {
                     socket = null
@@ -34,16 +32,18 @@ class SocketContext : AbstractContext(SocketContext) {
         return socket
     }
 
-    @Synchronized fun remove(socket: StateSocket): Boolean {
-        return socketPool[socket.route.address]?.remove(socket) ?: false
+    fun remove(socket: StateSocket): Boolean {
+        return socketPool[socket.route]?.remove(socket) ?: false
     }
 
-    @Synchronized fun add(socket: StateSocket): Boolean {
-        return if (socketPool[socket.route.address] == null) {
-            socketPool[socket.route.address] = mutableSetOf(socket)
-            true
-        } else {
-            socketPool[socket.route.address]!!.add(socket)
+    fun add(socket: StateSocket): Boolean {
+        synchronized(socketPool) {
+            return if (socketPool[socket.route] == null) {
+                socketPool[socket.route] = mutableSetOf(socket)
+                true
+            } else {
+                socketPool[socket.route]!!.add(socket)
+            }
         }
     }
 }

@@ -16,15 +16,21 @@ interface RouteContextAware : ContextAware {
     }
 
     fun add(address: Address, routes: Set<Route>): Boolean {
-        return get(RouteContext.Key)?.let {
-            it.add(address, routes)
-        } ?: false
+        return get(RouteContext.Key)?.add(address, routes) ?: false
+    }
+
+    fun add(address: Address, route: Route): Boolean {
+        return get(RouteContext.Key)?.add(address, route) ?: false
+    }
+
+    fun remove(route: Route): Boolean {
+        return get(RouteContext.Key)?.remove(route) ?: false
     }
 }
 
 interface SocketContextAware : ContextAware {
-    fun poll(address: Address): StateSocket? {
-        return get(SocketContext.Key)?.poll(address)
+    fun poll(route: Route): StateSocket? {
+        return get(SocketContext.Key)?.poll(route)
     }
 
     fun remove(socket: StateSocket): Boolean {

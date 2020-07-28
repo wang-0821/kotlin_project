@@ -27,6 +27,7 @@ interface BeanRegistry : Context {
 }
 
 @ContextInject
+@Suppress("UNCHECKED_CAST")
 class ContextBeanFactory : BeanRegistry, AbstractContext(BeanRegistry) {
     private val contextBeanPool = ConcurrentHashMap<String, Any>()
     private val beanNamesByType = ConcurrentHashMap<Class<*>, MutableSet<String>>()
@@ -39,7 +40,7 @@ class ContextBeanFactory : BeanRegistry, AbstractContext(BeanRegistry) {
             } else {
                 contextBeanPool[it.iterator().next()] as? T
             }
-        } ?: null
+        }
     }
 
     override fun <T : Any> getByName(beanName: String): T? {
