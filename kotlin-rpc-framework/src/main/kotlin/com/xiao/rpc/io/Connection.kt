@@ -1,14 +1,26 @@
 package com.xiao.rpc.io
 
 import com.xiao.rpc.Route
-import com.xiao.rpc.StateSocket
+import java.io.Closeable
 
 /**
  *
  * @author lix wang
  */
-class Connection(val route: Route, val socket: StateSocket) {
-    fun connect() {
+interface Connection : Closeable {
+    fun connect()
 
-    }
+    fun validateAndUse(): Boolean
+
+    fun route(): Route
+
+    fun writeHeaders(request: Request)
+
+    fun writeBody(request: Request)
+
+    fun write(message: ByteArray)
+
+    fun finishRequest()
+
+    fun response(): Response
 }

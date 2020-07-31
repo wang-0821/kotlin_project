@@ -9,11 +9,23 @@ import java.util.concurrent.atomic.AtomicInteger
 class RunningState {
     private val state = AtomicInteger(INITIAL)
 
-    fun changeState(origin: Int, current: Int): Boolean {
-        return this.state.compareAndSet(origin, current)
+    fun state() = this.state.get()
+
+    fun validateAndUse(): Boolean {
+        var result = false
+        if (state() < RUNNING) {
+            result = changeState(RUNNING)
+        }
+        return result
     }
 
-    fun state() = this.state.get()
+    fun changeState(updateState: Int, originState: Int? = null, block: (() -> Unit)? = null): Boolean {
+        val currentState = originState ?: state()
+        if (block != null) {
+            block()
+        }
+        return this.state.compareAndSet(currentState, updateState)
+    }
 
     companion object {
         val INITIAL = -1

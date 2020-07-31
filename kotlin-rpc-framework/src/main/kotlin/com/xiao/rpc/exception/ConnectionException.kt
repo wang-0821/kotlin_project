@@ -9,11 +9,11 @@ import com.xiao.base.exception.KtException
  */
 class ConnectionException(cause: Throwable) : KtException(cause) {
     companion object {
-        fun noAvailableConnection(): ConnectionException {
+        fun noAvailableConnection(message: String = ""): ConnectionException {
             return ConnectionException(
                 KtException().
                     statusCode(HttpStatus.SC_FORBIDDEN)
-                    .message("No available connection.")
+                    .message("No available connection. $message")
             )
         }
     }

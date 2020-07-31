@@ -8,7 +8,7 @@ import java.net.InetSocketAddress
  *
  * @author lix wang
  */
-class Route(val address: Address, val inetSocketAddress: InetSocketAddress) {
+class Route(val address: Address, private val inetSocketAddress: InetSocketAddress) {
     @Throws(IOException::class)
     fun acquireSocket(timeout: Int = -1): StateSocket {
         val socketFactory = SocketFactorySelector.select()

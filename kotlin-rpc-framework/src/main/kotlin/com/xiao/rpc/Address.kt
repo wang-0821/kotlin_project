@@ -43,14 +43,13 @@ class Address(val host: String, val scheme: String) {
 
         other as Address
 
-        if (host != other.host || scheme != other.scheme || port != other.port) return false
+        if (host != other.host || port != other.port) return false
 
         return true
     }
 
     override fun hashCode(): Int {
         var result = host.hashCode()
-        result = 31 * result + scheme.hashCode()
         result = 31 * result + port
         return result
     }

@@ -4,6 +4,8 @@ import com.xiao.base.context.ContextScanner
 import com.xiao.rpc.handler.Chain
 import com.xiao.rpc.handler.ReadTimeoutHandler
 import com.xiao.rpc.handler.WriteTimeoutHandler
+import com.xiao.rpc.io.Request
+import com.xiao.rpc.io.Response
 import com.xiao.rpc.tool.UrlParser
 
 /**
@@ -75,6 +77,6 @@ class Client {
 }
 
 fun main() {
-    println(Thread.currentThread().contextClassLoader)
-    Client().newCall(UrlParser.parseUrl("http://www.baidu.com")).execute()
+    val response = Client().newCall(UrlParser.parseUrl("http://localhost:8080")).execute()
+    println(response.entity?.contentAsString())
 }

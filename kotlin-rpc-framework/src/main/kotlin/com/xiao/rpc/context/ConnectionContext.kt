@@ -3,7 +3,6 @@ package com.xiao.rpc.context
 import com.xiao.base.annotation.ContextInject
 import com.xiao.base.context.AbstractContext
 import com.xiao.base.context.Context
-import com.xiao.rpc.Address
 import com.xiao.rpc.Route
 import com.xiao.rpc.io.Connection
 import java.util.concurrent.ConcurrentHashMap
@@ -18,14 +17,13 @@ class ConnectionContext : AbstractContext(ConnectionContext) {
 
     private val connectionPool = ConcurrentHashMap<Route, MutableSet<Connection>>()
 
-    @Synchronized fun poll(route: Route): Set<Connection>? {
+    fun poll(route: Route): Connection? {
         var connection: Connection? = null
         connectionPool[route]?.let {
             val iterator = it.iterator()
             while (iterator.hasNext()) {
                 connection = iterator.next()
-                if (connection!!.validate()) {
-                    iterator.remove()
+                if (connection!!.validateAndUse()) {
                     break
                 } else {
                     connection = null
@@ -33,5 +31,16 @@ class ConnectionContext : AbstractContext(ConnectionContext) {
             }
         }
         return connection
+    }
+
+    fun add(connection: Connection): Boolean {
+        synchronized(connectionPool) {
+            return if (connectionPool[connection.route()] == null) {
+                connectionPool[connection.route()] = mutableSetOf(connection)
+                true
+            } else {
+                connectionPool[connection.route()]!!.add(connection)
+            }
+        }
     }
 }

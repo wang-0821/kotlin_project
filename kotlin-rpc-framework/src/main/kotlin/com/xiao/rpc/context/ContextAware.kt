@@ -43,7 +43,11 @@ interface SocketContextAware : ContextAware {
 }
 
 interface ConnectionContextAware : ContextAware {
-    fun poll(address: Address): Connection? {
-        return get(ConnectionContext.Key)?.poll(address)
+    fun poll(route: Route): Connection? {
+        return get(ConnectionContext.Key)?.poll(route)
+    }
+
+    fun add(connection: Connection): Boolean {
+        return get(ConnectionContext.Key)?.add(connection) ?: false
     }
 }

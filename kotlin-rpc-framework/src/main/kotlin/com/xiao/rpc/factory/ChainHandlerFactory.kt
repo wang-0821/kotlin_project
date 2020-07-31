@@ -1,7 +1,11 @@
 package com.xiao.rpc.factory
 
 import com.xiao.base.context.BeanRegistryAware
-import com.xiao.rpc.handler.*
+import com.xiao.rpc.handler.Chain
+import com.xiao.rpc.handler.ConnectionHandler
+import com.xiao.rpc.handler.ExchangeHandler
+import com.xiao.rpc.handler.Handler
+import com.xiao.rpc.handler.RouteHandler
 
 /**
  *
@@ -13,7 +17,7 @@ interface ChainHandlerFactory {
 
 object DefaultChainHandlerFactory : ChainHandlerFactory {
     override fun create(chain: Chain): List<Handler> {
-        return listOf(RouteHandler(chain), SocketHandler(chain), ExchangeHandler(chain))
+        return listOf(RouteHandler(chain), ConnectionHandler(chain), ExchangeHandler(chain))
     }
 }
 

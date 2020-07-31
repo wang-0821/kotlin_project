@@ -36,16 +36,6 @@ subprojects {
 	repositories {
 		mavenLocal()
 		jcenter()
-		maven {
-			// 指定要上传的仓库
-			url "$gradleRepoUrl"
-
-			// 认证用户，可以设置在gradle.properties中并且ignore it
-			credentials {
-				username "$gradleRepoUsername"
-				password "$gradleRepoPassword"
-			}
-		}
 	}
 
 	// idea 插件会默认下载source和doc文件

@@ -1,10 +1,8 @@
-package com.xiao.rpc.handler
+package com.xiao.rpc.io
 
 import com.xiao.rpc.Address
 import com.xiao.rpc.Route
-import com.xiao.rpc.StateSocket
 import com.xiao.rpc.context.RouteContextAware
-import com.xiao.rpc.io.Connection
 
 /**
  *
@@ -13,7 +11,6 @@ import com.xiao.rpc.io.Connection
 class Exchange : RouteContextAware {
     lateinit var address: Address
     var routes: Set<Route>? = null
-    var socket: StateSocket? = null
     var connection: Connection? = null
 
     fun acquireRoutes(): Set<Route> {

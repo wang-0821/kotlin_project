@@ -15,31 +15,23 @@ class StateSocket(val route: Route) : Socket() {
     private val state = RunningState()
 
     @Throws(IOException::class)
-    @Synchronized override fun connect(endpoint: SocketAddress?, timeout: Int) {
-        changeState(RunningState.RUNNING) {
-            super.connect(endpoint, timeout)
+    override fun connect(endpoint: SocketAddress?, timeout: Int) {
+        synchronized(state) {
+            state.changeState(RunningState.RUNNING) {
+                super.connect(endpoint, timeout)
+            }
         }
     }
 
-    @Synchronized fun validateAndUse(): Boolean {
-        var result = false
-        if (state.state() < RunningState.RUNNING) {
-            result = changeState(RunningState.RUNNING)
+    fun validateAndUse(): Boolean {
+        synchronized(state) {
+            return state.validateAndUse()
         }
-        return result
     }
 
     @Throws(ConnectionException::class)
     fun acquireConnection(): Connection {
         val connectionFactory = ConnectionFactorySelector.select()
         return connectionFactory.create(this)
-    }
-
-    private fun changeState(updateState: Int, originState: Int? = null, block: (() -> Unit)? = null): Boolean {
-        val currentState = originState ?: state.state()
-        if (block != null) {
-            block()
-        }
-        return state.changeState(currentState, updateState)
     }
 }

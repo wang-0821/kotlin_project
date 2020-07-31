@@ -1,7 +1,8 @@
-package com.xiao.rpc
+package com.xiao.rpc.io
 
+import com.xiao.rpc.Protocol
+import com.xiao.rpc.RequestMethod
 import com.xiao.rpc.tool.UrlParser
-import kotlin.properties.Delegates
 
 /**
  *
@@ -65,42 +66,38 @@ class Request {
         return this.requestBuilder.protocol
     }
 
-    fun header(name: String, value: Any) {
-        this.requestBuilder.headers[name] = value
+    fun header(header: Header) {
+        this.requestBuilder.headers.add(header)
     }
 
-    fun <T> header(name: String): T? {
-        return requestBuilder.headers[name] as? T
+    fun  header(name: String): Header? {
+        return requestBuilder.headers.firstOrNull { it.name == name }
     }
 
-    fun headers(headers: Map<String, Any>) {
-        this.requestBuilder.headers.putAll(headers)
+    fun headers(headers: List<Header>) {
+        this.requestBuilder.headers.addAll(headers)
     }
 
-    fun param(name: String, value: Any) {
-        initParams()
-        this.requestBuilder.requestParams!![name] = value
+    fun headers(): List<Header> {
+        return this.requestBuilder.headers
     }
 
-    fun params(params: Map<String, Any>) {
-        initParams()
-        this.requestBuilder.requestParams!!.putAll(params)
+    fun param(name: String, value: String) {
+        this.requestBuilder.requestParams[name] = value
     }
 
-    private fun initParams() {
-        if (this.requestBuilder.requestParams == null) {
-            this.requestBuilder.requestParams = mutableMapOf()
-        }
+    fun params(params: Map<String, String>) {
+        this.requestBuilder.requestParams.putAll(params)
     }
 
     private class RequestBuilder {
         lateinit var scheme: String
         lateinit var host: String
         var path: String? = null
-        var port by Delegates.notNull<Int>()
+        var port: Int = -1
         var method: RequestMethod = RequestMethod.GET
         var protocol: Protocol = Protocol.HTTP_1_1
-        var headers: MutableMap<String, Any> = mutableMapOf()
-        var requestParams: MutableMap<String, Any>? = null
+        var headers: MutableList<Header> = mutableListOf()
+        var requestParams: MutableMap<String, String> = mutableMapOf()
     }
 }
