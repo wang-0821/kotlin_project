@@ -1,14 +1,18 @@
 package com.xiao.rpc.io
 
+import com.xiao.rpc.helper.ResponseHelper
+import com.xiao.rpc.helper.IoHelper.CRLF
+import java.io.InputStream
+
 /**
  *
  * @author lix wang
  */
 abstract class AbstractConnection : Connection {
     override fun writeHeaders(request: Request) {
-        var headerLine = "${request.method().name} ${request.path().orEmpty()} ${request.protocol().text}$CRLF"
+        var headerLine = "${request.method().name} ${request.path() ?: "/"} ${request.protocol().text}$CRLF"
         if (request.header("Host") == null) {
-            request.header(Header("Host", request.host()))
+            request.header(Header("Host", request.host() + ":" + request.port()))
         }
         if (request.header("Connection") == null) {
             request.header(Header("Connection", "Keep-Alive"))
@@ -24,6 +28,7 @@ abstract class AbstractConnection : Connection {
             headerLine += "${header.name}: ${header.value}$CRLF"
         }
         headerLine += CRLF
+
         write(headerLine.toByteArray())
     }
 
@@ -31,7 +36,7 @@ abstract class AbstractConnection : Connection {
         write(CRLF.toByteArray())
     }
 
-    companion object {
-        private const val CRLF = "\r\n"
+    fun parseToResponse(inputStream: InputStream): Response {
+        return ResponseHelper.parseResponse(inputStream)
     }
 }

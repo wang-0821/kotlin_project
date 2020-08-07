@@ -77,6 +77,5 @@ class Client {
 }
 
 fun main() {
-    val response = Client().newCall(UrlParser.parseUrl("http://localhost:8080")).execute()
-    println(response.entity?.contentAsString())
+    val response = Client().newCall(UrlParser.parseUrl("http://www.baidu.com:80")).execute()
 }

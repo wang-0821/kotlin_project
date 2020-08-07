@@ -1,8 +1,8 @@
 package com.xiao.rpc.io
 
-import com.xiao.rpc.Server
+import java.io.BufferedReader
 import java.io.InputStream
-import java.nio.charset.Charset
+import java.io.InputStreamReader
 
 /**
  *
@@ -14,13 +14,20 @@ class BasicHttpEntity(private val inputStream: InputStream) : HttpEntity {
     }
 
     override fun contentAsString(): String {
-        val readBytes = ByteArray(1024)
-        var msgLen: Int
+
+
+        val charBuffer = CharArray(10240)
         val stringBuilder = StringBuilder()
-        while (inputStream.read(readBytes).also { msgLen = it } != -1) {
-            stringBuilder.append(String(readBytes, 0, msgLen, Charset.forName("UTF-8")))
+        val input = BufferedReader(InputStreamReader(inputStream))
+        input.readLine()
+        while (true) {
+            if (input.ready()) {
+                while (input.read(charBuffer) != -1) {
+                    stringBuilder.append(charBuffer)
+                }
+                break
+            }
         }
-        println("get message from client: $stringBuilder")
         return stringBuilder.toString()
     }
 }

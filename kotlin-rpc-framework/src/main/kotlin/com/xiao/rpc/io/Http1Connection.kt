@@ -38,12 +38,13 @@ class Http1Connection(val route: Route, val socket: StateSocket) : AbstractConne
         outputStream?.write(message)
     }
 
+
     override fun finishRequest() {
         outputStream?.flush()
     }
 
     override fun response(): Response {
-        return Response(entity = BasicHttpEntity(inputStream!!))
+        return parseToResponse(inputStream!!)
     }
 
     override fun close() {
