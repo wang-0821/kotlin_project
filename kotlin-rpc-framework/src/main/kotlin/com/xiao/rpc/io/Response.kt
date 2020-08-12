@@ -1,7 +1,10 @@
 package com.xiao.rpc.io
 
 import com.xiao.rpc.Protocol
+import com.xiao.rpc.helper.IoHelper
 import java.io.Closeable
+import java.io.InputStream
+import java.nio.charset.Charset
 
 /**
  *
@@ -24,16 +27,38 @@ class Response : Closeable {
     /**
      * Http entity
      */
-    var entity: HttpEntity?
+    var content: InputStream
 
-    constructor(protocol: Protocol, status: Int, headers: List<Header>, entity: HttpEntity?) {
+    private val headerMap: Map<String, List<Header>>
+
+    constructor(protocol: Protocol, status: Int, headers: List<Header>, content: InputStream) {
         this.protocol = protocol
         this.status = status
         this.headers = headers
-        this.entity = entity
+        this.content = content
+        this.headerMap = headers.groupBy { it.name }
+    }
+
+    fun contentAsString(): String {
+        val contentLength = headerMap["Content-Length"]?.get(0)?.value?.toInt() ?: -1
+        var charset: Charset? = null
+        headerMap["Content-Type"]?.get(0)?.let {
+            val splits = it.value.split(";")
+            for (split in splits) {
+                if (split.trimStart().startsWith("charset")) {
+                     charset = Charset.forName(split.split("=")[1].trimStart())
+                }
+            }
+        }
+        charset = charset ?: Charsets.UTF_8
+        return if (contentLength > 0) {
+            IoHelper.inputStreamToString(content, charset!!, contentLength)
+        } else {
+            IoHelper.inputStreamToString(content, charset!!)
+        }
     }
 
     override fun close() {
-        entity?.close()
+        content.close()
     }
 }

@@ -9,9 +9,8 @@ import java.net.InetSocketAddress
  *
  * @author lix wang
  */
-class Address(val host: String, val scheme: String) {
-    val isTls: Boolean
-        get() = scheme == "https"
+class Address(val host: String, scheme: String) {
+    private val isTls = scheme == "https"
 
     var port: Int = -1
         get() {

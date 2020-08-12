@@ -1,9 +1,8 @@
 package com.xiao.rpc.helper
 
-import com.xiao.base.exception.HttpStatus
 import com.xiao.rpc.Protocol
+import com.xiao.rpc.io.Header
 import com.xiao.rpc.io.Response
-import okhttp3.internal.closeQuietly
 import java.io.InputStream
 
 /**
@@ -12,18 +11,43 @@ import java.io.InputStream
  */
 object ResponseHelper {
     fun parseResponse(inputStream: InputStream): Response {
+        // parse startLine
         val startLine = IoHelper.readLine(inputStream)
-        val headerLines = mutableListOf<String>()
+        println("************ $startLine ************")
+        val startLineSplits = startLine.split(" ")
+        val protocol = Protocol.parseProtocol(startLineSplits[0])
+        val status = startLineSplits[1].toInt()
+        val headers = parseHeaders(inputStream)
+        return Response(protocol, status, headers, inputStream)
+    }
+
+    private fun parseHeaders(inputStream: InputStream): List<Header> {
+        val headers = mutableListOf<Header>()
         while (true) {
             val line = IoHelper.readLine(inputStream)
+            println("******** $line **********")
             if (line.isNotBlank()) {
-                headerLines.add(line)
+                parseHeader(line)?.let {
+                    headers.add(it)
+                }
             } else {
                 break
             }
         }
-        println("******** startLine: $startLine $headerLines")
-        inputStream.closeQuietly()
-        return Response(Protocol.HTTP_1_1, HttpStatus.SC_OK, listOf(), null)
+        return headers
+    }
+
+    private fun parseHeader(headerLine: String): Header? {
+        var keyIndex = -1
+        for (index in headerLine.indices) {
+            if (headerLine[index] == ':') {
+                keyIndex = index
+                break
+            }
+        }
+        if (keyIndex > 0) {
+            return Header(headerLine.substring(0, keyIndex), headerLine.substring(keyIndex + 1).trimStart())
+        }
+        return null
     }
 }
