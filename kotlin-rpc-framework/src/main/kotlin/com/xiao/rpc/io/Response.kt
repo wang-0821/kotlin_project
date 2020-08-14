@@ -1,5 +1,6 @@
 package com.xiao.rpc.io
 
+import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.Protocol
 import com.xiao.rpc.helper.IoHelper
 import java.io.Closeable
@@ -36,13 +37,13 @@ class Response : Closeable {
         this.status = status
         this.headers = headers
         this.content = content
-        this.headerMap = headers.groupBy { it.name }
+        this.headerMap = headers.groupBy { it.name.toUpperCase() }
     }
 
     fun contentAsString(): String {
-        val contentLength = headerMap["Content-Length"]?.get(0)?.value?.toInt() ?: -1
+        val contentLength = headerMap[ContentHeaders.CONTENT_LENGTH.text.toUpperCase()]?.get(0)?.value?.toInt() ?: -1
         var charset: Charset? = null
-        headerMap["Content-Type"]?.get(0)?.let {
+        headerMap[ContentHeaders.CONTENT_TYPE.text.toUpperCase()]?.get(0)?.let {
             val splits = it.value.split(";")
             for (split in splits) {
                 if (split.trimStart().startsWith("charset")) {

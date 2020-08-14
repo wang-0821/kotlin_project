@@ -56,13 +56,16 @@ class PooledBuffer {
         }
 
         fun copy(charBuffer: CharBuffer): Int {
-            val remaining = remaining()
-            return if (charBuffer.remaining() <= remaining) {
-                System.arraycopy(charBuffer.array(), charBuffer.position(), charArray, index, charBuffer.remaining())
+            val currentRemaining = remaining()
+            val charBufferRemaining = charBuffer.remaining()
+            return if (charBufferRemaining <= currentRemaining) {
+                System.arraycopy(charBuffer.array(), charBuffer.position(), charArray, index, charBufferRemaining)
+                index += charBufferRemaining
                 0
             } else {
-                System.arraycopy(charBuffer.array(), charBuffer.position(), charArray, index, remaining)
-                charBuffer.position(charBuffer.position() + remaining)
+                System.arraycopy(charBuffer.array(), charBuffer.position(), charArray, index, currentRemaining)
+                charBuffer.position(charBuffer.position() + currentRemaining)
+                index += currentRemaining
                 charBuffer.remaining()
             }
         }

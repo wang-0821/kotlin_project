@@ -69,10 +69,10 @@ object UrlParser {
         val realRequest = request ?: Request()
 
         host = hostAndPort
-        for (index in hostAndPort.indices) {
-            if (hostAndPort[index] == ':') {
-                host = hostAndPort.substring(0 until index)
-                port = hostAndPort.substring(index + 1 until hostAndPort.length).toInt()
+        for (i in hostAndPort.indices) {
+            if (hostAndPort[i] == ':') {
+                host = hostAndPort.substring(0 until i)
+                port = hostAndPort.substring(i + 1 until hostAndPort.length).toInt()
                 break
             }
         }
@@ -93,7 +93,7 @@ object UrlParser {
 
     @Throws(KtException::class)
     private fun parseParams(paramString: String): Map<String, String>? {
-        if (paramString.isNullOrBlank()) {
+        if (paramString.isBlank()) {
             return null
         }
 

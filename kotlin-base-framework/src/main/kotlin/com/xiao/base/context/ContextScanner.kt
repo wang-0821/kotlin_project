@@ -102,5 +102,4 @@ object ContextScanner : BeanRegistryAware {
         java.lang.annotation.Retention::class,
         java.lang.annotation.Target::class
     )
-
 }

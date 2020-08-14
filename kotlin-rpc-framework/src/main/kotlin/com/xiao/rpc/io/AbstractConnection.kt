@@ -1,8 +1,10 @@
 package com.xiao.rpc.io
 
+import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.helper.ResponseHelper
 import com.xiao.rpc.helper.IoHelper.CRLF
 import java.io.InputStream
+import java.net.URLEncoder
 
 /**
  *
@@ -10,15 +12,18 @@ import java.io.InputStream
  */
 abstract class AbstractConnection : Connection {
     override fun writeHeaders(request: Request) {
-        var headerLine = "${request.method().name} ${request.path() ?: "/"} ${request.protocol().text}$CRLF"
+        val path = request.path()?.let {
+            URLEncoder.encode(it, "UTF-8")
+        } ?: "/"
+        var headerLine = "${request.method().name} $path ${request.protocol().text}$CRLF"
         if (request.header("Host") == null) {
             request.header(Header("Host", request.host() + ":" + request.port()))
         }
         if (request.header("Connection") == null) {
             request.header(Header("Connection", "Keep-Alive"))
         }
-        if (request.header("Accept-Encoding") == null) {
-            request.header(Header("Accept-Encoding", "gzip"))
+        if (request.header(ContentHeaders.ACCEPT_ENCODING.text) == null) {
+            request.header(Header(ContentHeaders.ACCEPT_ENCODING.text, "gzip"))
         }
         if (request.header("User-Agent") == null) {
             request.header(Header("User-Agent", "lix-http/${System.getProperty("projectMavenVersion")}"))

@@ -11,14 +11,17 @@ import java.nio.charset.Charset
  * @author lix wang
  */
 object IoHelper {
+    private const val KILO = 1024
+
     /**
      * Default buffer size for small buffer stream, like http header.
      */
-    const val BUFFER_SIZE = 4 * 1024
+    const val BUFFER_SIZE = 4 * KILO
+
     /**
      * Default buffer size for buffered streams, like http entity.
      */
-    const val STREAM_BUFFER_SIZE = 8 * 1024
+    const val STREAM_BUFFER_SIZE = 8 * KILO
 
     const val CRLF = "\r\n"
 
@@ -27,15 +30,15 @@ object IoHelper {
     private const val LINE_FEED_BYTE = '\n'.toByte()
 
     fun readLine(inputStream: InputStream, charset: Charset = Charsets.UTF_8): String {
-        return asString(inputStream, BUFFER_SIZE, charset, -1) { inputStream, bytes, offset, limit ->
-            readLineBuffer(inputStream, bytes, offset, limit)
+        return asString(inputStream, KILO, charset, -1) { input, bytes, offset, length ->
+            readLineBuffer(input, bytes, offset, length)
         }
     }
 
     @Throws(IllegalStateException::class)
     fun inputStreamToString(inputStream: InputStream, charset: Charset, length: Int = -1): String {
-        return asString(inputStream, STREAM_BUFFER_SIZE, charset, length) { inputStream, bytes, offset, limit ->
-            read(inputStream, bytes, offset, limit)
+        return asString(inputStream, KILO, charset, length) { input, bytes, offset, length ->
+            read(input, bytes, offset, length)
         }
     }
 
@@ -47,41 +50,44 @@ object IoHelper {
         length: Int,
         readBlock: (InputStream, ByteArray, Int, Int) -> Int
     ): String {
-        val buffer = PooledBuffer(bufferSize)
+        var buffer = PooledBuffer(bufferSize)
         val byteArray = ByteArray(bufferSize)
         val charArray = CharArray(bufferSize)
-        val charBuffer = CharBuffer.wrap(charArray)
         val byteBuffer = ByteBuffer.wrap(byteArray)
+        val charBuffer = CharBuffer.wrap(charArray)
         val charsetDecoder = charset.newDecoder()
         var total = 0
         while (true) {
-            val count = readBlock(inputStream, byteArray, byteBuffer.position(), byteBuffer.remaining())
+            val byteBufferRemaining = byteBuffer.remaining()
+            val count = readBlock(inputStream, byteArray, byteBuffer.position(), byteBufferRemaining)
+            byteBuffer.position(byteBuffer.position() + count)
             total += count
-            if (count > byteBuffer.remaining()) {
-                byteBuffer.position(byteBuffer.position() + count)
-                byteBuffer.flip()
-                charsetDecoder.decode(byteBuffer, charBuffer, false)
+            byteBuffer.flip()
+            if (count >= byteBufferRemaining) {
+                val decodeResult = charsetDecoder.decode(byteBuffer, charBuffer, false)
                 charBuffer.flip()
                 buffer.appendCharBuffer(charBuffer)
                 charBuffer.clear()
                 byteBuffer.compact()
             } else {
-                byteBuffer.flip()
-                charsetDecoder.decode(byteBuffer, charBuffer, true)
-                buffer.appendCharBuffer(charBuffer)
-                charBuffer.clear()
-                byteBuffer.compact()
+                val decodeResult = charsetDecoder.decode(byteBuffer, charBuffer, true)
+                charBuffer.flip()
+                buffer.let {
+                    it.appendCharBuffer(charBuffer)
+                    charBuffer.clear()
+                    byteBuffer.compact()
+                }
                 if (length > 0 && total != length) {
                     throw IllegalStateException("InputStream length is not equals with expected.")
                 }
-                return  buffer.asString()
+                return buffer.asString()
             }
         }
     }
 
-    private fun readLineBuffer(inputStream: InputStream, byteArray: ByteArray, offset: Int, limit: Int): Int {
+    private fun readLineBuffer(inputStream: InputStream, byteArray: ByteArray, offset: Int, length: Int): Int {
         var index = offset
-        val endIndex = offset + limit
+        val endIndex = offset + length
         while (index <= endIndex - 2) {
             val nextByteCode = inputStream.read()
             // end of stream

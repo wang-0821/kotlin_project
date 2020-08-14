@@ -55,7 +55,7 @@ subprojects {
 	}
 
 	// set encoding
-	tasks.withType(JavaCompile) {
+	compileJava {
 		options.encoding = "UTF-8"
 	}
 
