@@ -38,7 +38,7 @@ object IoHelper {
     @Throws(IllegalStateException::class)
     fun inputStreamToString(inputStream: InputStream, charset: Charset, length: Int = -1): String {
         return asString(inputStream, KILO, charset, length) { input, bytes, offset, length ->
-            read(input, bytes, offset, length)
+            input.read(bytes, offset, length)
         }
     }
 
@@ -60,8 +60,10 @@ object IoHelper {
         while (true) {
             val byteBufferRemaining = byteBuffer.remaining()
             val count = readBlock(inputStream, byteArray, byteBuffer.position(), byteBufferRemaining)
-            byteBuffer.position(byteBuffer.position() + count)
-            total += count
+            if (count > -1) {
+                byteBuffer.position(byteBuffer.position() + count)
+                total += count
+            }
             byteBuffer.flip()
             if (count >= byteBufferRemaining) {
                 val decodeResult = charsetDecoder.decode(byteBuffer, charBuffer, false)
@@ -127,27 +129,5 @@ object IoHelper {
             byteArray[index++] = nextByte
         }
         return index - offset
-    }
-
-    private fun read(
-        inputStream: InputStream,
-        byteArray: ByteArray,
-        offset: Int,
-        limit: Int
-    ): Int {
-        var index = offset
-        val endIndex = offset + limit
-        while (true) {
-            val nextByteCode = inputStream.read()
-            if (nextByteCode == -1) {
-                return index - offset
-            } else {
-                if (index < endIndex) {
-                    byteArray[index++] = nextByteCode.toByte()
-                } else {
-                    return index - offset
-                }
-            }
-        }
     }
 }

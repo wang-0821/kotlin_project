@@ -20,6 +20,7 @@ object ResponseHelper {
         val protocol = Protocol.parseProtocol(startLineSplits[0])
         val status = startLineSplits[1].toInt()
         val headers = parseHeaders(inputStream)
+        println("********* ${IoHelper.readLine(inputStream)} *********")
         val contentEncoding = headers.firstOrNull {
             it.name.toUpperCase() == ContentHeaders.CONTENT_ENCODING.text.toUpperCase()
         }?.value
@@ -28,9 +29,9 @@ object ResponseHelper {
     }
 
     private fun parseContent(contentEncoding: String?, inputStream: InputStream): InputStream {
-        if ("gzip" == contentEncoding) {
-            return GZIPInputStream(inputStream)
-        }
+//        if ("gzip" == contentEncoding) {
+//            return GZIPInputStream(inputStream)
+//        }
         return inputStream
     }
 
