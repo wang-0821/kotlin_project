@@ -7,13 +7,15 @@ import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
 import com.xiao.rpc.exception.ChainException
 import com.xiao.rpc.factory.ChainHandlerFactorySelector
+import com.xiao.rpc.helper.RpcHelper
 import com.xiao.rpc.io.Exchange
+import java.util.UUID
 
 /**
  *
  * @author lix wang
  */
-class Chain(val client: Client, val request: Request) {
+class Chain(private val client: Client, val request: Request) {
     private var handlers: List<Handler> = ChainHandlerFactorySelector.select().create(this)
     private var index = 0
     lateinit var exchange: Exchange
@@ -30,7 +32,9 @@ class Chain(val client: Client, val request: Request) {
             throw ChainException.executeOutOfBound()
         }
         @Suppress("USELESS_ELVIS")
-        return handlers[index++].handle() ?: throw ChainException.noResponseError(request.toString())
+        val result = handlers[index++].handle() ?: throw ChainException.noResponseError(request.toString())
+        afterExecute()
+        return result
     }
 
     init {
@@ -40,6 +44,10 @@ class Chain(val client: Client, val request: Request) {
     private fun prepareExchange() {
         this.exchange = Exchange().apply {
             this.address = createAddress(request)
+            this.rpcUuid = UUID.randomUUID().toString()
+            this.connectTimeout = client.connectTimeout
+            this.readTimeout = client.readTimeout
+            this.writeTimeout = client.writeTimeout
         }
     }
 
@@ -47,5 +55,9 @@ class Chain(val client: Client, val request: Request) {
         return Address(request.host(), request.scheme()).apply {
             this.port = request.port()
         }
+    }
+
+    private fun afterExecute() {
+        RpcHelper.deleteRpc()
     }
 }

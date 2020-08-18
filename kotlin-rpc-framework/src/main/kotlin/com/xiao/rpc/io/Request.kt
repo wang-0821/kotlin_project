@@ -71,7 +71,7 @@ class Request {
     }
 
     fun  header(name: String): Header? {
-        return requestBuilder.headers.firstOrNull { it.name == name }
+        return requestBuilder.headers.lastOrNull { it.name == name }
     }
 
     fun headers(headers: List<Header>) {

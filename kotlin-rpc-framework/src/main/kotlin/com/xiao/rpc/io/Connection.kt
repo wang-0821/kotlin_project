@@ -22,5 +22,5 @@ interface Connection : Closeable {
 
     fun finishRequest()
 
-    fun response(): Response
+    fun response(exchange: Exchange): Response
 }

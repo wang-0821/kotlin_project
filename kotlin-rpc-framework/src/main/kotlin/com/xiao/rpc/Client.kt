@@ -2,8 +2,6 @@ package com.xiao.rpc
 
 import com.xiao.base.context.ContextScanner
 import com.xiao.rpc.handler.Chain
-import com.xiao.rpc.handler.ReadTimeoutHandler
-import com.xiao.rpc.handler.WriteTimeoutHandler
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
 import com.xiao.rpc.tool.UrlParser
@@ -18,11 +16,6 @@ class Client {
     var readTimeout = 5000
     private set
     var writeTimeout = 5000
-    private set
-
-    var readTimeoutHandler: ReadTimeoutHandler? = null
-    private set
-    var writeTimeoutHandler: WriteTimeoutHandler? = null
     private set
 
     init {
@@ -51,16 +44,6 @@ class Client {
 
     fun writeTimeout(mills: Int): Client {
         this.writeTimeout = mills
-        return this
-    }
-
-    fun readTimeoutHandler(handler: ReadTimeoutHandler): Client {
-        this.readTimeoutHandler = handler
-        return this
-    }
-
-    fun writeTimeoutHandler(handler: WriteTimeoutHandler): Client {
-        this.writeTimeoutHandler = handler
         return this
     }
 

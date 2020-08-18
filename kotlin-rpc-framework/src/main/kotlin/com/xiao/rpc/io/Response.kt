@@ -53,9 +53,9 @@ class Response : Closeable {
         }
         charset = charset ?: Charsets.UTF_8
         return if (contentLength > 0) {
-            IoHelper.inputStreamToString(content, charset!!, contentLength)
+            IoHelper.contentAsString(content, charset!!, contentLength)
         } else {
-            IoHelper.inputStreamToString(content, charset!!)
+            IoHelper.contentAsString(content, charset!!)
         }
     }
 

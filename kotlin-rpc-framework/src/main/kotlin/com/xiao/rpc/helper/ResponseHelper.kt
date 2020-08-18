@@ -2,10 +2,10 @@ package com.xiao.rpc.helper
 
 import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.Protocol
+import com.xiao.rpc.io.WrappedInputStream
 import com.xiao.rpc.io.Header
 import com.xiao.rpc.io.Response
 import java.io.InputStream
-import java.util.zip.GZIPInputStream
 
 /**
  *
@@ -13,32 +13,25 @@ import java.util.zip.GZIPInputStream
  */
 object ResponseHelper {
     fun parseResponse(inputStream: InputStream): Response {
-        // parse startLine
-        val startLine = IoHelper.readLine(inputStream)
+        val startLine = IoHelper.readPlainTextLine(inputStream)
         println("************ $startLine ************")
         val startLineSplits = startLine.split(" ")
         val protocol = Protocol.parseProtocol(startLineSplits[0])
         val status = startLineSplits[1].toInt()
         val headers = parseHeaders(inputStream)
-        println("********* ${IoHelper.readLine(inputStream)} *********")
-        val contentEncoding = headers.firstOrNull {
+        val contentEncoding = headers.lastOrNull {
             it.name.toUpperCase() == ContentHeaders.CONTENT_ENCODING.text.toUpperCase()
         }?.value
-        val realInputStream = parseContent(contentEncoding, inputStream)
-        return Response(protocol, status, headers, realInputStream)
-    }
-
-    private fun parseContent(contentEncoding: String?, inputStream: InputStream): InputStream {
-//        if ("gzip" == contentEncoding) {
-//            return GZIPInputStream(inputStream)
-//        }
-        return inputStream
+        val transferEncoding = headers.lastOrNull {
+            it.name.toUpperCase() == ContentHeaders.TRANSFER_ENCODING.text.toUpperCase()
+        }?.value
+        return Response(protocol, status, headers, WrappedInputStream(inputStream, contentEncoding, transferEncoding))
     }
 
     private fun parseHeaders(inputStream: InputStream): List<Header> {
         val headers = mutableListOf<Header>()
         while (true) {
-            val line = IoHelper.readLine(inputStream)
+            val line = IoHelper.readPlainTextLine(inputStream)
             println("******** $line **********")
             if (line.isNotBlank()) {
                 parseHeader(line)?.let {

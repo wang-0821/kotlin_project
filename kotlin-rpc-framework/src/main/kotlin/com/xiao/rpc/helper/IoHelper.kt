@@ -17,74 +17,42 @@ object IoHelper {
      * Default buffer size for small buffer stream, like http header.
      */
     const val BUFFER_SIZE = 4 * KILO
-
-    /**
-     * Default buffer size for buffered streams, like http entity.
-     */
-    const val STREAM_BUFFER_SIZE = 8 * KILO
-
     const val CRLF = "\r\n"
-
     private const val CARRIAGE_RETURN_BYTE = '\r'.toByte()
+    const val LINE_FEED_BYTE = '\n'.toByte()
+    private val rpcIoByteArray = object : RpcContextKey<ByteArray> {}
+    private val rpcIoCharArray = object : RpcContextKey<CharArray> {}
 
-    private const val LINE_FEED_BYTE = '\n'.toByte()
-
-    fun readLine(inputStream: InputStream, charset: Charset = Charsets.UTF_8): String {
-        return asString(inputStream, KILO, charset, -1) { input, bytes, offset, length ->
+    fun readPlainTextLine(
+        inputStream: InputStream,
+        charset: Charset = Charsets.UTF_8
+    ): String {
+        val byteArray = getByteArray()
+        val charArray = getCharArray()
+        val result = asString(inputStream, byteArray, charArray, charset, -1)
+        { input, bytes, offset, length ->
             readLineBuffer(input, bytes, offset, length)
         }
+        cacheByteArray(byteArray)
+        cacheCharArray(charArray)
+        return result
     }
 
     @Throws(IllegalStateException::class)
-    fun inputStreamToString(inputStream: InputStream, charset: Charset, length: Int = -1): String {
-        return asString(inputStream, KILO, charset, length) { input, bytes, offset, length ->
-            input.read(bytes, offset, length)
-        }
-    }
-
-    @Throws(IllegalStateException::class)
-    private fun asString(
+    fun contentAsString(
         inputStream: InputStream,
-        bufferSize: Int,
         charset: Charset,
-        length: Int,
-        readBlock: (InputStream, ByteArray, Int, Int) -> Int
+        length: Int = -1
     ): String {
-        var buffer = PooledBuffer(bufferSize)
-        val byteArray = ByteArray(bufferSize)
-        val charArray = CharArray(bufferSize)
-        val byteBuffer = ByteBuffer.wrap(byteArray)
-        val charBuffer = CharBuffer.wrap(charArray)
-        val charsetDecoder = charset.newDecoder()
-        var total = 0
-        while (true) {
-            val byteBufferRemaining = byteBuffer.remaining()
-            val count = readBlock(inputStream, byteArray, byteBuffer.position(), byteBufferRemaining)
-            if (count > -1) {
-                byteBuffer.position(byteBuffer.position() + count)
-                total += count
-            }
-            byteBuffer.flip()
-            if (count >= byteBufferRemaining) {
-                val decodeResult = charsetDecoder.decode(byteBuffer, charBuffer, false)
-                charBuffer.flip()
-                buffer.appendCharBuffer(charBuffer)
-                charBuffer.clear()
-                byteBuffer.compact()
-            } else {
-                val decodeResult = charsetDecoder.decode(byteBuffer, charBuffer, true)
-                charBuffer.flip()
-                buffer.let {
-                    it.appendCharBuffer(charBuffer)
-                    charBuffer.clear()
-                    byteBuffer.compact()
-                }
-                if (length > 0 && total != length) {
-                    throw IllegalStateException("InputStream length is not equals with expected.")
-                }
-                return buffer.asString()
-            }
+        val byteArray = getByteArray()
+        val charArray = getCharArray()
+        val result = asString(inputStream, byteArray, charArray, charset, length)
+        { input, bytes, offset, len ->
+            input.read(bytes, offset, len)
         }
+        cacheByteArray(byteArray)
+        cacheCharArray(charArray)
+        return result
     }
 
     private fun readLineBuffer(inputStream: InputStream, byteArray: ByteArray, offset: Int, length: Int): Int {
@@ -129,5 +97,85 @@ object IoHelper {
             byteArray[index++] = nextByte
         }
         return index - offset
+    }
+
+    @Throws(IllegalStateException::class)
+    private fun asString(
+        inputStream: InputStream,
+        byteArray: ByteArray,
+        charArray: CharArray,
+        charset: Charset,
+        length: Int,
+        readBlock: (InputStream, ByteArray, Int, Int) -> Int
+    ): String {
+        var buffer = PooledBuffer(byteArray.size)
+        val byteBuffer = ByteBuffer.wrap(byteArray)
+        val charBuffer = CharBuffer.wrap(charArray)
+        val charsetDecoder = charset.newDecoder()
+        var total = 0
+        while (true) {
+            val byteBufferRemaining = byteBuffer.remaining()
+            val count = readBlock(inputStream, byteArray, byteBuffer.position(), byteBufferRemaining)
+            if (count > -1) {
+                byteBuffer.position(byteBuffer.position() + count)
+                total += count
+            }
+            byteBuffer.flip()
+            if (count >= byteBufferRemaining) {
+                charsetDecoder.decode(byteBuffer, charBuffer, false)
+                charBuffer.flip()
+                buffer.appendCharBuffer(charBuffer)
+                charBuffer.clear()
+                byteBuffer.compact()
+            } else {
+                charsetDecoder.decode(byteBuffer, charBuffer, true)
+                charBuffer.flip()
+                buffer.let {
+                    it.appendCharBuffer(charBuffer)
+                    charBuffer.clear()
+                    byteBuffer.compact()
+                }
+                if (length > 0 && total != length) {
+                    throw IllegalStateException("InputStream length is not equals with expected.")
+                }
+                return buffer.asString()
+            }
+        }
+    }
+
+    private fun getCharArray(): CharArray {
+        val charArrayList =  RpcHelper.fetch(rpcIoCharArray) {
+            mutableListOf<CharArray>()
+        }
+
+        return if (charArrayList.isNotEmpty()) {
+            charArrayList.removeAt(0)
+        } else {
+            CharArray(BUFFER_SIZE)
+        }
+    }
+
+    private fun getByteArray(): ByteArray {
+        val byteArrayList =  RpcHelper.fetch(rpcIoByteArray) {
+            mutableListOf<ByteArray>()
+        }
+
+        return if (byteArrayList.isNotEmpty()) {
+            byteArrayList.removeAt(0)
+        } else {
+            ByteArray(BUFFER_SIZE)
+        }
+    }
+
+    private fun cacheCharArray(charArray: CharArray): Boolean {
+        return RpcHelper.fetch(rpcIoCharArray) {
+            mutableListOf<CharArray>()
+        }.add(charArray)
+    }
+
+    private fun cacheByteArray(byteArray: ByteArray): Boolean {
+        return RpcHelper.fetch(rpcIoByteArray) {
+            mutableListOf<ByteArray>()
+        }.add(byteArray)
     }
 }

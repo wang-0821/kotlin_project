@@ -38,7 +38,7 @@ class ConnectionHandler(override val chain: Chain) : Handler, ConnectionContextA
 
         if (chain.exchange.connection == null) {
             findConnection(routes) {
-                SocketHelper.findSocket(it, chain.client.connectTimeout)
+                SocketHelper.findSocket(it, chain.exchange.connectTimeout)
             }
         }
 

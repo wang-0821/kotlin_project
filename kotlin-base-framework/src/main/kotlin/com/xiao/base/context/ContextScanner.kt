@@ -15,12 +15,21 @@ object ContextScanner : BeanRegistryAware {
     @Volatile
     private var refreshed = false
 
-    @Synchronized fun scanAndExecute(basePackage: String) {
+    /**
+     * 这里有可能一个线程执行到同步代码块中，另一个在等待获取同步锁，因此需要在同步代码块中再次判断刷新状态，避免重复刷新。
+     * 之所以不在方法上加同步锁，是因为这样每次都需要获取锁，通过先对状态的判断，可减少锁的使用。
+     */
+    fun scanAndExecute(basePackage: String) {
         if (refreshed) {
             return
         }
-        handleResourceProcessors(scan(basePackage))
-        refreshed = true
+        synchronized(this) {
+            if (refreshed) {
+                return
+            }
+            handleResourceProcessors(scan(basePackage))
+            refreshed = true
+        }
     }
 
     private fun scan(basePackage: String): List<AnnotatedKtResource> {

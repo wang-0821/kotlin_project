@@ -2,6 +2,7 @@ package com.xiao.rpc.handler
 
 import com.xiao.rpc.exception.ConnectionException
 import com.xiao.rpc.io.Connection
+import com.xiao.rpc.io.Exchange
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
 
@@ -15,13 +16,13 @@ class ExchangeHandler(override val chain: Chain) : Handler {
             throw ConnectionException.noAvailableConnection("${this.javaClass.simpleName} have no connection.")
         }
 
-        return doRequest(chain.exchange.connection!!, chain.request)
+        return doRequest(chain.exchange.connection!!, chain.request, chain.exchange)
     }
 
-    private fun doRequest(connection: Connection, request: Request): Response {
+    private fun doRequest(connection: Connection, request: Request, exchange: Exchange): Response {
         connection.writeHeaders(request)
         connection.writeBody(request)
         connection.finishRequest()
-        return connection.response()
+        return connection.response(exchange)
     }
 }

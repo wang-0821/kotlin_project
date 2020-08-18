@@ -43,7 +43,7 @@ class Http1Connection(val route: Route, val socket: StateSocket) : AbstractConne
         outputStream?.flush()
     }
 
-    override fun response(): Response {
+    override fun response(exchange: Exchange): Response {
         return parseToResponse(inputStream!!)
     }
 
