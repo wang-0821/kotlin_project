@@ -29,10 +29,7 @@ object IoHelper {
     ): String {
         val byteArray = getByteArray()
         val charArray = getCharArray()
-        val result = asString(inputStream, byteArray, charArray, charset, -1)
-        { input, bytes, offset, length ->
-            readLineBuffer(input, bytes, offset, length)
-        }
+        val result = readLine(inputStream, byteArray, charArray, charset)
         cacheByteArray(byteArray)
         cacheCharArray(charArray)
         return result
@@ -44,59 +41,90 @@ object IoHelper {
         charset: Charset,
         length: Int = -1
     ): String {
+        var times = 0
         val byteArray = getByteArray()
         val charArray = getCharArray()
         val result = asString(inputStream, byteArray, charArray, charset, length)
         { input, bytes, offset, len ->
+            println("************ read content $times ***************")
             input.read(bytes, offset, len)
+            times++
         }
         cacheByteArray(byteArray)
         cacheCharArray(charArray)
         return result
     }
 
-    private fun readLineBuffer(inputStream: InputStream, byteArray: ByteArray, offset: Int, length: Int): Int {
-        var index = offset
-        val endIndex = offset + length
-        while (index <= endIndex - 2) {
-            val nextByteCode = inputStream.read()
-            // end of stream
-            if (nextByteCode == -1) {
-                return index - offset
+    private fun readLine(
+        inputStream: InputStream,
+        byteArray: ByteArray,
+        charArray: CharArray,
+        charset: Charset
+    ): String {
+        var buffer: PooledBuffer? = null
+        val byteBuffer = ByteBuffer.wrap(byteArray)
+        val charBuffer = CharBuffer.wrap(charArray)
+        val charSetDecoder = charset.newDecoder()
+        var isEnd = false
+        while (true) {
+            // fill byte array buffer
+            val byteRemaining = byteBuffer.remaining()
+            var alreadyRead = 0
+            while (alreadyRead < byteRemaining - 2) {
+                val nextByteCode = inputStream.read()
+                // end of stream
+                if (nextByteCode == -1) {
+                    break
+                }
+
+                val nextByte = nextByteCode.toByte()
+                // /r/n
+                if (nextByte == CARRIAGE_RETURN_BYTE) {
+                    val nextByte2 = inputStream.read().toByte()
+                    if (nextByte2 == LINE_FEED_BYTE) {
+                        isEnd = true
+                        break
+                    } else {
+                        byteArray[alreadyRead++] = nextByte
+                        byteArray[alreadyRead++] = nextByte2
+                        if (alreadyRead >= byteArray.size) {
+                            break
+                        }
+                    }
+                } else {
+                    // /n
+                    if (nextByte == LINE_FEED_BYTE) {
+                        isEnd = true
+                        break
+                    }
+                    byteArray[alreadyRead++] = nextByte
+                }
             }
 
-            val nextByte = nextByteCode.toByte()
-            // /r/n
-            if (nextByte == CARRIAGE_RETURN_BYTE) {
-                val nextByte2 = inputStream.read().toByte()
-                if (nextByte2 == LINE_FEED_BYTE) {
-                    return index - offset
+            // already filled byte array buffer, decode byte array
+            byteBuffer.position(byteBuffer.position() + alreadyRead)
+            byteBuffer.flip()
+            if (isEnd) {
+                charSetDecoder.decode(byteBuffer, charBuffer, true)
+                charBuffer.flip()
+                // all chars are in single char array
+                return if (buffer == null) {
+                    String(charBuffer.array(), charBuffer.position(), charBuffer.remaining())
                 } else {
-                    byteArray[index++] = nextByte
-                    byteArray[index++] = nextByte2
-                    if (index >= byteArray.size) {
-                        return index - offset
-                    }
+                    buffer.appendCharBuffer(charBuffer)
+                    charBuffer.clear()
+                    byteBuffer.compact()
+                    buffer.asString()
                 }
             } else {
-                // /n
-                if (nextByte == LINE_FEED_BYTE) {
-                    return index - offset
-                }
-                byteArray[index++] = nextByte
+                charSetDecoder.decode(byteBuffer, charBuffer, false)
+                charBuffer.flip()
+                buffer = buffer ?: PooledBuffer(byteArray.size)
+                buffer.appendCharBuffer(charBuffer)
+                charBuffer.clear()
+                byteBuffer.compact()
             }
         }
-
-        // get last byte
-        val nextByteCode = inputStream.read()
-        if (nextByteCode == -1) {
-            return index - offset
-        }
-        val nextByte = nextByteCode.toByte()
-        if (nextByte != LINE_FEED_BYTE) {
-            byteArray[index++] = nextByte
-        }
-        return index - offset
     }
 
     @Throws(IllegalStateException::class)
@@ -108,7 +136,7 @@ object IoHelper {
         length: Int,
         readBlock: (InputStream, ByteArray, Int, Int) -> Int
     ): String {
-        var buffer = PooledBuffer(byteArray.size)
+        var buffer: PooledBuffer? = null
         val byteBuffer = ByteBuffer.wrap(byteArray)
         val charBuffer = CharBuffer.wrap(charArray)
         val charsetDecoder = charset.newDecoder()
@@ -119,26 +147,28 @@ object IoHelper {
             if (count > -1) {
                 byteBuffer.position(byteBuffer.position() + count)
                 total += count
-            }
-            byteBuffer.flip()
-            if (count >= byteBufferRemaining) {
+                byteBuffer.flip()
                 charsetDecoder.decode(byteBuffer, charBuffer, false)
                 charBuffer.flip()
+                buffer = buffer ?: PooledBuffer(byteArray.size)
                 buffer.appendCharBuffer(charBuffer)
                 charBuffer.clear()
                 byteBuffer.compact()
             } else {
-                charsetDecoder.decode(byteBuffer, charBuffer, true)
-                charBuffer.flip()
-                buffer.let {
-                    it.appendCharBuffer(charBuffer)
-                    charBuffer.clear()
-                    byteBuffer.compact()
-                }
                 if (length > 0 && total != length) {
                     throw IllegalStateException("InputStream length is not equals with expected.")
                 }
-                return buffer.asString()
+                byteBuffer.flip()
+                charsetDecoder.decode(byteBuffer, charBuffer, true)
+                charBuffer.flip()
+                return if (buffer == null) {
+                    String(charBuffer.array(), charBuffer.position(), charBuffer.remaining())
+                } else {
+                    buffer.appendCharBuffer(charBuffer)
+                    charBuffer.clear()
+                    byteBuffer.compact()
+                    buffer.asString()
+                }
             }
         }
     }

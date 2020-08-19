@@ -1,10 +1,8 @@
 package com.xiao.rpc.io
 
 import com.xiao.rpc.helper.IoHelper
-import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.nio.ByteBuffer
-import java.util.zip.GZIPInputStream
 
 /**
  *
@@ -22,7 +20,7 @@ class WrappedInputStream(
 
     init {
         if (transferEncoding.isNullOrBlank() && "gzip" == contentEncoding) {
-            inputStream = GZIPInputStream(inputStream)
+            inputStream = WrappedGZIPInputStream(inputStream)
         }
     }
 
@@ -39,40 +37,63 @@ class WrappedInputStream(
     }
 
     private fun readChunked(b: ByteArray, off: Int, len: Int): Int {
-        val stream = calculateChunkedInputStream()
-        val size = stream.read(b, off, len)
-        if (size < len) {
-            // reach chunk end
-            realInputStream = null
+        chunkLimitCheck()
+        val inputStream = calculateChunkedInputStream()
+        return if ("gzip" == contentEncoding) {
+            // check chunked gzip inputStream
+            checkGzipInputStream(inputStream)
+            inputStream.read(b, off, len)
+        } else {
+            inputStream.read(b, off, len.coerceAtMost(chunkedLimit))
         }
-        return size
     }
+
+    private fun checkGzipInputStream(inputStream: InputStream) {
+        val gzipInputStream = inputStream as? WrappedGZIPInputStream
+        val byteArrayInputStream = gzipInputStream?.inputStream() as? WrappedByteArrayInputStream
+        byteArrayInputStream?.let {
+            if (it.available() <= 0) {
+                fillChunkedByteBuffer()
+                it.replace(chunkedBuffer.array(), chunkedBuffer.position(), chunkedBuffer.remaining())
+                chunkedBuffer.clear()
+            }
+        }
+    }
+
+   private fun calculateChunkedInputStream(): InputStream {
+       if (realInputStream != null) {
+           return realInputStream as InputStream
+       }
+       realInputStream = if ("gzip" == contentEncoding) {
+           createChunkedGzipInputStream()
+       } else {
+           inputStream
+       }
+       return realInputStream as InputStream
+   }
 
     private fun calculateSimpleInputStream(): InputStream {
         if (realInputStream != null) {
             return realInputStream!!
         }
         realInputStream = if ("gzip" == contentEncoding) {
-            GZIPInputStream(inputStream)
+            WrappedGZIPInputStream(inputStream)
         } else {
             inputStream
         }
         return realInputStream as InputStream
     }
 
-    private fun calculateChunkedInputStream(): InputStream {
-        if (realInputStream != null) {
-            return realInputStream!!
-        }
-        checkChunkLimit()
-        return if ("gzip" == contentEncoding) {
-            createChunkedGzipInputStream()
-        } else {
-            inputStream
-        }
+    private fun createChunkedGzipInputStream(): InputStream {
+        fillChunkedByteBuffer()
+        val byteArrayInputStream = WrappedByteArrayInputStream(
+            chunkedBuffer.array(), chunkedBuffer.position(), chunkedBuffer.remaining()
+        )
+        chunkedBuffer.clear()
+        return WrappedGZIPInputStream(byteArrayInputStream)
     }
 
-    private fun createChunkedGzipInputStream(): InputStream {
+    private fun fillChunkedByteBuffer() {
         val remaining = chunkedBuffer.remaining()
         if (chunkedLimit <= remaining) {
             fillByteArray(chunkedLimit)
@@ -81,23 +102,18 @@ class WrappedInputStream(
         } else {
             fillByteArray(remaining)
         }
-        val byteArrayInputStream = ByteArrayInputStream(
-            chunkedBuffer.array(), chunkedBuffer.position(), chunkedBuffer.limit()
-        )
-        chunkedBuffer.clear()
-        return GZIPInputStream(byteArrayInputStream)
     }
 
     private fun fillByteArray(len: Int) {
         var start = chunkedBuffer.position()
-        for (i in 0..len) {
+        for (i in 0 until len) {
             chunkedByteArray[start++] = inputStream.read().toByte()
         }
         chunkedBuffer.position(start)
         chunkedBuffer.flip()
     }
 
-    private fun checkChunkLimit() {
+    private fun chunkLimitCheck(){
         if (chunkedLimit <= 0) {
             chunkedLimit = Integer.parseInt(IoHelper.readPlainTextLine(inputStream), 16)
         }
