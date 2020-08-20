@@ -13,12 +13,9 @@ import java.nio.charset.Charset
 object IoHelper {
     private const val KILO = 1024
 
-    /**
-     * Default buffer size for small buffer stream, like http header.
-     */
     const val BUFFER_SIZE = 4 * KILO
     const val CRLF = "\r\n"
-    private const val CARRIAGE_RETURN_BYTE = '\r'.toByte()
+    const val CARRIAGE_RETURN_BYTE = '\r'.toByte()
     const val LINE_FEED_BYTE = '\n'.toByte()
     private val rpcIoByteArray = object : RpcContextKey<ByteArray> {}
     private val rpcIoCharArray = object : RpcContextKey<CharArray> {}
@@ -47,8 +44,8 @@ object IoHelper {
         val result = asString(inputStream, byteArray, charArray, charset, length)
         { input, bytes, offset, len ->
             println("************ read content $times ***************")
-            input.read(bytes, offset, len)
             times++
+            input.read(bytes, offset, len)
         }
         cacheByteArray(byteArray)
         cacheCharArray(charArray)
@@ -144,6 +141,7 @@ object IoHelper {
         while (true) {
             val byteBufferRemaining = byteBuffer.remaining()
             val count = readBlock(inputStream, byteArray, byteBuffer.position(), byteBufferRemaining)
+            println("*********** read count $count **********")
             if (count > -1) {
                 byteBuffer.position(byteBuffer.position() + count)
                 total += count

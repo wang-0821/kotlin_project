@@ -41,6 +41,7 @@ class PooledBuffer {
     private fun ensureCurrentBuffer(): PooledCharArrayBuffer {
         if (currentBuffer.remaining() <= 0) {
             currentBuffer = PooledCharArrayBuffer(allocateSize)
+            buffers.add(currentBuffer)
         }
         return currentBuffer
     }
