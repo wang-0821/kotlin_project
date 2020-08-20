@@ -38,13 +38,10 @@ object IoHelper {
         charset: Charset,
         length: Int = -1
     ): String {
-        var times = 0
         val byteArray = getByteArray()
         val charArray = getCharArray()
         val result = asString(inputStream, byteArray, charArray, charset, length)
         { input, bytes, offset, len ->
-            println("************ read content $times ***************")
-            times++
             input.read(bytes, offset, len)
         }
         cacheByteArray(byteArray)
@@ -141,7 +138,6 @@ object IoHelper {
         while (true) {
             val byteBufferRemaining = byteBuffer.remaining()
             val count = readBlock(inputStream, byteArray, byteBuffer.position(), byteBufferRemaining)
-            println("*********** read count $count **********")
             if (count > -1) {
                 byteBuffer.position(byteBuffer.position() + count)
                 total += count

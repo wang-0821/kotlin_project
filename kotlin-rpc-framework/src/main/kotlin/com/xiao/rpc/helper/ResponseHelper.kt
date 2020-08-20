@@ -14,7 +14,6 @@ import java.io.InputStream
 object ResponseHelper {
     fun parseResponse(inputStream: InputStream): Response {
         val startLine = IoHelper.readPlainTextLine(inputStream)
-        println("************ $startLine ************")
         val startLineSplits = startLine.split(" ")
         val protocol = Protocol.parseProtocol(startLineSplits[0])
         val status = startLineSplits[1].toInt()
@@ -32,7 +31,6 @@ object ResponseHelper {
         val headers = mutableListOf<Header>()
         while (true) {
             val line = IoHelper.readPlainTextLine(inputStream)
-            println("******** $line **********")
             if (line.isNotBlank()) {
                 parseHeader(line)?.let {
                     headers.add(it)

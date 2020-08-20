@@ -97,28 +97,32 @@ class WrappedInputStream(
         if (chunkedLimit <= 0) {
             chunkedBuffer.position(0)
             chunkedBuffer.flip()
+            skipLineFeed()
             return
         }
         val capacity = chunkedBuffer.capacity()
         if (chunkedLimit <= capacity) {
             fillByteArray(chunkedLimit)
             chunkedLimit = 0
-
-            // make sure inputStream reached chunked end
-            val byte1 = inputStream.read().toByte()
-            if (byte1 == IoHelper.CARRIAGE_RETURN_BYTE) {
-                if (inputStream.read().toByte() == IoHelper.LINE_FEED_BYTE) {
-                    return
-                }
-            }
-            if (byte1 == IoHelper.LINE_FEED_BYTE) {
-                return
-            }
-            throw IllegalStateException("Chunked length is incorrect.")
+            skipLineFeed()
         } else {
             fillByteArray(capacity)
             chunkedLimit -= capacity
         }
+    }
+
+    private fun skipLineFeed() {
+        // make sure inputStream reached chunked end
+        val byte1 = inputStream.read().toByte()
+        if (byte1 == IoHelper.CARRIAGE_RETURN_BYTE) {
+            if (inputStream.read().toByte() == IoHelper.LINE_FEED_BYTE) {
+                return
+            }
+        }
+        if (byte1 == IoHelper.LINE_FEED_BYTE) {
+            return
+        }
+        throw IllegalStateException("Chunked length is incorrect.")
     }
 
     private fun fillByteArray(len: Int) {
@@ -133,7 +137,6 @@ class WrappedInputStream(
     private fun calculateChunkLimit() {
         if (chunkedLimit <= 0 && !endInputStream) {
             chunkedLimit = Integer.parseInt(IoHelper.readPlainTextLine(inputStream), 16)
-            println("*********** chunkedLimit: $chunkedLimit ************")
             if (chunkedLimit <= 0) {
                 endInputStream = true
             }
