@@ -12,13 +12,13 @@ import java.nio.charset.Charset
  */
 object IoHelper {
     private const val KILO = 1024
-
     const val BUFFER_SIZE = 4 * KILO
     const val CRLF = "\r\n"
     const val CARRIAGE_RETURN_BYTE = '\r'.toByte()
     const val LINE_FEED_BYTE = '\n'.toByte()
-    private val rpcIoByteArray = object : RpcContextKey<ByteArray> {}
-    private val rpcIoCharArray = object : RpcContextKey<CharArray> {}
+    private const val MAX_CACHE_SIZE = 16
+    private val RPC_IO_BYTE_ARRAY = object : RpcContextKey<ByteArray> {}
+    private val RPC_IO_CHAR_ARRAY = object : RpcContextKey<CharArray> {}
 
     fun readPlainTextLine(
         inputStream: InputStream,
@@ -168,7 +168,7 @@ object IoHelper {
     }
 
     private fun getCharArray(): CharArray {
-        val charArrayList =  RpcHelper.fetch(rpcIoCharArray) {
+        val charArrayList =  RpcHelper.fetch(RPC_IO_CHAR_ARRAY) {
             mutableListOf<CharArray>()
         }
 
@@ -180,7 +180,7 @@ object IoHelper {
     }
 
     private fun getByteArray(): ByteArray {
-        val byteArrayList =  RpcHelper.fetch(rpcIoByteArray) {
+        val byteArrayList =  RpcHelper.fetch(RPC_IO_BYTE_ARRAY) {
             mutableListOf<ByteArray>()
         }
 
@@ -192,14 +192,24 @@ object IoHelper {
     }
 
     private fun cacheCharArray(charArray: CharArray): Boolean {
-        return RpcHelper.fetch(rpcIoCharArray) {
+        val charArrayList = RpcHelper.fetch(RPC_IO_CHAR_ARRAY) {
             mutableListOf<CharArray>()
-        }.add(charArray)
+        }
+        return if (charArrayList.size >= MAX_CACHE_SIZE) {
+            false
+        } else {
+            charArrayList.add(charArray)
+        }
     }
 
     private fun cacheByteArray(byteArray: ByteArray): Boolean {
-        return RpcHelper.fetch(rpcIoByteArray) {
+        val byteArrayList = RpcHelper.fetch(RPC_IO_BYTE_ARRAY) {
             mutableListOf<ByteArray>()
-        }.add(byteArray)
+        }
+        return if (byteArrayList.size >= MAX_CACHE_SIZE) {
+            return false
+        } else {
+            byteArrayList.add(byteArray)
+        }
     }
 }

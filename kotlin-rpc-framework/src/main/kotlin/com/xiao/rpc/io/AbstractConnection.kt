@@ -1,10 +1,14 @@
 package com.xiao.rpc.io
 
 import com.xiao.rpc.ContentHeaders
+import com.xiao.rpc.Route
+import com.xiao.rpc.StateSocket
+import com.xiao.rpc.factory.SslSocketFactorySelector
 import com.xiao.rpc.helper.ResponseHelper
 import com.xiao.rpc.helper.IoHelper.CRLF
 import java.io.InputStream
 import java.net.URLEncoder
+import javax.net.ssl.SSLSocket
 
 /**
  *
@@ -41,7 +45,13 @@ abstract class AbstractConnection : Connection {
         write(CRLF.toByteArray())
     }
 
-    fun parseToResponse(inputStream: InputStream): Response {
+    protected fun parseToResponse(inputStream: InputStream): Response {
         return ResponseHelper.parseResponse(inputStream)
+    }
+
+    protected fun connectTls(socket: StateSocket, route: Route): SSLSocket {
+        val sslSocket = SslSocketFactorySelector.select().createSSLSocket(socket, route)
+        sslSocket.startHandshake()
+        return sslSocket
     }
 }

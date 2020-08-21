@@ -18,7 +18,7 @@ class StateSocket(val route: Route) : Socket() {
     override fun connect(endpoint: SocketAddress?, timeout: Int) {
         synchronized(state) {
             state.changeState(RunningState.RUNNING) {
-                super.connect(endpoint, timeout)
+                super.connect(endpoint, timeout.coerceAtLeast(0))
             }
         }
     }

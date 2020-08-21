@@ -1,10 +1,12 @@
 package com.xiao.rpc
 
 import com.xiao.base.context.ContextScanner
+import com.xiao.rpc.factory.SslSocketFactorySelector
 import com.xiao.rpc.handler.Chain
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
 import com.xiao.rpc.tool.UrlParser
+import javax.net.ssl.SSLContext
 
 /**
  *
@@ -60,6 +62,6 @@ class Client {
 }
 
 fun main() {
-    val response = Client().newCall(UrlParser.parseUrl("http://www.baidu.com")).execute()
+    val response = Client().newCall(UrlParser.parseUrl("https://www.baidu.com")).execute()
     println("Response*********** ${response.contentAsString()} *******")
 }

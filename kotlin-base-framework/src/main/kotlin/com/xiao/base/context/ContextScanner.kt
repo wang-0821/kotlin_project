@@ -73,8 +73,19 @@ object ContextScanner : BeanRegistryAware {
     }
 
     private fun filterResource(resource: KtResource): AnnotatedKtResource? {
-        val annotations = resource.clazz.java.extractAnnotations()
-        annotations.firstOrNull { it.annotationClass == AnnotationScan::class }?.let {
+        var annotations: List<Annotation>? = null
+        var times = 0
+        try{
+            annotations = resource.clazz.java.extractAnnotations()
+            times++
+            if (times > 50) {
+                println("ExtractAnnotations failed: ${resource.clazz.simpleName}")
+                return null
+            }
+        } catch (e: Exception) {
+            println("ExtractAnnotations failed: ${resource.clazz.simpleName}")
+        }
+        annotations!!.firstOrNull { it.annotationClass == AnnotationScan::class }?.let {
             val annotationScan = it as AnnotationScan
             val includeTypeFilter = annotationScan.includeTypeFilter.objectInstance
                 ?: annotationScan.includeTypeFilter.objectInstance

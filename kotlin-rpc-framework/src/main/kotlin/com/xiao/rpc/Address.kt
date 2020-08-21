@@ -10,7 +10,7 @@ import java.net.InetSocketAddress
  * @author lix wang
  */
 class Address(val host: String, scheme: String) {
-    private val isTls = scheme == "https"
+    val isTls = scheme == "https"
 
     var port: Int = -1
         get() {
