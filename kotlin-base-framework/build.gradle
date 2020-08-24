@@ -1,4 +1,3 @@
 dependencies {
     compile libs['kotlin-coroutines-core']
-    compile libs['okHttp3']
 }

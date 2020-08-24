@@ -4,8 +4,9 @@ import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.Route
 import com.xiao.rpc.StateSocket
 import com.xiao.rpc.factory.SslSocketFactorySelector
-import com.xiao.rpc.helper.ResponseHelper
 import com.xiao.rpc.helper.IoHelper.CRLF
+import com.xiao.rpc.helper.ResponseHelper
+import com.xiao.rpc.tool.JacksonUtils
 import java.io.InputStream
 import java.net.URLEncoder
 import javax.net.ssl.SSLSocket
@@ -42,7 +43,12 @@ abstract class AbstractConnection : Connection {
     }
 
     override fun writeBody(request: Request) {
-        write(CRLF.toByteArray())
+        val body = if (request.params().isNotEmpty()) {
+            JacksonUtils.serialize(request.params()) + CRLF
+        } else {
+            CRLF
+        }
+        write(body.toByteArray())
     }
 
     protected fun parseToResponse(inputStream: InputStream): Response {

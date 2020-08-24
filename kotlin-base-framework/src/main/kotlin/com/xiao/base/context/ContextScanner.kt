@@ -73,19 +73,8 @@ object ContextScanner : BeanRegistryAware {
     }
 
     private fun filterResource(resource: KtResource): AnnotatedKtResource? {
-        var annotations: List<Annotation>? = null
-        var times = 0
-        try{
-            annotations = resource.clazz.java.extractAnnotations()
-            times++
-            if (times > 50) {
-                println("ExtractAnnotations failed: ${resource.clazz.simpleName}")
-                return null
-            }
-        } catch (e: Exception) {
-            println("ExtractAnnotations failed: ${resource.clazz.simpleName}")
-        }
-        annotations!!.firstOrNull { it.annotationClass == AnnotationScan::class }?.let {
+        val annotations = resource.clazz.java.extractAnnotations()
+        annotations.firstOrNull { it.annotationClass == AnnotationScan::class }?.let {
             val annotationScan = it as AnnotationScan
             val includeTypeFilter = annotationScan.includeTypeFilter.objectInstance
                 ?: annotationScan.includeTypeFilter.objectInstance
@@ -107,19 +96,11 @@ object ContextScanner : BeanRegistryAware {
     }
 
     private fun <T : Class<out Any>> T.extractAnnotations(result: MutableList<Annotation>): List<Annotation> {
-        var annotations = this.annotations.filter { !EXCLUDE_META_ANNOTATIONS.contains(it.annotationClass) }
+        val annotations = this.annotations.filter { !result.contains(it) }
         result.addAll(annotations)
         for (annotation in annotations) {
             annotation.annotationClass.java.extractAnnotations(result)
         }
         return result
     }
-
-    private val EXCLUDE_META_ANNOTATIONS = listOf(
-        Metadata::class,
-        Retention::class,
-        Target::class,
-        java.lang.annotation.Retention::class,
-        java.lang.annotation.Target::class
-    )
 }

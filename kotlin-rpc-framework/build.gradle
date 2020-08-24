@@ -1,3 +1,4 @@
 dependencies {
     compile project(":kotlin-base-framework")
+    compile libs["jackson-databind"]
 }

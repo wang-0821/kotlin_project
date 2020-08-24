@@ -13,7 +13,7 @@ class Request {
     private var requestBuilder: RequestBuilder
 
     constructor() {
-        this.requestBuilder = RequestBuilder()
+        requestBuilder = RequestBuilder()
     }
 
     constructor(url: String) : this() {
@@ -21,53 +21,53 @@ class Request {
     }
 
     fun method(method: RequestMethod) {
-        this.requestBuilder.method = method
+        requestBuilder.method = method
     }
 
     fun method(): RequestMethod {
-        return this.requestBuilder.method
+        return requestBuilder.method
     }
 
     fun scheme(scheme: String) {
-        this.requestBuilder.scheme = scheme
+        requestBuilder.scheme = scheme
     }
 
     fun scheme(): String {
-        return this.requestBuilder.scheme
+        return requestBuilder.scheme
     }
 
     fun host(host: String) {
-        this.requestBuilder.host = host
+        requestBuilder.host = host
     }
 
     fun host(): String {
-        return this.requestBuilder.host
+        return requestBuilder.host
     }
 
     fun path(path: String) {
-        this.requestBuilder.path = path
+        requestBuilder.path = path
     }
     fun path(): String? {
-        return this.requestBuilder.path
+        return requestBuilder.path
     }
 
     fun port(port: Int) {
-        this.requestBuilder.port = port
+        requestBuilder.port = port
     }
 
     fun port(): Int {
-        return this.requestBuilder.port
+        return requestBuilder.port
     }
     fun protocol(protocol: Protocol) {
-        this.requestBuilder.protocol = protocol
+        requestBuilder.protocol = protocol
     }
 
     fun protocol(): Protocol {
-        return this.requestBuilder.protocol
+        return requestBuilder.protocol
     }
 
     fun header(header: Header) {
-        this.requestBuilder.headers.add(header)
+        requestBuilder.headers.add(header)
     }
 
     fun  header(name: String): Header? {
@@ -75,19 +75,23 @@ class Request {
     }
 
     fun headers(headers: List<Header>) {
-        this.requestBuilder.headers.addAll(headers)
+        requestBuilder.headers.addAll(headers)
     }
 
     fun headers(): List<Header> {
-        return this.requestBuilder.headers
+        return requestBuilder.headers
     }
 
     fun param(name: String, value: String) {
-        this.requestBuilder.requestParams[name] = value
+        requestBuilder.requestParams[name] = value
     }
 
     fun params(params: Map<String, String>) {
-        this.requestBuilder.requestParams.putAll(params)
+        requestBuilder.requestParams.putAll(params)
+    }
+
+    fun params(): Map<String, String> {
+        return requestBuilder.requestParams
     }
 
     private class RequestBuilder {

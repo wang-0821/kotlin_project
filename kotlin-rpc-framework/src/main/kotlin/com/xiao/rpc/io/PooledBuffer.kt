@@ -1,6 +1,8 @@
 package com.xiao.rpc.io
 
 import com.xiao.rpc.helper.IoHelper
+import com.xiao.rpc.helper.RpcContextKey
+import com.xiao.rpc.helper.RpcHelper
 import java.nio.CharBuffer
 
 /**
@@ -8,13 +10,13 @@ import java.nio.CharBuffer
  * @author lix wang
  */
 class PooledBuffer {
-    private val allocateSize: Int
     private val buffers = mutableListOf<PooledCharArrayBuffer>()
     private var currentBuffer: PooledCharArrayBuffer
+    private val POOLED_BUFFER_IO_BUFFERS = object : RpcContextKey<PooledCharArrayBuffer> {}
+    private val MAX_CACHE_SIZE = 32
 
-    constructor(allocateSize: Int = IoHelper.BUFFER_SIZE) {
-        this.allocateSize = allocateSize
-        this.currentBuffer = PooledCharArrayBuffer(allocateSize)
+    constructor() {
+        this.currentBuffer = PooledCharArrayBuffer(IoHelper.BUFFER_SIZE)
         buffers.add(currentBuffer)
     }
 
@@ -28,19 +30,20 @@ class PooledBuffer {
     }
 
     fun asString(): String {
-        var count = (buffers.size - 1) * allocateSize + currentBuffer.index
+        val count = (buffers.size - 1) * IoHelper.BUFFER_SIZE + currentBuffer.index
         val charArray = CharArray(count)
         var pos = 0
         for (buffer in buffers) {
             System.arraycopy(buffer.charArray, 0, charArray, pos, buffer.index)
             pos += buffer.index
+            cachePooledCharArrayBuffer(buffer)
         }
         return String(charArray)
     }
 
     private fun ensureCurrentBuffer(): PooledCharArrayBuffer {
         if (currentBuffer.remaining() <= 0) {
-            currentBuffer = PooledCharArrayBuffer(allocateSize)
+            currentBuffer = getPooledCharArrayBuffer()
             buffers.add(currentBuffer)
         }
         return currentBuffer
@@ -73,6 +76,33 @@ class PooledBuffer {
 
         fun remaining(): Int {
             return capacity - index
+        }
+
+        fun clear() {
+            index = 0
+        }
+    }
+
+    private fun cachePooledCharArrayBuffer(buffer: PooledCharArrayBuffer): Boolean {
+        val pooledCharArrayBuffers = RpcHelper.fetch(POOLED_BUFFER_IO_BUFFERS) {
+            mutableListOf<PooledCharArrayBuffer>()
+        }
+        return if (pooledCharArrayBuffers.size >= MAX_CACHE_SIZE) {
+            false
+        } else {
+            buffer.clear()
+            pooledCharArrayBuffers.add(buffer)
+        }
+    }
+
+    private fun getPooledCharArrayBuffer() : PooledCharArrayBuffer {
+        val pooledCharArrayBuffers = RpcHelper.fetch(POOLED_BUFFER_IO_BUFFERS) {
+            mutableListOf<PooledCharArrayBuffer>()
+        }
+        return if (pooledCharArrayBuffers.isNotEmpty()) {
+            pooledCharArrayBuffers.removeAt(0)
+        } else {
+            PooledCharArrayBuffer(IoHelper.BUFFER_SIZE)
         }
     }
 }

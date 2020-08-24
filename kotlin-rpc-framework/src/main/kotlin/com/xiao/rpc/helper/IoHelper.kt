@@ -16,7 +16,7 @@ object IoHelper {
     const val CRLF = "\r\n"
     const val CARRIAGE_RETURN_BYTE = '\r'.toByte()
     const val LINE_FEED_BYTE = '\n'.toByte()
-    private const val MAX_CACHE_SIZE = 16
+    private const val MAX_CACHE_SIZE = 32
     private val RPC_IO_BYTE_ARRAY = object : RpcContextKey<ByteArray> {}
     private val RPC_IO_CHAR_ARRAY = object : RpcContextKey<CharArray> {}
 
@@ -113,7 +113,7 @@ object IoHelper {
             } else {
                 charSetDecoder.decode(byteBuffer, charBuffer, false)
                 charBuffer.flip()
-                buffer = buffer ?: PooledBuffer(byteArray.size)
+                buffer = buffer ?: PooledBuffer()
                 buffer.appendCharBuffer(charBuffer)
                 charBuffer.clear()
                 byteBuffer.compact()
@@ -138,13 +138,15 @@ object IoHelper {
         while (true) {
             val byteBufferRemaining = byteBuffer.remaining()
             val count = readBlock(inputStream, byteArray, byteBuffer.position(), byteBufferRemaining)
-            if (count > -1) {
-                byteBuffer.position(byteBuffer.position() + count)
+            if (count > 0) {
                 total += count
+                byteBuffer.position(byteBuffer.position() + count)
+            }
+            if (count > -1 && (length <= 0 || (length > 0 && total < length))) {
                 byteBuffer.flip()
                 charsetDecoder.decode(byteBuffer, charBuffer, false)
                 charBuffer.flip()
-                buffer = buffer ?: PooledBuffer(byteArray.size)
+                buffer = buffer ?: PooledBuffer()
                 buffer.appendCharBuffer(charBuffer)
                 charBuffer.clear()
                 byteBuffer.compact()
