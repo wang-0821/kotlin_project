@@ -1,7 +1,5 @@
 package com.xiao.rpc.tool
 
-import com.xiao.base.exception.KtException
-import com.xiao.rpc.exception.UrlException
 import com.xiao.rpc.io.Request
 
 /**
@@ -9,12 +7,10 @@ import com.xiao.rpc.io.Request
  * @author lix wang
  */
 object UrlParser {
-    @Throws(KtException::class)
     fun parseUrl(url: String): Request {
         return parseUrl(url, null)
     }
 
-    @Throws(KtException::class)
     fun parseUrl(url: String, request: Request?): Request {
         var scheme: String? = null
         var hostAndPort: String? = null
@@ -60,10 +56,10 @@ object UrlParser {
         }
 
         if (scheme.isNullOrBlank()) {
-            throw UrlException.noScheme()
+            throw IllegalArgumentException("Http request lack of schema.")
         }
         if (hostAndPort.isNullOrBlank()) {
-            throw UrlException.noHost()
+            throw IllegalArgumentException("Http request url format is illegal.")
         }
 
         val realRequest = request ?: Request()
@@ -91,7 +87,6 @@ object UrlParser {
         return realRequest
     }
 
-    @Throws(KtException::class)
     private fun parseParams(paramString: String): Map<String, String>? {
         if (paramString.isBlank()) {
             return null
@@ -105,7 +100,7 @@ object UrlParser {
             if (paramString[index] == '=') {
                 key = paramString.substring(start until index)
                 if (key.isBlank()) {
-                    UrlException.invalidParamFormat()
+                    throw IllegalArgumentException("Http request params format is illegal.")
                 }
                 start = index + 1
             }

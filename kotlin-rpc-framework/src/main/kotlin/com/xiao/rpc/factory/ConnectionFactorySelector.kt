@@ -2,7 +2,6 @@ package com.xiao.rpc.factory
 
 import com.xiao.rpc.Protocol
 import com.xiao.rpc.StateSocket
-import com.xiao.rpc.exception.ConnectionException
 import com.xiao.rpc.io.Connection
 import com.xiao.rpc.io.Http1Connection
 import com.xiao.rpc.io.Http2Connection
@@ -24,7 +23,7 @@ object ConnectionFactorySelector : AbstractSelector<ConnectionFactory>() {
                     result.connect()
                     return result
                 } catch (e : Exception) {
-                    throw ConnectionException.noAvailableConnection()
+                    throw IllegalStateException("ConnectionFactory create Connection failed.")
                 }
             }
         }

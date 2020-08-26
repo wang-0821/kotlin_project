@@ -1,9 +1,8 @@
 package com.xiao.rpc
 
-import com.xiao.base.exception.KtException
-import com.xiao.rpc.exception.DnsException
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.net.UnknownHostException
 
 /**
  *
@@ -25,15 +24,12 @@ class Address(val host: String, scheme: String) {
             }
         }
 
-    @Throws(KtException::class)
+    @Throws(UnknownHostException::class)
     fun acquireRoutes(): Set<Route> {
-        try {
-            return InetAddress.getAllByName(this.host).asSequence()
-                .map { InetSocketAddress(it, this.port) }
-                .map { Route(this, it) }.toSet()
-        } catch (e: Exception) {
-            throw DnsException.dnsDomainResolveException("failed address: $this")
-        }
+        return InetAddress.getAllByName(this.host).asSequence()
+            .map { InetSocketAddress(it, this.port) }
+            .map { Route(this, it) }.toSet()
+
     }
 
     override fun equals(other: Any?): Boolean {

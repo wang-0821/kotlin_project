@@ -1,6 +1,5 @@
 package com.xiao.rpc
 
-import com.xiao.rpc.exception.ConnectionException
 import com.xiao.rpc.factory.ConnectionFactorySelector
 import com.xiao.rpc.io.Connection
 import java.io.IOException
@@ -29,7 +28,6 @@ class StateSocket(val route: Route) : Socket() {
         }
     }
 
-    @Throws(ConnectionException::class)
     fun acquireConnection(): Connection {
         val connectionFactory = ConnectionFactorySelector.select()
         return connectionFactory.create(this)

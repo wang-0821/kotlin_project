@@ -3,13 +3,11 @@ package com.xiao.rpc.handler
 import com.xiao.base.exception.KtException
 import com.xiao.rpc.Address
 import com.xiao.rpc.Client
-import com.xiao.rpc.io.Request
-import com.xiao.rpc.io.Response
-import com.xiao.rpc.exception.ChainException
 import com.xiao.rpc.factory.ChainHandlerFactorySelector
 import com.xiao.rpc.helper.RpcHelper
 import com.xiao.rpc.io.Exchange
-import java.util.UUID
+import com.xiao.rpc.io.Request
+import com.xiao.rpc.io.Response
 
 /**
  *
@@ -29,10 +27,10 @@ class Chain(private val client: Client, val request: Request) {
     @Throws(KtException::class)
     fun execute(): Response {
         if (index > handlers.size) {
-            throw ChainException.executeOutOfBound()
+            throw IndexOutOfBoundsException("Chain handler execute out of bounds.")
         }
         @Suppress("USELESS_ELVIS")
-        val result = handlers[index++].handle() ?: throw ChainException.noResponseError(request.toString())
+        val result = handlers[index++].handle() ?: throw IllegalStateException("Chain execute result must not null.")
         afterExecute()
         return result
     }
@@ -44,7 +42,6 @@ class Chain(private val client: Client, val request: Request) {
     private fun prepareExchange() {
         this.exchange = Exchange().apply {
             this.address = createAddress(request)
-            this.rpcUuid = UUID.randomUUID().toString()
             this.connectTimeout = client.connectTimeout
             this.readTimeout = client.readTimeout
             this.writeTimeout = client.writeTimeout

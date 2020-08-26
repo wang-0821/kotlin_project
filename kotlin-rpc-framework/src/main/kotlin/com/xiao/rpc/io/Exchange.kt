@@ -12,7 +12,6 @@ class Exchange : RouteContextAware {
     lateinit var address: Address
     var routes: Set<Route>? = null
     var connection: Connection? = null
-    lateinit var rpcUuid: String
     var connectTimeout: Int = -1
     var readTimeout: Int = -1
     var writeTimeout: Int = -1

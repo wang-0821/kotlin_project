@@ -1,8 +1,7 @@
 package com.xiao.rpc.handler
 
-import com.xiao.rpc.io.Response
 import com.xiao.rpc.context.RouteContextAware
-import com.xiao.rpc.exception.RouteException
+import com.xiao.rpc.io.Response
 
 /**
  *
@@ -17,7 +16,7 @@ class RouteHandler(override val chain: Chain) : Handler, RouteContextAware {
             add(chain.exchange.address, routes)
         }
         if (routes.isNullOrEmpty()) {
-            throw RouteException.noAvailableRoutes("address: ${chain.exchange.address} ")
+            throw NoSuchElementException("RouteHandler have no valid route.")
         }
         return chain.execute()
     }

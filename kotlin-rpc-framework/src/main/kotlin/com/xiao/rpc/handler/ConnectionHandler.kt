@@ -3,7 +3,6 @@ package com.xiao.rpc.handler
 import com.xiao.rpc.Route
 import com.xiao.rpc.StateSocket
 import com.xiao.rpc.context.ConnectionContextAware
-import com.xiao.rpc.exception.ConnectionException
 import com.xiao.rpc.helper.SocketHelper
 import com.xiao.rpc.io.Response
 
@@ -43,7 +42,7 @@ class ConnectionHandler(override val chain: Chain) : Handler, ConnectionContextA
         }
 
         if (chain.exchange.connection == null) {
-            throw ConnectionException.noAvailableConnection("${this.javaClass.simpleName} acquire connection failed.")
+            throw NoSuchElementException("Exchange connection must be not null.")
         }
     }
 
