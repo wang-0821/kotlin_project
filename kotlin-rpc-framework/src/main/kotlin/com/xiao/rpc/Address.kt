@@ -8,21 +8,24 @@ import java.net.UnknownHostException
  *
  * @author lix wang
  */
-class Address(val host: String, scheme: String) {
-    val isTls = scheme == "https"
+class Address {
+    val isTls: Boolean
+    val host: String
+    val port: Int
 
-    var port: Int = -1
-        get() {
-            return if (field > 0) {
-                field
+    constructor(host: String, scheme: String, port: Int = -1) {
+        this.isTls = scheme == "https"
+        this.host = host
+        this.port = if (port > 0) {
+            port
+        } else {
+            if (isTls) {
+                443
             } else {
-                if (isTls) {
-                    443
-                } else {
-                    80
-                }
+                80
             }
         }
+    }
 
     @Throws(UnknownHostException::class)
     fun acquireRoutes(): Set<Route> {

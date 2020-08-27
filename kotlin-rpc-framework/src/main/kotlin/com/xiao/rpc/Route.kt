@@ -16,4 +16,22 @@ class Route(val address: Address, private val inetSocketAddress: InetSocketAddre
         socket.connect(socket.route.inetSocketAddress, timeout)
         return socket
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as Route
+
+        if (address != other.address) return false
+        if (inetSocketAddress != other.inetSocketAddress) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = address.hashCode()
+        result = 31 * result + inetSocketAddress.hashCode()
+        return result
+    }
 }

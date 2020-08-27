@@ -10,7 +10,10 @@ import java.io.Closeable
 interface Connection : Closeable {
     fun connect()
 
-    fun validateAndUse(): Boolean
+    /**
+     * @return -1 means [Connection] is invalid, 0 means [Connection] is in use, 1 means [Connection] is valid.
+     */
+    fun validateAndUse(): Int
 
     fun route(): Route
 

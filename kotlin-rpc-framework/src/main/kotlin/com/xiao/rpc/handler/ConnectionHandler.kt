@@ -12,11 +12,14 @@ import com.xiao.rpc.io.Response
  */
 class ConnectionHandler(override val chain: Chain) : Handler, ConnectionContextAware {
     override fun handle(): Response {
-        findConnection()
+        val startTime = System.currentTimeMillis()
+        createConnection()
+        val endTime = System.currentTimeMillis()
+        println("*** ConnectionHandler cost: ${endTime - startTime} ms")
         return chain.execute()
     }
 
-    private fun findConnection() {
+    private fun createConnection() {
         if (chain.exchange.connection != null) {
             return
         }
@@ -30,13 +33,13 @@ class ConnectionHandler(override val chain: Chain) : Handler, ConnectionContextA
         }
 
         if (chain.exchange.connection == null) {
-            findConnection(routes) {
+            createConnection(routes) {
                 SocketHelper.findSocketByCache(it)
             }
         }
 
         if (chain.exchange.connection == null) {
-            findConnection(routes) {
+            createConnection(routes) {
                 SocketHelper.findSocket(it, chain.exchange.connectTimeout)
             }
         }
@@ -46,7 +49,7 @@ class ConnectionHandler(override val chain: Chain) : Handler, ConnectionContextA
         }
     }
 
-    private fun findConnection(routes: Set<Route>, socketGenerator: (Route) -> StateSocket?) {
+    private fun createConnection(routes: Set<Route>, socketGenerator: (Route) -> StateSocket?) {
         for (route in routes) {
             // find cached socket
             val socket = socketGenerator(route)
@@ -57,6 +60,7 @@ class ConnectionHandler(override val chain: Chain) : Handler, ConnectionContextA
             }
             if (connection != null) {
                 chain.exchange.connection = connection
+                connection.validateAndUse()
                 add(connection)
                 break
             }

@@ -49,9 +49,7 @@ class Chain(private val client: Client, val request: Request) {
     }
 
     private fun createAddress(request: Request): Address {
-        return Address(request.host(), request.scheme()).apply {
-            this.port = request.port()
-        }
+        return Address(request.host()!!, request.scheme()!!, request.port())
     }
 
     private fun afterExecute() {

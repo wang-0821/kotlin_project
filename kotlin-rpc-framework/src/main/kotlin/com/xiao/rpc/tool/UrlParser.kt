@@ -55,26 +55,25 @@ object UrlParser {
             index++
         }
 
-        if (scheme.isNullOrBlank()) {
-            throw IllegalArgumentException("Http request lack of schema.")
-        }
-        if (hostAndPort.isNullOrBlank()) {
-            throw IllegalArgumentException("Http request url format is illegal.")
-        }
-
         val realRequest = request ?: Request()
-
         host = hostAndPort
-        for (i in hostAndPort.indices) {
-            if (hostAndPort[i] == ':') {
-                host = hostAndPort.substring(0 until i)
-                port = hostAndPort.substring(i + 1 until hostAndPort.length).toInt()
-                break
+        if (!hostAndPort.isNullOrBlank()) {
+            for (i in hostAndPort.indices) {
+                if (hostAndPort[i] == ':') {
+                    host = hostAndPort.substring(0 until i)
+                    port = hostAndPort.substring(i + 1 until hostAndPort.length).toInt()
+                    break
+                }
             }
         }
 
-        realRequest.scheme(scheme)
-        realRequest.host(host!!)
+
+        scheme?.let {
+            realRequest.scheme(it)
+        }
+        host?.let {
+            realRequest.host(it)
+        }
         port?.let {
             realRequest.port(it)
         }

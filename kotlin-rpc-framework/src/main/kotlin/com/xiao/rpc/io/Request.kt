@@ -32,7 +32,7 @@ class Request {
         requestBuilder.scheme = scheme
     }
 
-    fun scheme(): String {
+    fun scheme(): String? {
         return requestBuilder.scheme
     }
 
@@ -40,7 +40,7 @@ class Request {
         requestBuilder.host = host
     }
 
-    fun host(): String {
+    fun host(): String? {
         return requestBuilder.host
     }
 
@@ -95,8 +95,8 @@ class Request {
     }
 
     private class RequestBuilder {
-        lateinit var scheme: String
-        lateinit var host: String
+        var scheme: String? = null
+        var host: String? = null
         var path: String? = null
         var port: Int = -1
         var method: RequestMethod = RequestMethod.GET

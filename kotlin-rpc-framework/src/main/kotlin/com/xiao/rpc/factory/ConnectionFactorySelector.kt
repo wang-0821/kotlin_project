@@ -3,8 +3,7 @@ package com.xiao.rpc.factory
 import com.xiao.rpc.Protocol
 import com.xiao.rpc.StateSocket
 import com.xiao.rpc.io.Connection
-import com.xiao.rpc.io.Http1Connection
-import com.xiao.rpc.io.Http2Connection
+import com.xiao.rpc.io.HttpConnection
 
 /**
  *
@@ -18,7 +17,7 @@ object ConnectionFactorySelector : AbstractSelector<ConnectionFactory>() {
                     val result = if (protocol == Protocol.HTTP_2) {
                         Http2Connection()
                     } else {
-                        Http1Connection(socket.route, socket)
+                        HttpConnection(socket.route, socket)
                     }
                     result.connect()
                     return result

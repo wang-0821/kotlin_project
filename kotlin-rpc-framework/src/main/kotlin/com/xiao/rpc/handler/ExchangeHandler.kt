@@ -19,9 +19,13 @@ class ExchangeHandler(override val chain: Chain) : Handler {
     }
 
     private fun doRequest(connection: Connection, request: Request, exchange: Exchange): Response {
+        val startTime = System.currentTimeMillis()
         connection.writeHeaders(request)
         connection.writeBody(request)
         connection.finishRequest()
-        return connection.response(exchange)
+        val result = connection.response(exchange)
+        val endTime = System.currentTimeMillis()
+        println("***** ExechangeHandler cost: ${endTime - startTime} ms")
+        return result
     }
 }

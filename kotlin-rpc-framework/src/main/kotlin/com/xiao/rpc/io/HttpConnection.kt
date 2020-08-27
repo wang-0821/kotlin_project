@@ -3,7 +3,6 @@ package com.xiao.rpc.io
 import com.xiao.rpc.Route
 import com.xiao.rpc.RunningState
 import com.xiao.rpc.StateSocket
-import com.xiao.rpc.factory.SslSocketFactorySelector
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.Socket
@@ -12,12 +11,13 @@ import java.net.Socket
  *
  * @author lix wang
  */
-class Http1Connection(private val route: Route, private val socket: StateSocket) : AbstractConnection() {
+class HttpConnection(private val route: Route, private val socket: StateSocket) : AbstractConnection() {
     private val state = RunningState()
 
     private var realSocket: Socket? = null
     private var inputStream: InputStream? = null
     private var outputStream: OutputStream? = null
+    private var requestStartTime: Long = -1
 
     override fun connect() {
         if (route.address.isTls) {
@@ -29,9 +29,16 @@ class Http1Connection(private val route: Route, private val socket: StateSocket)
         this.outputStream = realSocket?.getOutputStream()
     }
 
-    override fun validateAndUse(): Boolean {
+    override fun validateAndUse(): Int {
         synchronized(state) {
-            return state.validateAndUse()
+            if (!checkActivate()) {
+                return -1
+            }
+            return if (state.validateAndUse()) {
+                1
+            } else {
+                0
+            }
         }
     }
 
@@ -46,6 +53,7 @@ class Http1Connection(private val route: Route, private val socket: StateSocket)
 
     override fun finishRequest() {
         outputStream?.flush()
+        requestStartTime = System.currentTimeMillis()
     }
 
     override fun response(exchange: Exchange): Response {
@@ -55,5 +63,15 @@ class Http1Connection(private val route: Route, private val socket: StateSocket)
     override fun close() {
         this.inputStream?.close()
         this.outputStream?.close()
+    }
+
+    private fun checkActivate(): Boolean {
+        val currentTime = System.currentTimeMillis()
+        return if (requestStartTime > 0 && currentTime - requestStartTime > requestActivateTime) {
+            close()
+            false
+        } else {
+            true
+        }
     }
 }

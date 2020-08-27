@@ -26,7 +26,14 @@ class Client {
 
     class Call(private val client: Client, private val request: Request) {
         fun execute(): Response {
+            checkRequest(request)
              return Chain(client, request).execute()
+        }
+
+        private fun checkRequest(request: Request) {
+            if (request.scheme().isNullOrBlank() || request.host().isNullOrBlank()) {
+                throw IllegalArgumentException("Request schema and host must not null.")
+            }
         }
     }
 

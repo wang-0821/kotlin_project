@@ -2,7 +2,6 @@ package com.xiao.base.executor
 
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.Future
 import java.util.concurrent.FutureTask
 import java.util.concurrent.locks.ReentrantLock
 
@@ -20,21 +19,52 @@ class ExecutionQueue {
         this.executorService = executorService
     }
 
-    fun <T> submit(taskName: String?, callable: Callable<T>): Future<T> {
+    fun <T> submit(taskName: String, callable: Callable<T>): WrappedFuture<T> {
+        val name = if (taskName.isNullOrBlank()) {
+            "Queue-Callable"
+        } else {
+            taskName
+        }
+        return submitTask(name) {
+            FutureTask(callable)
+        }
+    }
+
+    fun <T> submit(callable: Callable<T>): WrappedFuture<T> {
+        return submit("", callable)
+    }
+
+    fun submit(taskName: String, runnable: Runnable) {
+        val name = if (taskName.isNullOrBlank()){
+            "Queue-Runnable"
+        } else {
+            taskName
+        }
+        submitTask(name) {
+            FutureTask<Void>(runnable, null)
+        }
+    }
+
+    fun submit(runnable: Runnable) {
+        submit("", runnable)
+    }
+
+    private fun <T> submitTask(taskName: String, futureTaskGenerator: () -> FutureTask<T>): WrappedFuture<T> {
         lock.lock()
-        val name = taskName ?: "Queue-Item"
         try {
-            val queueItem = QueueItem(name, FutureTask(callable))
-            return executorService.submit(callable)
+            val submitTime = System.currentTimeMillis()
+            val task = futureTaskGenerator()
+            val future = WrappedFuture<T>(task).apply {
+                this.submitTime = submitTime
+            }
+            val queueItem = SimpleQueueItem(taskName, task, future)
+            executorService.submit(queueItem)
+            return future
         } catch (e: Exception) {
             throw IllegalStateException(
                 "Submit task $taskName to $executionQueueName ExecutionQueue failed. ${e.message}")
         } finally {
             lock.unlock()
         }
-    }
-
-    fun <T> submit(callable: Callable<T>): Future<T> {
-        return submit(null, callable)
     }
 }

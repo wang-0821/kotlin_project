@@ -23,9 +23,13 @@ class ConnectionContext : AbstractContext(ConnectionContext) {
             val iterator = it.iterator()
             while (iterator.hasNext()) {
                 connection = iterator.next()
-                if (connection!!.validateAndUse()) {
+                val state = connection!!.validateAndUse()
+                if (state > 0) {
                     break
                 } else {
+                    if (state < 0) {
+                        iterator.remove()
+                    }
                     connection = null
                 }
             }

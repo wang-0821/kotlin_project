@@ -9,6 +9,7 @@ import com.xiao.rpc.io.Response
  */
 class RouteHandler(override val chain: Chain) : Handler, RouteContextAware {
     override fun handle(): Response {
+        val startTime = System.currentTimeMillis()
         var routes = get(chain.exchange.address)
         if (routes.isNullOrEmpty()) {
             routes = chain.exchange.address.acquireRoutes()
@@ -18,6 +19,8 @@ class RouteHandler(override val chain: Chain) : Handler, RouteContextAware {
         if (routes.isNullOrEmpty()) {
             throw NoSuchElementException("RouteHandler have no valid route.")
         }
+        val endTime = System.currentTimeMillis()
+        println("*** RouteHandler cost: ${endTime - startTime} ms")
         return chain.execute()
     }
 }

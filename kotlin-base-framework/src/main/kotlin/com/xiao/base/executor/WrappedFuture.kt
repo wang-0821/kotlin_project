@@ -1,6 +1,5 @@
 package com.xiao.base.executor
 
-import java.time.Instant
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
@@ -9,7 +8,9 @@ import java.util.concurrent.TimeUnit
  * @author lix wang
  */
 class WrappedFuture<T>(private val future: Future<T>) : Future<T> {
-
+    var submitTime: Long = -1
+    var timeTrace: ExecuteTimeTrace? = null
+    var retryTimeTraces: List<ExecuteTimeTrace>? = null
 
     override fun isDone(): Boolean {
         return future.isDone

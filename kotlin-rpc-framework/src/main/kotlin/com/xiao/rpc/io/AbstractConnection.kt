@@ -16,6 +16,8 @@ import javax.net.ssl.SSLSocket
  * @author lix wang
  */
 abstract class AbstractConnection : Connection {
+    protected val requestActivateTime = 60 * 1000
+
     override fun writeHeaders(request: Request) {
         val path = request.path()?.let {
             URLEncoder.encode(it, "UTF-8")
