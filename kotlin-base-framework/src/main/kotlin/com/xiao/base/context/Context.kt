@@ -1,8 +1,6 @@
 package com.xiao.base.context
 
-import com.xiao.base.exception.KtException
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  *
@@ -13,20 +11,18 @@ interface Context {
 
     val key: Key<*>
 
-    @Throws(KtException::class)
     fun <E : Context> register(key: Key<E>) {
-        lock.withLock {
+        synchronized(container) {
             if (get(key) == null) {
                 container[key] = this
             } else {
-                throw KtException().message("Context register key duplicate $key")
+                throw IllegalStateException("Context register key duplicate $key.")
             }
         }
     }
 
     companion object ContextContainer {
-        private var container = mutableMapOf<Key<*>, Context>()
-        private val lock = ReentrantLock()
+        private var container = ConcurrentHashMap<Key<*>, Context>()
 
         internal fun <E : Context> get(key: Key<E>): E? {
             val context = container[key]

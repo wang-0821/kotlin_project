@@ -1,7 +1,5 @@
 package com.xiao.rpc.context
 
-import com.xiao.base.annotation.ContextInject
-import com.xiao.base.context.AbstractContext
 import com.xiao.base.context.Context
 import com.xiao.rpc.Route
 import com.xiao.rpc.StateSocket
@@ -11,17 +9,18 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * @author lix wang
  */
-@ContextInject
-class SocketContext : AbstractContext(SocketContext) {
+class SocketContext : ClientContextAware<SocketContext> {
     companion object Key : Context.Key<SocketContext>
-    private val socketPool = ConcurrentHashMap<Route, MutableSet<StateSocket>>()
+    override val key: Context.Key<SocketContext>
+        get() = Key
+
+    private val socketPool = ConcurrentHashMap<Route, MutableList<StateSocket>>()
 
     fun poll(route: Route): StateSocket? {
         var socket: StateSocket? = null
         socketPool[route]?.let {
-            val iterator = it.iterator()
-            while (iterator.hasNext()) {
-                socket = iterator.next()
+            for (i in it.size - 1..0) {
+                socket = it[i]
                 if (socket!!.validateAndUse()) {
                     break
                 } else {
@@ -38,11 +37,15 @@ class SocketContext : AbstractContext(SocketContext) {
 
     fun add(socket: StateSocket): Boolean {
         synchronized(socketPool) {
-            return if (socketPool[socket.route] == null) {
-                socketPool[socket.route] = mutableSetOf(socket)
-                true
+            var list = socketPool[socket.route]
+            if (list == null) {
+                list = mutableListOf()
+                socketPool[socket.route] = list
+            }
+            return if (list.contains(socket)) {
+                false
             } else {
-                socketPool[socket.route]!!.add(socket)
+                list.add(socket)
             }
         }
     }

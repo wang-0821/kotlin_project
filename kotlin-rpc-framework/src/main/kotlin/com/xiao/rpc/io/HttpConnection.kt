@@ -11,7 +11,11 @@ import java.net.Socket
  *
  * @author lix wang
  */
-class HttpConnection(private val route: Route, private val socket: StateSocket) : AbstractConnection() {
+class HttpConnection(
+    private val route: Route,
+    private val socket: StateSocket,
+    private val exchange: Exchange
+) : AbstractConnection(exchange) {
     private val state = RunningState()
 
     private var realSocket: Socket? = null

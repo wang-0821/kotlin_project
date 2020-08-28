@@ -1,7 +1,5 @@
 package com.xiao.rpc.context
 
-import com.xiao.base.annotation.ContextInject
-import com.xiao.base.context.AbstractContext
 import com.xiao.base.context.Context
 import com.xiao.rpc.Address
 import com.xiao.rpc.Route
@@ -11,27 +9,31 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * @author lix wang
  */
-@ContextInject
-class RouteContext : AbstractContext(RouteContext) {
+class RouteContext : ClientContextAware<RouteContext> {
     companion object Key : Context.Key<RouteContext>
+    override val key: Context.Key<RouteContext>
+        get() = Key
 
-    private var routePool = ConcurrentHashMap<Address, MutableSet<Route>>()
+    private var routePool = ConcurrentHashMap<Address, MutableList<Route>>()
 
-    fun get(address: Address): Set<Route>? {
+    fun get(address: Address): List<Route>? {
         return routePool[address]
     }
 
-    fun add(address: Address, routes: Set<Route>): Boolean {
+    fun add(address: Address, routes: List<Route>): Boolean {
         synchronized(routePool) {
+            var list: MutableList<Route>? = null
             if (routePool[address] == null) {
-                routePool[address] = mutableSetOf()
+                list = mutableListOf()
+                routePool[address] = list
             }
-            return routePool[address]!!.addAll(routes)
+            val realRoutes = routes.filter { !list!!.contains(it) }
+            return list!!.addAll(realRoutes)
         }
     }
 
     fun add(address: Address, route: Route): Boolean {
-        return add(address, setOf(route))
+        return add(address, listOf(route))
     }
 
     fun remove(route: Route): Boolean {

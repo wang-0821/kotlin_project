@@ -3,6 +3,8 @@ package com.xiao.rpc.handler
 import com.xiao.rpc.Route
 import com.xiao.rpc.StateSocket
 import com.xiao.rpc.context.ConnectionContextAware
+import com.xiao.rpc.helper.ConnectionHelper
+import com.xiao.rpc.helper.RouteHelper
 import com.xiao.rpc.helper.SocketHelper
 import com.xiao.rpc.io.Response
 
@@ -10,10 +12,18 @@ import com.xiao.rpc.io.Response
  *
  * @author lix wang
  */
-class ConnectionHandler(override val chain: Chain) : Handler, ConnectionContextAware {
+class ConnectionHandler(override val chain: Chain) : Handler {
     override fun handle(): Response {
         val startTime = System.currentTimeMillis()
-        createConnection()
+        val routes = RouteHelper.findRoutes(chain.client)
+        check(routes.isNotEmpty()) {
+            "ConnectionHandler can not find valid routes."
+        }
+        val connection = ConnectionHelper.findConnection(chain.client, routes)
+        check(connection != null) {
+            "ConnectionHandler can not find valid connection."
+        }
+        chain.exchange.connection = connection
         val endTime = System.currentTimeMillis()
         println("*** ConnectionHandler cost: ${endTime - startTime} ms")
         return chain.execute()

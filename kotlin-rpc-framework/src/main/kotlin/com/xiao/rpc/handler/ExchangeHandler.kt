@@ -11,10 +11,9 @@ import com.xiao.rpc.io.Response
  */
 class ExchangeHandler(override val chain: Chain) : Handler {
     override fun handle(): Response {
-        if (chain.exchange.connection == null) {
-            throw NoSuchElementException("ExchangeHandler have no connection.")
+        check(chain.exchange.connection != null) {
+            "ExchangeHandler can not find valid connection."
         }
-
         return doRequest(chain.exchange.connection!!, chain.request, chain.exchange)
     }
 

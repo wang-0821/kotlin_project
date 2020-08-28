@@ -15,7 +15,7 @@ import javax.net.ssl.SSLSocket
  *
  * @author lix wang
  */
-abstract class AbstractConnection : Connection {
+abstract class AbstractConnection(exechange: Exchange) : Connection {
     protected val requestActivateTime = 60 * 1000
 
     override fun writeHeaders(request: Request) {

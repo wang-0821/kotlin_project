@@ -3,6 +3,7 @@ package com.xiao.rpc.io
 import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.Protocol
 import com.xiao.rpc.helper.IoHelper
+import com.xiao.rpc.listener.ResponseListener
 import java.io.Closeable
 import java.io.InputStream
 import java.nio.charset.Charset
@@ -15,29 +16,38 @@ class Response : Closeable {
     /**
      * Http version
      */
-    var protocol: Protocol
+    val protocol: Protocol
     /**
      * Http status code
      */
-    var status: Int
+    val status: Int
     /**
      * Http headers
      */
-    var headers: List<Header>
+    val headers: List<Header>
 
     /**
      * Http entity
      */
-    var content: InputStream
+    val content: InputStream
+
+    private val responseListener: ResponseListener?
 
     private val headerMap: Map<String, List<Header>>
 
-    constructor(protocol: Protocol, status: Int, headers: List<Header>, content: InputStream) {
+    constructor(
+        protocol: Protocol,
+        status: Int,
+        headers: List<Header>,
+        content: InputStream,
+        responseListener: ResponseListener? = null
+    ) {
         this.protocol = protocol
         this.status = status
         this.headers = headers
         this.content = content
         this.headerMap = headers.groupBy { it.name.toUpperCase() }
+        this.responseListener = responseListener
     }
 
     fun contentAsString(): String {
@@ -58,6 +68,8 @@ class Response : Closeable {
         } else {
             IoHelper.contentAsString(content, charset!!)
         }
+        close()
+        responseListener?.afterResponse()
         val endTime = System.currentTimeMillis()
         println("*** Content to string cost: ${endTime - startTime} ms")
         return result

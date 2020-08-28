@@ -1,12 +1,11 @@
 package com.xiao.rpc
 
 import com.xiao.base.context.ContextScanner
-import com.xiao.rpc.factory.SslSocketFactorySelector
+import com.xiao.rpc.context.ClientContextPool
 import com.xiao.rpc.handler.Chain
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
 import com.xiao.rpc.tool.UrlParser
-import javax.net.ssl.SSLContext
 
 /**
  *
@@ -14,10 +13,9 @@ import javax.net.ssl.SSLContext
  */
 class Client {
     var connectTimeout = 5000
-    private set
     var readTimeout = 5000
-    private set
     var writeTimeout = 5000
+    var clientContextPool: ClientContextPool? = null
     private set
 
     init {
@@ -41,19 +39,8 @@ class Client {
         return Call(this, request)
     }
 
-    fun connectTimeout(mills: Int): Client {
-        this.connectTimeout = mills
-        return this
-    }
-
-    fun readTimeout(mills: Int): Client {
-        this.readTimeout = mills
-        return this
-    }
-
-    fun writeTimeout(mills: Int): Client {
-        this.writeTimeout = mills
-        return this
+    fun clientContext(clientContextPool: ClientContextPool) {
+        this.clientContextPool = clientContextPool
     }
 
     private fun refreshContext() {

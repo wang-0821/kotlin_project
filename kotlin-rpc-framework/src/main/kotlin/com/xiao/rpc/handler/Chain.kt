@@ -1,6 +1,5 @@
 package com.xiao.rpc.handler
 
-import com.xiao.base.exception.KtException
 import com.xiao.rpc.Address
 import com.xiao.rpc.Client
 import com.xiao.rpc.factory.ChainHandlerFactorySelector
@@ -13,7 +12,7 @@ import com.xiao.rpc.io.Response
  *
  * @author lix wang
  */
-class Chain(private val client: Client, val request: Request) {
+class Chain(val client: Client, val request: Request) {
     private var handlers: List<Handler> = ChainHandlerFactorySelector.select().create(this)
     private var index = 0
     lateinit var exchange: Exchange
@@ -24,7 +23,6 @@ class Chain(private val client: Client, val request: Request) {
         }
     }
 
-    @Throws(KtException::class)
     fun execute(): Response {
         if (index > handlers.size) {
             throw IndexOutOfBoundsException("Chain handler execute out of bounds.")

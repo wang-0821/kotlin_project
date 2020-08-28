@@ -1,7 +1,5 @@
 package com.xiao.rpc.context
 
-import com.xiao.base.annotation.ContextInject
-import com.xiao.base.context.AbstractContext
 import com.xiao.base.context.Context
 import com.xiao.rpc.Route
 import com.xiao.rpc.io.Connection
@@ -11,25 +9,23 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * @author lix wang
  */
-@ContextInject
-class ConnectionContext : AbstractContext(ConnectionContext) {
+class ConnectionContext : ClientContextAware<ConnectionContext> {
     companion object Key : Context.Key<ConnectionContext>
+    override val key: Context.Key<ConnectionContext>
+        get() = Key
 
-    private val connectionPool = ConcurrentHashMap<Route, MutableSet<Connection>>()
+    private val connectionPool = ConcurrentHashMap<Route, MutableList<Connection>>()
 
     fun poll(route: Route): Connection? {
+        listOf<Any>(1, 2)
         var connection: Connection? = null
         connectionPool[route]?.let {
-            val iterator = it.iterator()
-            while (iterator.hasNext()) {
-                connection = iterator.next()
+            for (i in it.size - 1..0) {
+                connection = it[i]
                 val state = connection!!.validateAndUse()
                 if (state > 0) {
                     break
                 } else {
-                    if (state < 0) {
-                        iterator.remove()
-                    }
                     connection = null
                 }
             }
@@ -37,13 +33,14 @@ class ConnectionContext : AbstractContext(ConnectionContext) {
         return connection
     }
 
-    fun add(connection: Connection): Boolean {
+    fun add(connection: Connection) {
         synchronized(connectionPool) {
-            return if (connectionPool[connection.route()] == null) {
-                connectionPool[connection.route()] = mutableSetOf(connection)
-                true
+            var connections = connectionPool[connection.route()]
+            if (connections == null) {
+                connections = mutableListOf(connection)
+                connectionPool[connection.route()] = connections
             } else {
-                connectionPool[connection.route()]!!.add(connection)
+                connections.add(connection)
             }
         }
     }

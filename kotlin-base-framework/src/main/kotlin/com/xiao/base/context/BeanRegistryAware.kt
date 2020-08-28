@@ -1,7 +1,5 @@
 package com.xiao.base.context
 
-import com.xiao.base.exception.KtException
-
 /**
  *
  * @author lix wang
@@ -15,12 +13,10 @@ interface BeanRegistryAware : ContextAware {
         return get(BeanRegistry.Key)?.getByType(clazz)
     }
 
-    @Throws(KtException::class)
     fun <T : Any> registerSingleton(bean: T) {
         get(BeanRegistry.Key)?.registerSingleton(bean)
     }
 
-    @Throws(KtException::class)
     fun <T : Any> registerSingleton(name: String, bean: T) {
         get(BeanRegistry.Key)?.registerSingleton(name, bean)
     }

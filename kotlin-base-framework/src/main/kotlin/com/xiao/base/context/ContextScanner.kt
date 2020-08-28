@@ -4,14 +4,19 @@ import com.xiao.base.annotation.AnnotatedKtResource
 import com.xiao.base.annotation.AnnotationScan
 import com.xiao.base.annotation.Component
 import com.xiao.base.annotation.ContextInject
+import com.xiao.base.annotation.extractAnnotations
 import com.xiao.base.resource.KtResource
 import com.xiao.base.resource.PathResourceScanner
 
 /**
+ * [scanAndExecute]只用来刷新一次
  *
  * @author lix wang
  */
 object ContextScanner : BeanRegistryAware {
+    var annotatedKtResources = listOf<AnnotatedKtResource>()
+    var ktResources = listOf<KtResource>()
+
     @Volatile
     private var refreshed = false
 
@@ -32,12 +37,13 @@ object ContextScanner : BeanRegistryAware {
                 return
             }
             refreshed = true
-            handleResourceProcessors(scan(basePackage))
+            ktResources = PathResourceScanner().scanByPackage(basePackage)
+            annotatedKtResources = scan(ktResources)
+            handleResourceProcessors(annotatedKtResources)
         }
     }
 
-    private fun scan(basePackage: String): List<AnnotatedKtResource> {
-        val resources = PathResourceScanner().scanByPackage(basePackage)
+    private fun scan(resources: List<KtResource>): List<AnnotatedKtResource> {
         val annotationResources = mutableListOf<AnnotatedKtResource>()
         for (resource in resources) {
             filterResource(resource)?.let {
@@ -92,19 +98,5 @@ object ContextScanner : BeanRegistryAware {
             }
         }
         return null
-    }
-
-    private fun <T : Class<out Any>> T.extractAnnotations(): List<Annotation> {
-        val result = mutableListOf<Annotation>()
-        return this.extractAnnotations(result)
-    }
-
-    private fun <T : Class<out Any>> T.extractAnnotations(result: MutableList<Annotation>): List<Annotation> {
-        val annotations = this.annotations.filter { !result.contains(it) }
-        result.addAll(annotations)
-        for (annotation in annotations) {
-            annotation.annotationClass.java.extractAnnotations(result)
-        }
-        return result
     }
 }

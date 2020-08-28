@@ -1,8 +1,6 @@
 package com.xiao.base.context
 
 import com.xiao.base.annotation.ContextInject
-import com.xiao.base.exception.HttpStatus
-import com.xiao.base.exception.KtException
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -14,13 +12,10 @@ interface BeanRegistry : Context {
 
     fun <T : Any> getByName(beanName: String): T?
 
-    @Throws(KtException::class)
     fun <T : Any> register(beanName: String, bean: T)
 
-    @Throws(KtException::class)
     fun <T : Any> registerSingleton(bean: T)
 
-    @Throws(KtException::class)
     fun <T : Any> registerSingleton(name: String, bean: T)
 
     companion object Key : Context.Key<BeanRegistry>
@@ -30,13 +25,12 @@ interface BeanRegistry : Context {
 @Suppress("UNCHECKED_CAST")
 class ContextBeanFactory : BeanRegistry, AbstractContext(BeanRegistry) {
     private val contextBeanPool = ConcurrentHashMap<String, Any>()
-    private val beanNamesByType = ConcurrentHashMap<Class<*>, MutableSet<String>>()
+    private val beanNamesByType = mutableMapOf<Class<*>, MutableSet<String>>()
 
     override fun <T : Any> getByType(clazz: Class<T>): T? {
         return beanNamesByType[clazz]?.let {
             if (it.size > 1) {
-                throw KtException().statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-                    .message("Duplicate bean of ${clazz.simpleName}.")
+                throw IllegalStateException("Duplicate bean of ${clazz.simpleName}.")
             } else {
                 contextBeanPool[it.iterator().next()] as? T
             }
@@ -47,30 +41,32 @@ class ContextBeanFactory : BeanRegistry, AbstractContext(BeanRegistry) {
         return contextBeanPool[beanName] as? T
     }
 
-    @Synchronized override fun <T : Any> register(beanName: String, bean: T) {
-        beanNamesByType[bean::class.java]?.let {
-            if (!it.add(beanName)) {
-                throw KtException().statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-                    .message("Duplicate beanName of ${beanName}")
+    override fun <T : Any> register(beanName: String, bean: T) {
+        synchronized(contextBeanPool) {
+            beanNamesByType[bean::class.java]?.let {
+                if (!it.add(beanName)) {
+                    throw IllegalStateException("Duplicate beanName of $beanName")
+                }
+            } ?: kotlin.run {
+                beanNamesByType[bean::class.java] = mutableSetOf(beanName)
             }
-        } ?: kotlin.run {
-            beanNamesByType[bean::class.java] = mutableSetOf(beanName)
-        }
 
-        contextBeanPool[beanName] = bean
+            contextBeanPool[beanName] = bean
+        }
     }
 
-    @Synchronized override fun <T : Any> registerSingleton(bean: T) {
+    override fun <T : Any> registerSingleton(bean: T) {
         register(bean::class.java.simpleName, bean)
     }
 
-    @Synchronized override fun <T : Any> registerSingleton(name: String, bean: T) {
-        beanNamesByType[bean::class.java]?.let {
-            throw KtException().statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR)
-                .message("Duplicate bean of ${bean::class.java.simpleName}")
-        } ?: kotlin.run {
-            beanNamesByType[bean::class.java] = mutableSetOf(name)
-            contextBeanPool[name] = bean
+    override fun <T : Any> registerSingleton(name: String, bean: T) {
+        synchronized(contextBeanPool) {
+            beanNamesByType[bean::class.java]?.let {
+                throw IllegalStateException("Duplicate bean of ${bean::class.java.simpleName}")
+            } ?: kotlin.run {
+                beanNamesByType[bean::class.java] = mutableSetOf(name)
+                contextBeanPool[name] = bean
+            }
         }
     }
 }

@@ -6,11 +6,9 @@ package com.xiao.base.context
  */
 interface ContextAware : Context {
     override val key: Context.Key<*>
-        get() = Key
+        get() = object : Context.Key<ContextAware> {}
 
     fun <E : Context> get(key: Context.Key<E>): E? {
         return Context.get(key)
     }
-
-    private companion object Key : Context.Key<ContextAware>
 }

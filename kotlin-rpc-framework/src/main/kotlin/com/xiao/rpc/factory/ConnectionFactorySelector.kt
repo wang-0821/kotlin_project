@@ -14,11 +14,7 @@ object ConnectionFactorySelector : AbstractSelector<ConnectionFactory>() {
         return object : ConnectionFactory {
             override fun create(socket: StateSocket, protocol: Protocol): Connection {
                 try {
-                    val result = if (protocol == Protocol.HTTP_2) {
-                        Http2Connection()
-                    } else {
-                        HttpConnection(socket.route, socket)
-                    }
+                    val result = HttpConnection(socket.route, socket)
                     result.connect()
                     return result
                 } catch (e : Exception) {

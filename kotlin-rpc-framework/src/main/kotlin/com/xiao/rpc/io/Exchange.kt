@@ -10,17 +10,9 @@ import com.xiao.rpc.context.RouteContextAware
  */
 class Exchange : RouteContextAware {
     lateinit var address: Address
-    var routes: Set<Route>? = null
+    var routes: List<Route>? = null
     var connection: Connection? = null
     var connectTimeout: Int = -1
     var readTimeout: Int = -1
     var writeTimeout: Int = -1
-
-    fun acquireRoutes(): Set<Route> {
-        var result = routes ?: get(address)
-        if (result.isNullOrEmpty()) {
-            result = address.acquireRoutes()
-        }
-        return result
-    }
 }
