@@ -69,7 +69,6 @@ class Response : Closeable {
             IoHelper.contentAsString(content, charset!!)
         }
         close()
-        responseListener?.afterResponse()
         val endTime = System.currentTimeMillis()
         println("*** Content to string cost: ${endTime - startTime} ms")
         return result
@@ -77,5 +76,6 @@ class Response : Closeable {
 
     override fun close() {
         content.close()
+        responseListener?.afterResponse()
     }
 }

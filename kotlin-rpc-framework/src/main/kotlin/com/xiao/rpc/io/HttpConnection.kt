@@ -13,9 +13,9 @@ import java.net.Socket
  */
 class HttpConnection(
     private val route: Route,
-    private val socket: StateSocket,
-    private val exchange: Exchange
-) : AbstractConnection(exchange) {
+    private val socket: StateSocket
+) : AbstractConnection() {
+    var exchange: Exchange? = null
     private val state = RunningState()
 
     private var realSocket: Socket? = null
@@ -67,6 +67,9 @@ class HttpConnection(
     override fun close() {
         this.inputStream?.close()
         this.outputStream?.close()
+    }
+
+    override fun cleanup() {
     }
 
     private fun checkActivate(): Boolean {

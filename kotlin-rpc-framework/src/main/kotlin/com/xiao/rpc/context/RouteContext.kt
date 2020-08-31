@@ -3,12 +3,14 @@ package com.xiao.rpc.context
 import com.xiao.base.context.Context
 import com.xiao.rpc.Address
 import com.xiao.rpc.Route
+import com.xiao.rpc.annotation.ClientContext
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  *
  * @author lix wang
  */
+@ClientContext
 class RouteContext : ClientContextAware<RouteContext> {
     companion object Key : Context.Key<RouteContext>
     override val key: Context.Key<RouteContext>

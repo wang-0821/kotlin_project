@@ -12,8 +12,8 @@ interface SocketContextAware : ClientContextAware<SocketContext> {
     override val key: Context.Key<SocketContext>
         get() = SocketContext.Key
 
-    fun poll(clientContextKey: Context.Key<*>, route: Route): StateSocket? {
-        return getContext(clientContextKey)?.poll(route)
+    fun get(clientContextKey: Context.Key<*>, route: Route): StateSocket? {
+        return getContext(clientContextKey)?.get(route)
     }
 
     fun remove(clientContextKey: Context.Key<*>, socket: StateSocket): Boolean {

@@ -5,6 +5,7 @@ import com.xiao.base.annotation.AnnotationScan
 import com.xiao.base.annotation.Component
 import com.xiao.base.annotation.ContextInject
 import com.xiao.base.annotation.extractAnnotations
+import com.xiao.base.context.ContextScanner.scanAndExecute
 import com.xiao.base.resource.KtResource
 import com.xiao.base.resource.PathResourceScanner
 
@@ -15,7 +16,6 @@ import com.xiao.base.resource.PathResourceScanner
  */
 object ContextScanner : BeanRegistryAware {
     var annotatedKtResources = listOf<AnnotatedKtResource>()
-    var ktResources = listOf<KtResource>()
 
     @Volatile
     private var refreshed = false
@@ -37,8 +37,7 @@ object ContextScanner : BeanRegistryAware {
                 return
             }
             refreshed = true
-            ktResources = PathResourceScanner().scanByPackage(basePackage)
-            annotatedKtResources = scan(ktResources)
+            annotatedKtResources = scan(PathResourceScanner().scanByPackage(basePackage))
             handleResourceProcessors(annotatedKtResources)
         }
     }

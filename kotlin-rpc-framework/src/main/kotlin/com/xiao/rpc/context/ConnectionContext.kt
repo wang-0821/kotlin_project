@@ -2,6 +2,7 @@ package com.xiao.rpc.context
 
 import com.xiao.base.context.Context
 import com.xiao.rpc.Route
+import com.xiao.rpc.annotation.ClientContext
 import com.xiao.rpc.io.Connection
 import java.util.concurrent.ConcurrentHashMap
 
@@ -9,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * @author lix wang
  */
+@ClientContext
 class ConnectionContext : ClientContextAware<ConnectionContext> {
     companion object Key : Context.Key<ConnectionContext>
     override val key: Context.Key<ConnectionContext>
@@ -16,8 +18,7 @@ class ConnectionContext : ClientContextAware<ConnectionContext> {
 
     private val connectionPool = ConcurrentHashMap<Route, MutableList<Connection>>()
 
-    fun poll(route: Route): Connection? {
-        listOf<Any>(1, 2)
+    fun get(route: Route): Connection? {
         var connection: Connection? = null
         connectionPool[route]?.let {
             for (i in it.size - 1..0) {

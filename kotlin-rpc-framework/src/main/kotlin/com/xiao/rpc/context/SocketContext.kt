@@ -3,12 +3,14 @@ package com.xiao.rpc.context
 import com.xiao.base.context.Context
 import com.xiao.rpc.Route
 import com.xiao.rpc.StateSocket
+import com.xiao.rpc.annotation.ClientContext
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  *
  * @author lix wang
  */
+@ClientContext
 class SocketContext : ClientContextAware<SocketContext> {
     companion object Key : Context.Key<SocketContext>
     override val key: Context.Key<SocketContext>
@@ -16,7 +18,7 @@ class SocketContext : ClientContextAware<SocketContext> {
 
     private val socketPool = ConcurrentHashMap<Route, MutableList<StateSocket>>()
 
-    fun poll(route: Route): StateSocket? {
+    fun get(route: Route): StateSocket? {
         var socket: StateSocket? = null
         socketPool[route]?.let {
             for (i in it.size - 1..0) {

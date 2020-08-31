@@ -20,7 +20,7 @@ class PathResourceScanner(private val resourceLoader: ResourceLoader = DefaultRe
         val resourceUrls: Enumeration<URL> = classLoader?.getResources(realBasePackage)
             ?: ClassLoader.getSystemResources(realBasePackage)
         while (resourceUrls.hasMoreElements()) {
-            var rootFile = File(resourceUrls.nextElement().toURI().schemeSpecificPart)
+            val rootFile = File(resourceUrls.nextElement().toURI().schemeSpecificPart)
             val targetFiles = findResourceFiles(rootFile, resourceLoader.getMatcher())
             result.addAll(retrieveValidateResources(basePackage, rootFile.absolutePath, targetFiles))
         }

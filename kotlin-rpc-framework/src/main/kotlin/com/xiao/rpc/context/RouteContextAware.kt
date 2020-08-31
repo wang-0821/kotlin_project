@@ -16,7 +16,7 @@ interface RouteContextAware : ClientContextAware<RouteContext> {
         return getContext(clientContextKey)?.get(address)
     }
 
-    fun add(clientContextKey: Context.Key<*>, address: Address, routes: Set<Route>): Boolean {
+    fun add(clientContextKey: Context.Key<*>, address: Address, routes: List<Route>): Boolean {
         return getContext(clientContextKey)?.add(address, routes) ?: false
     }
 

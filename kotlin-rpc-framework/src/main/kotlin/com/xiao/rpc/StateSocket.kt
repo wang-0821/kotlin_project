@@ -1,5 +1,6 @@
 package com.xiao.rpc
 
+import com.xiao.rpc.cleaner.Cleaner
 import com.xiao.rpc.factory.ConnectionFactorySelector
 import com.xiao.rpc.io.Connection
 import java.io.IOException
@@ -10,7 +11,7 @@ import java.net.SocketAddress
  *
  * @author lix wang
  */
-class StateSocket(val route: Route) : Socket() {
+class StateSocket(val route: Route) : Socket(), Cleaner {
     private val state = RunningState()
 
     @Throws(IOException::class)
@@ -31,5 +32,8 @@ class StateSocket(val route: Route) : Socket() {
     fun acquireConnection(): Connection {
         val connectionFactory = ConnectionFactorySelector.select()
         return connectionFactory.create(this)
+    }
+
+    override fun cleanup() {
     }
 }

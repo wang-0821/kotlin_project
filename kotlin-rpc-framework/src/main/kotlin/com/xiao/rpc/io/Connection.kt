@@ -1,13 +1,14 @@
 package com.xiao.rpc.io
 
 import com.xiao.rpc.Route
+import com.xiao.rpc.cleaner.Cleaner
 import java.io.Closeable
 
 /**
  *
  * @author lix wang
  */
-interface Connection : Closeable {
+interface Connection : Closeable, Cleaner {
     fun connect()
 
     /**

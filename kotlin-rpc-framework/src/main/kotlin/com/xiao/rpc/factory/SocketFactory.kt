@@ -8,5 +8,5 @@ import com.xiao.rpc.StateSocket
  * @author lix wang
  */
 interface SocketFactory {
-    fun createSocket(route: Route): StateSocket
+    fun createSocket(route: Route, connectTimeout: Int): StateSocket
 }
