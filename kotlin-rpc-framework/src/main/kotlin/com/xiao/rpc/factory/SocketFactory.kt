@@ -1,12 +1,12 @@
 package com.xiao.rpc.factory
 
 import com.xiao.rpc.Route
-import com.xiao.rpc.StateSocket
+import java.net.Socket
 
 /**
  *
  * @author lix wang
  */
 interface SocketFactory {
-    fun createSocket(route: Route, connectTimeout: Int): StateSocket
+    fun createSocket(route: Route, connectTimeout: Int): Socket
 }

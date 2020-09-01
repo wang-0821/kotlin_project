@@ -7,7 +7,7 @@ import kotlin.reflect.KClass
  *
  * @author lix wang
  */
-class AnnotatedKtResource(val resource: KtResource, private val annotations: List<Annotation>) {
+class AnnotatedKtResource(val resource: KtResource, val annotations: List<Annotation>) {
     fun <T : Annotation> isAnnotated(annotation: KClass<T>): Boolean {
         return annotations.any { it.annotationClass == annotation }
     }

@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
  * @author lix wang
  */
 @ClientContext
-class ConnectionContext : ClientContextAware<ConnectionContext> {
+class ConnectionContext(private val contextConfig: ClientContextConfig) : Context {
     companion object Key : Context.Key<ConnectionContext>
     override val key: Context.Key<ConnectionContext>
         get() = Key
@@ -23,8 +23,7 @@ class ConnectionContext : ClientContextAware<ConnectionContext> {
         connectionPool[route]?.let {
             for (i in it.size - 1..0) {
                 connection = it[i]
-                val state = connection!!.validateAndUse()
-                if (state > 0) {
+                if (connection!!.tryUse()) {
                     break
                 } else {
                     connection = null
@@ -36,6 +35,9 @@ class ConnectionContext : ClientContextAware<ConnectionContext> {
 
     fun add(connection: Connection) {
         synchronized(connectionPool) {
+            if (isFull(connection.route())) {
+                return
+            }
             var connections = connectionPool[connection.route()]
             if (connections == null) {
                 connections = mutableListOf(connection)
@@ -44,5 +46,10 @@ class ConnectionContext : ClientContextAware<ConnectionContext> {
                 connections.add(connection)
             }
         }
+    }
+
+    private fun isFull(route: Route): Boolean {
+        val pooledSize = connectionPool[route]?.size ?: 0
+        return contextConfig.singleCorePoolSize <= pooledSize
     }
 }

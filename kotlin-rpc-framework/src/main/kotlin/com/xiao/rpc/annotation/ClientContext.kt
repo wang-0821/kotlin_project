@@ -1,5 +1,7 @@
 package com.xiao.rpc.annotation
 
+import com.xiao.base.annotation.AnnotationScan
+
 /**
  * Mark a kind of client context which implements [com.xiao.rpc.context.ClientContextAware] effective.
  *
@@ -7,4 +9,5 @@ package com.xiao.rpc.annotation
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
+@AnnotationScan
 annotation class ClientContext

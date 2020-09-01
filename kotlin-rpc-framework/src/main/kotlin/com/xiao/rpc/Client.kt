@@ -2,11 +2,13 @@ package com.xiao.rpc
 
 import com.xiao.base.context.ContextScanner
 import com.xiao.rpc.context.ClientContextPool
+import com.xiao.rpc.context.DefaultClientContextPool
 import com.xiao.rpc.handler.Chain
 import com.xiao.rpc.io.Exchange
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
 import com.xiao.rpc.tool.UrlParser
+import com.xiao.rpc.tool.packageName
 
 /**
  *
@@ -58,25 +60,26 @@ class Client {
         return Call(this, request, builder)
     }
 
-    fun clientContext(clientContextPool: ClientContextPool) {
+    fun clientContextPool(clientContextPool: ClientContextPool) {
         this.clientContextPool = clientContextPool
     }
 
     private fun refreshContext() {
-        ContextScanner.scanAndExecute(getPackageName(this::class.java.name))
+        ContextScanner.scanAndExecute(BASE_SCAN_PACKAGE)
     }
 
     companion object  {
         const val DEFAULT_TIMEOUT = 5000
-
-        private fun getPackageName(fqClassName: String): String {
-            val lastDotIndex: Int = fqClassName.lastIndexOf(".")
-            return if (lastDotIndex != -1) fqClassName.substring(0, lastDotIndex) else ""
-        }
+        val BASE_SCAN_PACKAGE = this::class.packageName()
     }
 }
 
 fun main() {
-    val response = Client().newCall(UrlParser.parseUrl("https://www.baidu.com")).execute()
+    val client = Client()
+    val contextPool = DefaultClientContextPool()
+    client.clientContextPool(contextPool)
+    contextPool.start()
+
+    val response = client.newCall(UrlParser.parseUrl("https://www.baidu.com")).execute()
     println("Response*********** ${response.contentAsString()} *******")
 }

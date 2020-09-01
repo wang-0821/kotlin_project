@@ -3,7 +3,6 @@ package com.xiao.rpc.io
 import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.Protocol
 import com.xiao.rpc.helper.IoHelper
-import com.xiao.rpc.listener.ResponseListener
 import java.io.Closeable
 import java.io.InputStream
 import java.nio.charset.Charset
@@ -31,23 +30,19 @@ class Response : Closeable {
      */
     val content: InputStream
 
-    private val responseListener: ResponseListener?
-
     private val headerMap: Map<String, List<Header>>
 
     constructor(
         protocol: Protocol,
         status: Int,
         headers: List<Header>,
-        content: InputStream,
-        responseListener: ResponseListener? = null
+        content: InputStream
     ) {
         this.protocol = protocol
         this.status = status
         this.headers = headers
         this.content = content
         this.headerMap = headers.groupBy { it.name.toUpperCase() }
-        this.responseListener = responseListener
     }
 
     fun contentAsString(): String {
@@ -76,6 +71,5 @@ class Response : Closeable {
 
     override fun close() {
         content.close()
-        responseListener?.afterResponse()
     }
 }

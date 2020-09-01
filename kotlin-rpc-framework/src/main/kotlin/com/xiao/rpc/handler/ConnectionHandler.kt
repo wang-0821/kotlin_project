@@ -11,7 +11,7 @@ import com.xiao.rpc.io.Response
 class ConnectionHandler(override val chain: Chain) : Handler {
     override fun handle(): Response {
         val startTime = System.currentTimeMillis()
-        val routes = RouteHelper.findRoutes(chain.client, chain.exchange.address)
+        val routes = chain.exchange.routes ?: RouteHelper.findRoutes(chain.client, chain.exchange.address)
         check(routes.isNotEmpty()) {
             "ConnectionHandler can not find valid routes."
         }

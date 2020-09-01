@@ -8,23 +8,28 @@ import com.xiao.rpc.Route
  *
  * @author lix wang
  */
-interface RouteContextAware : ClientContextAware<RouteContext> {
-    override val key: Context.Key<RouteContext>
-        get() = RouteContext.Key
-
-    fun get(clientContextKey: Context.Key<*>, address: Address): List<Route>? {
-        return getContext(clientContextKey)?.get(address)
+interface RouteContextAware : ClientContextAware {
+    fun getRoute(contextPoolKey: Context.Key<*>, address: Address): List<Route>? {
+        return context(contextPoolKey)?.get(address)
     }
 
-    fun add(clientContextKey: Context.Key<*>, address: Address, routes: List<Route>): Boolean {
-        return getContext(clientContextKey)?.add(address, routes) ?: false
+    fun addRoutes(contextPoolKey: Context.Key<*>, address: Address, routes: List<Route>): Boolean {
+        return context(contextPoolKey)?.add(address, routes) ?: false
     }
 
-    fun add(clientContextKey: Context.Key<*>, address: Address, route: Route): Boolean {
-        return getContext(clientContextKey)?.add(address, route) ?: false
+    fun addRoute(contextPoolKey: Context.Key<*>, address: Address, route: Route): Boolean {
+        return context(contextPoolKey)?.add(address, route) ?: false
     }
 
-    fun remove(clientContextKey: Context.Key<*>, route: Route): Boolean {
-        return getContext(clientContextKey)?.remove(route) ?: false
+    fun removeRoute(contextPoolKey: Context.Key<*>, route: Route): Boolean {
+        return context(contextPoolKey)?.remove(route) ?: false
+    }
+
+    private fun context(contextPoolKey: Context.Key<*>): RouteContext? {
+        return getContext(contextPoolKey, KEY) as RouteContext?
+    }
+
+    companion object {
+        val KEY = RouteContext.Key
     }
 }

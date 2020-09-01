@@ -14,13 +14,12 @@ import java.net.InetSocketAddress
 object RouteHelper : RouteContextAware {
     fun findRoutes(client: Client, address: Address): List<Route> {
         var routes: List<Route>?
-
         return if (client.clientContextPool != null) {
-            routes = get(client.clientContextPool!!.key, address)
+            routes = getRoute(client.clientContextPool!!.key, address)
             if (routes.isNullOrEmpty()) {
                 routes = createRoutes(address)
                 if (routes.isNotEmpty()) {
-                    add(client.clientContextPool!!.key, address, routes)
+                    addRoutes(client.clientContextPool!!.key, address, routes)
                 }
             }
             routes

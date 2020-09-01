@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentHashMap
  * @author lix wang
  */
 @ClientContext
-class RouteContext : ClientContextAware<RouteContext> {
+class RouteContext(private val contextConfig: ClientContextConfig) : Context {
     companion object Key : Context.Key<RouteContext>
     override val key: Context.Key<RouteContext>
         get() = Key
@@ -24,6 +24,9 @@ class RouteContext : ClientContextAware<RouteContext> {
 
     fun add(address: Address, routes: List<Route>): Boolean {
         synchronized(routePool) {
+            if (isFull(address)) {
+                return false
+            }
             var list: MutableList<Route>? = null
             if (routePool[address] == null) {
                 list = mutableListOf()
@@ -40,5 +43,10 @@ class RouteContext : ClientContextAware<RouteContext> {
 
     fun remove(route: Route): Boolean {
         return routePool[route.address]?.remove(route) ?: false
+    }
+
+    private fun isFull(address: Address): Boolean {
+        val pooledSize = routePool[address]?.size ?: 0
+        return contextConfig.singleCorePoolSize <= pooledSize
     }
 }

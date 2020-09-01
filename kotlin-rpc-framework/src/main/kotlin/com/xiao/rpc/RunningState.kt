@@ -1,31 +1,27 @@
 package com.xiao.rpc
 
-import java.util.concurrent.atomic.AtomicInteger
-
 /**
  *
  * @author lix wang
  */
 class RunningState {
-    private val state = AtomicInteger(INITIAL)
+    @Volatile private var state: Int = INITIAL
+    var lastUsingMills: Long = System.currentTimeMillis()
 
-    fun state() = this.state.get()
-
-    fun validateAndUse(): Boolean {
-        var result = false
-        if (state() < RUNNING) {
-            result = changeState(RUNNING)
-        }
-        return result
+    fun updateState(state: Int) {
+        this.state = state
     }
 
-    fun changeState(updateState: Int, originState: Int? = null, block: (() -> Unit)? = null): Boolean {
-        val currentState = originState ?: state()
-        if (block != null) {
-            block()
+    fun updateState(originState: Int, newState: Int): Boolean {
+        return if (state == originState) {
+            state = newState
+            true
+        } else {
+            false
         }
-        return this.state.compareAndSet(currentState, updateState)
     }
+
+    fun state() = state
 
     companion object {
         val INITIAL = -1

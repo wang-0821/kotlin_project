@@ -8,15 +8,20 @@ import com.xiao.rpc.io.Connection
  *
  * @author lix wang
  */
-interface ConnectionContextAware : ClientContextAware<ConnectionContext> {
-    override val key: Context.Key<ConnectionContext>
-        get() = ConnectionContext.Key
-
-    fun get(clientContextKey: Context.Key<*>, route: Route): Connection? {
-        return getContext(clientContextKey)?.get(route)
+interface ConnectionContextAware : ClientContextAware {
+    fun getConnection(contextPoolKey: Context.Key<*>, route: Route): Connection? {
+        return context(contextPoolKey)?.get(route)
     }
 
-    fun add(clientContextKey: Context.Key<*>, connection: Connection) {
-        getContext(clientContextKey)?.add(connection)
+    fun addConnection(contextPoolKey: Context.Key<*>, connection: Connection) {
+        context(contextPoolKey)?.add(connection)
+    }
+
+    fun context(contextPoolKey: Context.Key<*>): ConnectionContext? {
+        return getContext(contextPoolKey, KEY) as ConnectionContext?
+    }
+
+    companion object {
+        val KEY = ConnectionContext.Key
     }
 }

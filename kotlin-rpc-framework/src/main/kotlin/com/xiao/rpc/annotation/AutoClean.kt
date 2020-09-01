@@ -1,6 +1,6 @@
 package com.xiao.rpc.annotation
 
-import com.xiao.base.annotation.Component
+import com.xiao.base.annotation.AnnotationScan
 
 /**
  * This annotation mark a [com.xiao.rpc.cleaner.Cleaner] effective.
@@ -9,7 +9,7 @@ import com.xiao.base.annotation.Component
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
-@Component
+@AnnotationScan
 annotation class AutoClean(
     /**
      * mills between two cleanup

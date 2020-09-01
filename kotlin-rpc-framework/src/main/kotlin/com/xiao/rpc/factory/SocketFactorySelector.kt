@@ -1,7 +1,7 @@
 package com.xiao.rpc.factory
 
 import com.xiao.rpc.Route
-import com.xiao.rpc.StateSocket
+import java.net.Socket
 
 /**
  *
@@ -10,8 +10,8 @@ import com.xiao.rpc.StateSocket
 object SocketFactorySelector : AbstractSelector<SocketFactory>() {
     override fun selectDefault(): SocketFactory {
         return object : SocketFactory {
-            override fun createSocket(route: Route, connectTimeout: Int): StateSocket {
-                val socket = StateSocket(route)
+            override fun createSocket(route: Route, connectTimeout: Int): Socket {
+                val socket = Socket()
                 socket.connect(route.inetSocketAddress, connectTimeout)
                 return socket
             }

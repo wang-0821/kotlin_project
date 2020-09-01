@@ -1,14 +1,25 @@
 package com.xiao.rpc
 
-import com.xiao.rpc.cleaner.Cleaner
 import java.net.InetSocketAddress
 
 /**
  *
  * @author lix wang
  */
-class Route(val address: Address, val inetSocketAddress: InetSocketAddress) : Cleaner {
-    override fun cleanup() {
+class Route(
+    val address: Address,
+    val inetSocketAddress: InetSocketAddress
+) : CloseableResource {
+    override fun tryClose(keepAliveMills: Int): Boolean {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun tryUse(): Boolean {
+        return true
+    }
+
+    override fun unUse(): Boolean {
+        return true
     }
 
     override fun equals(other: Any?): Boolean {

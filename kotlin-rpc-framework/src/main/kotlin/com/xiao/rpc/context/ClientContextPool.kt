@@ -2,6 +2,10 @@ package com.xiao.rpc.context
 
 import com.xiao.base.context.AbstractContext
 import com.xiao.base.context.Context
+import com.xiao.base.context.ContextScanner
+import com.xiao.rpc.Client
+import com.xiao.rpc.annotation.AutoClean
+import com.xiao.rpc.annotation.ClientContext
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
@@ -10,29 +14,25 @@ import java.util.concurrent.TimeUnit
  *
  * @author lix wang
  */
-abstract class ClientContextPool : AbstractContext {
-    private val maxConnectionSize: Int
-    private val keepAliveTime: Long
-    private val timeUnit: TimeUnit
+abstract class ClientContextPool(key: Context.Key<*>) : AbstractContext(key) {
+    private val contextClientConfig = mutableMapOf<Context.Key<*>, ClientContextConfig>()
+    private val defaultClientContextConfig = ClientContextConfig(16, 60, TimeUnit.SECONDS)
+    private val clientContextContainer = ConcurrentHashMap<Context.Key<*>, Context>()
 
-    constructor(
-        key: Context.Key<*>,
-        maxConnectionSize: Int,
-        keepAliveTime: Long,
-        timeUnit: TimeUnit) : super(key) {
-        this.maxConnectionSize = if (maxConnectionSize > 0) {
-            maxConnectionSize
-        } else {
-            Int.MAX_VALUE
-        }
-        check(keepAliveTime > 0) {
-            "ClientContextPool keepAliveTime must greater than 0."
-        }
-        this.keepAliveTime = keepAliveTime
-        this.timeUnit = timeUnit
+    fun clientConfig(key: Context.Key<*>, config: ClientContextConfig) {
+        contextClientConfig[key] = config
     }
 
-    private val clientContextContainer = ConcurrentHashMap<Context.Key<*>, Context>()
+    fun clientConfig(key: Context.Key<*>): ClientContextConfig {
+        return contextClientConfig[key] ?: defaultClientContextConfig
+    }
+
+    fun start() {
+        ContextScanner.scanAndExecute(Client.BASE_SCAN_PACKAGE)
+        val clientContextList = ContextScanner.annotatedKtResources.filter { it.isAnnotated(ClientContext::class) }
+        val contextCleaners = ContextScanner.annotatedKtResources.filter { it.isAnnotated(AutoClean::class) }
+        println("*******")
+    }
 
     fun registerContext(key: Context.Key<*>, context: Context) {
         synchronized(clientContextContainer) {

@@ -1,20 +1,14 @@
 package com.xiao.rpc.io
 
+import com.xiao.rpc.CloseableResource
 import com.xiao.rpc.Route
-import com.xiao.rpc.cleaner.Cleaner
-import java.io.Closeable
 
 /**
  *
  * @author lix wang
  */
-interface Connection : Closeable, Cleaner {
+interface Connection : CloseableResource {
     fun connect()
-
-    /**
-     * @return -1 means [Connection] is invalid, 0 means [Connection] is in use, 1 means [Connection] is valid.
-     */
-    fun validateAndUse(): Int
 
     fun route(): Route
 

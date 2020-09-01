@@ -10,17 +10,15 @@ import com.xiao.base.context.ContextAware
  * @author lix wang
  */
 @Suppress("UNCHECKED_CAST")
-interface ClientContextAware<E : Context> : ContextAware {
-    override val key: Context.Key<E>
-
-    fun registerContext(clientContextKey: Context.Key<*>, context: Context) {
-        val clientContext = getClientContext<ClientContextPool>(clientContextKey)
-        clientContext?.registerContext(key, context)
+interface ClientContextAware : ContextAware {
+    fun registerContext(contextPoolKey: Context.Key<*>, contextKey: Context.Key<*>, context: Context) {
+        val clientContext = getClientContext<ClientContextPool>(contextPoolKey)
+        clientContext?.registerContext(contextKey, context)
     }
 
-    fun getContext(clientContextKey: Context.Key<*>): E? {
-        val clientContext = getClientContext<ClientContextPool>(clientContextKey)
-        return clientContext?.getContext(key) as E?
+    fun getContext(contextPoolKey: Context.Key<*>, contextKey: Context.Key<*>): Context? {
+        val clientContext = getClientContext<ClientContextPool>(contextPoolKey)
+        return clientContext?.getContext(contextKey)
     }
 
     private fun <T : ClientContextPool> getClientContext(key: Context.Key<*>): T? {

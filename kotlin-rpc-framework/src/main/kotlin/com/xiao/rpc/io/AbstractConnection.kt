@@ -1,13 +1,15 @@
 package com.xiao.rpc.io
 
+import com.xiao.rpc.AbstractCloseableResource
 import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.Route
-import com.xiao.rpc.StateSocket
+import com.xiao.rpc.RunningState
 import com.xiao.rpc.factory.SslSocketFactorySelector
 import com.xiao.rpc.helper.IoHelper.CRLF
 import com.xiao.rpc.helper.ResponseHelper
 import com.xiao.rpc.tool.JacksonUtils
 import java.io.InputStream
+import java.net.Socket
 import java.net.URLEncoder
 import javax.net.ssl.SSLSocket
 
@@ -16,7 +18,7 @@ import javax.net.ssl.SSLSocket
  * @author lix wang
  */
 abstract class AbstractConnection : Connection {
-    protected val requestActivateTime = 60 * 1000
+    private val closeableResource = object : AbstractCloseableResource(RunningState()) {}
 
     override fun writeHeaders(request: Request) {
         val path = request.path()?.let {
@@ -53,11 +55,23 @@ abstract class AbstractConnection : Connection {
         write(body.toByteArray())
     }
 
+    override fun tryClose(keepAliveMills: Int): Boolean {
+        return closeableResource.tryClose(keepAliveMills)
+    }
+
+    override fun tryUse(): Boolean {
+        return closeableResource.tryUse()
+    }
+
+    override fun unUse(): Boolean {
+        return closeableResource.unUse()
+    }
+
     protected fun parseToResponse(inputStream: InputStream): Response {
         return ResponseHelper.parseResponse(inputStream)
     }
 
-    protected fun connectTls(socket: StateSocket, route: Route): SSLSocket {
+    protected fun connectTls(socket: Socket, route: Route): SSLSocket {
         val sslSocket = SslSocketFactorySelector.select().createSSLSocket(socket, route)
         sslSocket.startHandshake()
         return sslSocket
