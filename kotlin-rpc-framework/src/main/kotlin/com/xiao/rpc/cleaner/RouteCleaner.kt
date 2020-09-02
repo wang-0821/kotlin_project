@@ -8,7 +8,7 @@ import com.xiao.rpc.context.RouteContext
  *
  * @author lix wang
  */
-@AutoClean(period = RouteCleaner.CLEANUP_PERIOD)
+@AutoClean
 class RouteCleaner : Cleaner {
     override fun cleanup(context: Context) {
         val routeConnection = context as RouteContext? ?: return

@@ -10,9 +10,4 @@ import com.xiao.base.annotation.AnnotationScan
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
 @AnnotationScan
-annotation class AutoClean(
-    /**
-     * mills between two cleanup
-     */
-    val period: Int = 60 * 1000
-)
+annotation class AutoClean

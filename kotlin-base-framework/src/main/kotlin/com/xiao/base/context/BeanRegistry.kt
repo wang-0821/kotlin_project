@@ -28,12 +28,14 @@ class ContextBeanFactory : BeanRegistry, AbstractContext(BeanRegistry) {
     private val beanNamesByType = mutableMapOf<Class<*>, MutableSet<String>>()
 
     override fun <T : Any> getByType(clazz: Class<T>): T? {
-        return beanNamesByType[clazz]?.let {
-            if (it.size > 1) {
-                throw IllegalStateException("Duplicate bean of ${clazz.simpleName}.")
-            } else {
-                contextBeanPool[it.iterator().next()] as? T
-            }
+        val beanNames = beanNamesByType.entries.filter { clazz.isAssignableFrom(it.key) }.flatMap { it.value }
+        check(beanNames.size <= 1) {
+            "Duplicate bean of ${clazz.simpleName}."
+        }
+        return if (beanNames.isNotEmpty()) {
+            contextBeanPool[beanNames[0]] as T?
+        } else {
+            null
         }
     }
 

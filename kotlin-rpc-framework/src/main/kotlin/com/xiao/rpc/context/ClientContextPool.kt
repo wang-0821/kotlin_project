@@ -1,12 +1,17 @@
 package com.xiao.rpc.context
 
+import com.xiao.base.annotation.AnnotatedKtResource
 import com.xiao.base.context.AbstractContext
+import com.xiao.base.context.BeanHelper
+import com.xiao.base.context.BeanRegistry
 import com.xiao.base.context.Context
 import com.xiao.base.context.ContextScanner
+import com.xiao.base.context.GenericContextAware
 import com.xiao.rpc.Client
+import com.xiao.rpc.RunningState
 import com.xiao.rpc.annotation.AutoClean
 import com.xiao.rpc.annotation.ClientContext
-import java.util.concurrent.ConcurrentHashMap
+import com.xiao.rpc.cleaner.Cleaner
 import java.util.concurrent.TimeUnit
 
 /**
@@ -14,10 +19,15 @@ import java.util.concurrent.TimeUnit
  *
  * @author lix wang
  */
-abstract class ClientContextPool(key: Context.Key<*>) : AbstractContext(key) {
+abstract class ClientContextPool(key: Context.Key<*>) : AbstractContext(key), GenericContextAware {
     private val contextClientConfig = mutableMapOf<Context.Key<*>, ClientContextConfig>()
     private val defaultClientContextConfig = ClientContextConfig(16, 60, TimeUnit.SECONDS)
-    private val clientContextContainer = ConcurrentHashMap<Context.Key<*>, Context>()
+    private val clientContextContainer = mutableMapOf<Context.Key<*>, Context>()
+    private val cleanerContainer = mutableListOf<Cleaner>()
+    private var beanRegistry: BeanRegistry? = null
+    private val minCleanupDuration = 5000L
+    private var cleanUpDuration: Long? = null
+    private var state = RunningState()
 
     fun clientConfig(key: Context.Key<*>, config: ClientContextConfig) {
         contextClientConfig[key] = config
@@ -29,21 +39,118 @@ abstract class ClientContextPool(key: Context.Key<*>) : AbstractContext(key) {
 
     fun start() {
         ContextScanner.scanAndExecute(Client.BASE_SCAN_PACKAGE)
-        val clientContextList = ContextScanner.annotatedKtResources.filter { it.isAnnotated(ClientContext::class) }
-        val contextCleaners = ContextScanner.annotatedKtResources.filter { it.isAnnotated(AutoClean::class) }
-        println("*******")
+        val clientContextClasses = ContextScanner.annotatedKtResources.filter { it.isAnnotated(ClientContext::class) }
+        val contextCleanerClasses = ContextScanner.annotatedKtResources.filter { it.isAnnotated(AutoClean::class) }
+        registerClientContexts(clientContextClasses)
+        registerCleaners(contextCleanerClasses)
+        startClean()
     }
 
-    fun registerContext(key: Context.Key<*>, context: Context) {
-        synchronized(clientContextContainer) {
-            if (clientContextContainer[key] != null) {
-                throw IllegalStateException("Duplicate key $key.")
-            }
-            clientContextContainer[key] = context
+    fun stop() {
+        synchronized(state) {
+            state.updateState(RunningState.TERMINATE)
         }
     }
 
     fun getContext(key: Context.Key<*>): Context? {
         return clientContextContainer[key]
+    }
+
+    private fun startClean() {
+        synchronized(state) {
+            val thread = Thread(Runnable {
+                cleanupRunnable()
+            })
+            thread.isDaemon = true
+            thread.start()
+            state.updateState(RunningState.RUNNING)
+        }
+    }
+
+    private fun cleanupRunnable() {
+        val sleepDuration = cleanUpDuration ?: minCleanupDuration
+        while (true) {
+            if (state.state() >= RunningState.TERMINATE) {
+                return
+            }
+            cleanerContainer.forEach { cleaner ->
+                try {
+                    clientContextContainer.values.forEach {
+                        cleaner.cleanup(it)
+                    }
+                } catch (e: Exception) {
+                }
+            }
+            Thread.sleep(sleepDuration)
+        }
+    }
+
+    private fun registerClientContexts(contexts: List<AnnotatedKtResource>) {
+        for (context in contexts) {
+            val clientContext = constructClientContext<Context>(context.resource.clazz.java)
+            clientContext?.let {
+                clientContextContainer[it.key] = it
+                computeCleanupDuration(it.key)
+            }
+        }
+    }
+
+    private fun computeCleanupDuration(key: Context.Key<*>) {
+        val config = clientConfig(key)
+        val mills = config.timeUnit.toMillis(config.idleTimeout)
+        if (mills > minCleanupDuration && (cleanUpDuration == null || mills < cleanUpDuration!!)) {
+            cleanUpDuration = mills
+        }
+    }
+
+    private fun registerCleaners(cleaners : List<AnnotatedKtResource>) {
+        for (cleaner in cleaners) {
+            val cleanerInstance = BeanHelper.newInstance<Cleaner>(cleaner.resource.clazz.java)
+            cleanerInstance.let {
+                cleanerContainer.add(it)
+            }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <E : Any> constructClientContext(clazz: Class<*>): E? {
+        val constructors = clazz.constructors
+        check(constructors.size == 1) {
+            "${clazz.simpleName} should have only one constructor."
+        }
+        val parameterTypes = constructors[0].parameterTypes
+        var key: Context.Key<*>? = null
+        if (Context::class.java.isAssignableFrom(clazz)) {
+            val contextKeys = clazz.declaredFields.filter { Context.Key::class.java.isAssignableFrom(it.type) }
+            check(contextKeys.size == 1) {
+                "${clazz.simpleName} must contain a ${Context.Key::class.java.simpleName} field."
+            }
+            key = contextKeys[0].get(clazz) as? Context.Key<*>
+        }
+        if (key == null) {
+            return null
+        }
+
+        // new instance
+        val parameters = arrayOfNulls<Any>(parameterTypes.size)
+        val beanRegistry = beanRegistry()
+        for (i in parameterTypes.indices) {
+            if (parameterTypes[i] == ClientContextConfig::class.java) {
+                parameters[i] = clientConfig(key)
+            } else {
+                parameters[i] = beanRegistry?.getByType(parameterTypes[i])
+            }
+            check(parameters[i] != null) {
+                "${clazz.simpleName} constructor parameterType ${parameterTypes[i].simpleName} can't find value."
+            }
+        }
+        return constructors[0].newInstance(*parameters) as E?
+    }
+
+    private fun beanRegistry(): BeanRegistry? {
+        if (beanRegistry == null) {
+            beanRegistry = get(BeanRegistry.Key)
+        }
+        return beanRegistry
     }
 }

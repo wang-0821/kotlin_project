@@ -11,11 +11,6 @@ import com.xiao.base.context.ContextAware
  */
 @Suppress("UNCHECKED_CAST")
 interface ClientContextAware : ContextAware {
-    fun registerContext(contextPoolKey: Context.Key<*>, contextKey: Context.Key<*>, context: Context) {
-        val clientContext = getClientContext<ClientContextPool>(contextPoolKey)
-        clientContext?.registerContext(contextKey, context)
-    }
-
     fun getContext(contextPoolKey: Context.Key<*>, contextKey: Context.Key<*>): Context? {
         val clientContext = getClientContext<ClientContextPool>(contextPoolKey)
         return clientContext?.getContext(contextKey)

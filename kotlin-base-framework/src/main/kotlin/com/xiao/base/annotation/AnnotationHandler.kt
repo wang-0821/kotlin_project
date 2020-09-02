@@ -21,7 +21,7 @@ object ComponentResourceHandler : AnnotationHandler, BeanRegistryAware {
             if (component.value.isBlank()) {
                 registerSingleton(p1.resource.clazz::class.java.newInstance())
             } else {
-                registerSingleton(component.value, p1.resource.clazz::class.java.newInstance())
+                registerSingleton(component.value, p1.resource.clazz.java.newInstance())
             }
         }
     }

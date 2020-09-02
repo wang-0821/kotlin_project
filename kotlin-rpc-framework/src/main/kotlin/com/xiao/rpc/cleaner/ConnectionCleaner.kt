@@ -8,14 +8,10 @@ import com.xiao.rpc.context.ConnectionContext
  *
  * @author lix wang
  */
-@AutoClean(period = ConnectionCleaner.CLEANUP_PERIOD)
+@AutoClean
 class ConnectionCleaner : Cleaner {
     override fun cleanup(context: Context) {
         val connectionContext = context as ConnectionContext? ?: return
         println("Clean up connections.")
-    }
-
-    companion object {
-        const val CLEANUP_PERIOD = 60 * 1000
     }
 }

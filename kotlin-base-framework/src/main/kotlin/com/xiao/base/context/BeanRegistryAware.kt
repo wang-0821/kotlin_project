@@ -20,7 +20,4 @@ interface BeanRegistryAware : ContextAware {
     fun <T : Any> registerSingleton(name: String, bean: T) {
         get(BeanRegistry.Key)?.registerSingleton(name, bean)
     }
-
-    override val key: Context.Key<*>
-        get() = BeanRegistry.Key
 }
