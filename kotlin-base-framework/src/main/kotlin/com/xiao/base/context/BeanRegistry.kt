@@ -23,7 +23,9 @@ interface BeanRegistry : Context {
 
 @ContextInject
 @Suppress("UNCHECKED_CAST")
-class ContextBeanFactory : BeanRegistry, AbstractContext(BeanRegistry) {
+class ContextBeanFactory : BeanRegistry {
+    override val key: Context.Key<*>
+        get() = BeanRegistry.Key
     private val contextBeanPool = ConcurrentHashMap<String, Any>()
     private val beanNamesByType = mutableMapOf<Class<*>, MutableSet<String>>()
 
@@ -46,8 +48,8 @@ class ContextBeanFactory : BeanRegistry, AbstractContext(BeanRegistry) {
     override fun <T : Any> register(beanName: String, bean: T) {
         synchronized(contextBeanPool) {
             beanNamesByType[bean::class.java]?.let {
-                if (!it.add(beanName)) {
-                    throw IllegalStateException("Duplicate beanName of $beanName")
+                check(it.add(beanName)) {
+                    "Duplicate beanName of $beanName"
                 }
             } ?: kotlin.run {
                 beanNamesByType[bean::class.java] = mutableSetOf(beanName)

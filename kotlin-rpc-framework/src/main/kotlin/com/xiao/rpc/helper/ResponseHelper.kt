@@ -2,6 +2,7 @@ package com.xiao.rpc.helper
 
 import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.Protocol
+import com.xiao.rpc.ResponseListener
 import com.xiao.rpc.io.WrappedInputStream
 import com.xiao.rpc.io.Header
 import com.xiao.rpc.io.Response
@@ -12,7 +13,7 @@ import java.io.InputStream
  * @author lix wang
  */
 object ResponseHelper {
-    fun parseResponse(inputStream: InputStream): Response {
+    fun parseResponse(inputStream: InputStream, responseListener: ResponseListener): Response {
         val startLine = IoHelper.readPlainTextLine(inputStream)
         val startLineSplits = startLine.split(" ")
         val protocol = Protocol.parseProtocol(startLineSplits[0])
@@ -24,7 +25,13 @@ object ResponseHelper {
         val transferEncoding = headers.lastOrNull {
             it.name.toUpperCase() == ContentHeaders.TRANSFER_ENCODING.text.toUpperCase()
         }?.value
-        return Response(protocol, status, headers, WrappedInputStream(inputStream, contentEncoding, transferEncoding))
+        return Response(
+            protocol,
+            status,
+            headers,
+            WrappedInputStream(inputStream, contentEncoding, transferEncoding),
+            responseListener
+        )
     }
 
     private fun parseHeaders(inputStream: InputStream): List<Header> {

@@ -1,14 +1,17 @@
 package com.xiao.base.resource
 
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.net.URL
-import java.util.*
+import java.util.Enumeration
 
 /**
  *
  * @author lix wang
  */
 class PathResourceScanner(private val resourceLoader: ResourceLoader = DefaultResourceLoader) {
+    private val log = LoggerFactory.getLogger(PathResourceScanner::class.java)
+
     fun scanByPackage(basePackage: String): List<KtResource> {
         if (basePackage.isNullOrBlank()) {
             return emptyList()
@@ -91,6 +94,7 @@ class PathResourceScanner(private val resourceLoader: ResourceLoader = DefaultRe
             }
             KtResource(file, file.path, kClass)
         } catch (e: Exception) {
+            log.error("Retrieve resource failed. ${e.message}", e)
             null
         }
     }

@@ -91,7 +91,6 @@ class WrappedInputStream(
         return WrappedGZIPInputStream(createChunkedSimpleInputStream(), IoHelper.BUFFER_SIZE)
     }
 
-    @Throws(IllegalStateException::class)
     private fun fillChunkedByteBuffer() {
         calculateChunkLimit()
         if (chunkedLimit <= 0) {

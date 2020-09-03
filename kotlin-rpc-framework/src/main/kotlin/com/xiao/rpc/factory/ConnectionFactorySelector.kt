@@ -14,7 +14,7 @@ object ConnectionFactorySelector : AbstractSelector<ConnectionFactory>() {
     override fun selectDefault(): ConnectionFactory {
         return object : ConnectionFactory {
             override fun create(socket: Socket, route: Route, protocol: Protocol): Connection {
-                val result = HttpConnection(route, socket)
+                val result = HttpConnection(route, socket, null)
                 result.connect()
                 return result
             }

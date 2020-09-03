@@ -1,6 +1,9 @@
 package com.xiao.rpc.io
 
+import com.xiao.rpc.AbstractCloseableResource
+import com.xiao.rpc.ResponseListener
 import com.xiao.rpc.Route
+import com.xiao.rpc.RunningState
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.Socket
@@ -11,11 +14,23 @@ import java.net.Socket
  */
 class HttpConnection(
     private val route: Route,
-    private val socket: Socket
+    private val socket: Socket,
+    responseListener: ResponseListener?
 ) : AbstractConnection() {
+    private val runningState = RunningState()
+    private val closeableResource = object : AbstractCloseableResource(runningState) {}
+    private val realResponseListener = responseListener ?: object : ResponseListener {
+        override fun afterResponse() {
+            synchronized(runningState) {
+                runningState.updateState(RunningState.RUNNING, RunningState.READY)
+            }
+        }
+    }
+
     private var realSocket: Socket? = null
     private var inputStream: InputStream? = null
     private var outputStream: OutputStream? = null
+    private var currentResponse: Response? = null
 
     override fun connect() {
         if (route.address.isTls) {
@@ -41,15 +56,24 @@ class HttpConnection(
     }
 
     override fun response(exchange: Exchange): Response {
-        return parseToResponse(inputStream!!)
+        currentResponse = parseToResponse(inputStream!!, realResponseListener)
+        return currentResponse!!
     }
 
     override fun tryClose(keepAliveMills: Int): Boolean {
-        val result = super.tryClose(keepAliveMills)
+        val result = closeableResource.tryClose(keepAliveMills)
         if (result) {
             outputStream?.close()
             inputStream?.close()
         }
         return result
+    }
+
+    override fun tryUse(): Boolean {
+        return closeableResource.tryUse()
+    }
+
+    override fun unUse(): Boolean {
+        return closeableResource.unUse()
     }
 }

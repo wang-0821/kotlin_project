@@ -6,22 +6,7 @@ import java.net.InetSocketAddress
  *
  * @author lix wang
  */
-class Route(
-    val address: Address,
-    val inetSocketAddress: InetSocketAddress
-) : CloseableResource {
-    override fun tryClose(keepAliveMills: Int): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun tryUse(): Boolean {
-        return true
-    }
-
-    override fun unUse(): Boolean {
-        return true
-    }
-
+class Route(val address: Address, val inetSocketAddress: InetSocketAddress) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

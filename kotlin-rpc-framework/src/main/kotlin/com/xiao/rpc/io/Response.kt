@@ -2,6 +2,7 @@ package com.xiao.rpc.io
 
 import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.Protocol
+import com.xiao.rpc.ResponseListener
 import com.xiao.rpc.helper.IoHelper
 import java.io.Closeable
 import java.io.InputStream
@@ -16,10 +17,12 @@ class Response : Closeable {
      * Http version
      */
     val protocol: Protocol
+
     /**
      * Http status code
      */
     val status: Int
+
     /**
      * Http headers
      */
@@ -30,19 +33,29 @@ class Response : Closeable {
      */
     val content: InputStream
 
+    /**
+     * Header map
+     */
     private val headerMap: Map<String, List<Header>>
+
+    /**
+     * Response listener
+     */
+    private val listener: ResponseListener?
 
     constructor(
         protocol: Protocol,
         status: Int,
         headers: List<Header>,
-        content: InputStream
+        content: InputStream,
+        listener: ResponseListener?
     ) {
         this.protocol = protocol
         this.status = status
         this.headers = headers
         this.content = content
         this.headerMap = headers.groupBy { it.name.toUpperCase() }
+        this.listener = listener
     }
 
     fun contentAsString(): String {
@@ -71,5 +84,6 @@ class Response : Closeable {
 
     override fun close() {
         content.close()
+        listener?.afterResponse()
     }
 }

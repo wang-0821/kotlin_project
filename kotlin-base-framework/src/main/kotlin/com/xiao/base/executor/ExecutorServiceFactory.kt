@@ -12,6 +12,12 @@ import java.util.concurrent.TimeUnit
 object ExecutorServiceFactory {
     fun newDefaultThreadPoolExecutor(threadCount: Int): ExecutorService {
         return ThreadPoolExecutor(
-            threadCount, threadCount, 0, TimeUnit.SECONDS, LinkedBlockingDeque(), NamedThreadFactory())
+            threadCount,
+            threadCount,
+            0,
+            TimeUnit.SECONDS,
+            LinkedBlockingDeque<Runnable>(),
+            NamedThreadFactory()
+        )
     }
 }

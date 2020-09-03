@@ -1,5 +1,7 @@
 package com.xiao.base.executor
 
+import org.slf4j.LoggerFactory
+
 /**
  *
  * @author lix wang
@@ -9,6 +11,7 @@ class SimpleQueueItem<T>(
     runnable: Runnable,
     private val future: WrappedFuture<T>
 ) : AbstractQueueItem(name, runnable) {
+    private val log = LoggerFactory.getLogger(SimpleQueueItem::class.java)
     private val maxRetryTimes = 3
 
     override fun run() {
@@ -17,6 +20,7 @@ class SimpleQueueItem<T>(
         try {
             runnable.run()
         } catch (e: Exception) {
+            log.error("Execute async task $name failed. ${e.message}", e)
             retry()
         } finally {
             future.timeTrace!!.endTime = System.currentTimeMillis()
@@ -25,7 +29,6 @@ class SimpleQueueItem<T>(
 
     private fun retry() {
         val retryTimeTraces = mutableListOf<ExecuteTimeTrace>()
-        var ex: Exception? = null
         for (i in 1..maxRetryTimes) {
             val timeTrace = ExecuteTimeTrace()
             timeTrace.startTime = System.currentTimeMillis()
@@ -35,13 +38,13 @@ class SimpleQueueItem<T>(
                 future.timeTrace!!.endTime = System.currentTimeMillis()
                 break
             } catch (e: Exception) {
-                ex = e
+                log.error("Retry-$i async task $name failed. ${e.message}", e)
             } finally {
                 timeTrace.endTime = System.currentTimeMillis()
                 retryTimeTraces.add(timeTrace)
             }
         }
-        throw RuntimeException("Task $name execute failed. ${ex?.message.orEmpty()}")
+        throw RuntimeException("Retry async task $name failed.")
     }
 
     private fun checkTimeTrace(future: WrappedFuture<T>) {

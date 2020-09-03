@@ -32,7 +32,6 @@ object IoHelper {
         return result
     }
 
-    @Throws(IllegalStateException::class)
     fun contentAsString(
         inputStream: InputStream,
         charset: Charset,
@@ -121,7 +120,6 @@ object IoHelper {
         }
     }
 
-    @Throws(IllegalStateException::class)
     private fun asString(
         inputStream: InputStream,
         byteArray: ByteArray,
@@ -151,8 +149,8 @@ object IoHelper {
                 charBuffer.clear()
                 byteBuffer.compact()
             } else {
-                if (length > 0 && total != length) {
-                    throw IllegalStateException("InputStream length is not equals with expected.")
+                check(length < 0 || total == length) {
+                    "InputStream length $total is not equals with expected $length."
                 }
                 byteBuffer.flip()
                 charsetDecoder.decode(byteBuffer, charBuffer, true)

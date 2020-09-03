@@ -1,17 +1,17 @@
 package com.xiao.rpc.context
 
 import com.xiao.base.annotation.AnnotatedKtResource
-import com.xiao.base.context.AbstractContext
 import com.xiao.base.context.BeanHelper
 import com.xiao.base.context.BeanRegistry
 import com.xiao.base.context.Context
+import com.xiao.base.context.ContextAware
 import com.xiao.base.context.ContextScanner
-import com.xiao.base.context.GenericContextAware
 import com.xiao.rpc.Client
 import com.xiao.rpc.RunningState
 import com.xiao.rpc.annotation.AutoClean
 import com.xiao.rpc.annotation.ClientContext
 import com.xiao.rpc.cleaner.Cleaner
+import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
 
 /**
@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit
  *
  * @author lix wang
  */
-abstract class ClientContextPool(key: Context.Key<*>) : AbstractContext(key), GenericContextAware {
+abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAware {
     private val contextClientConfig = mutableMapOf<Context.Key<*>, ClientContextConfig>()
     private val defaultClientContextConfig = ClientContextConfig(16, 60, TimeUnit.SECONDS)
     private val clientContextContainer = mutableMapOf<Context.Key<*>, Context>()
@@ -28,6 +28,8 @@ abstract class ClientContextPool(key: Context.Key<*>) : AbstractContext(key), Ge
     private val minCleanupDuration = 5000L
     private var cleanUpDuration: Long? = null
     private var state = RunningState()
+
+    private val log = LoggerFactory.getLogger(this::class.java)
 
     fun clientConfig(key: Context.Key<*>, config: ClientContextConfig) {
         contextClientConfig[key] = config
@@ -74,11 +76,16 @@ abstract class ClientContextPool(key: Context.Key<*>) : AbstractContext(key), Ge
                 return
             }
             cleanerContainer.forEach { cleaner ->
-                try {
-                    clientContextContainer.values.forEach {
+                clientContextContainer.values.forEach {
+                    try {
                         cleaner.cleanup(it)
+                    } catch (e: Exception) {
+                        log.error(
+                            "Cleaner ${cleaner.javaClass.simpleName} cleanup ${it.javaClass.simpleName} failed." +
+                                    "${e.message}",
+                            e
+                        )
                     }
-                } catch (e: Exception) {
                 }
             }
             Thread.sleep(sleepDuration)

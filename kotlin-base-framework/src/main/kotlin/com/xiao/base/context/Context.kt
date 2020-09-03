@@ -13,11 +13,10 @@ interface Context {
 
     fun <E : Context> register(key: Key<E>) {
         synchronized(container) {
-            if (get(key) == null) {
-                container[key] = this
-            } else {
-                throw IllegalStateException("Context register key duplicate $key.")
+            check(get(key) == null) {
+                "Context register key duplicate $key."
             }
+            container[key] = this
         }
     }
 
@@ -33,11 +32,5 @@ interface Context {
                 null
             }
         }
-    }
-}
-
-abstract class AbstractContext(override val key: Context.Key<*>) : Context {
-    init {
-        register(key)
     }
 }

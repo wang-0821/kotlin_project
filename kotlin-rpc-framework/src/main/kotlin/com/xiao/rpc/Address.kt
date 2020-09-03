@@ -1,9 +1,5 @@
 package com.xiao.rpc
 
-import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.net.UnknownHostException
-
 /**
  *
  * @author lix wang
@@ -27,14 +23,6 @@ class Address {
         }
     }
 
-    @Throws(UnknownHostException::class)
-    fun acquireRoutes(): Set<Route> {
-        return InetAddress.getAllByName(this.host).asSequence()
-            .map { InetSocketAddress(it, this.port) }
-            .map { Route(this, it) }.toSet()
-
-    }
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -50,5 +38,9 @@ class Address {
         var result = host.hashCode()
         result = 31 * result + port
         return result
+    }
+
+    override fun toString(): String {
+        return "Address(isTls=$isTls, host='$host', port=$port)"
     }
 }
