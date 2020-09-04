@@ -7,7 +7,7 @@
 slf4j所做的事情与commons-logging类似。
 
 <h2 id = "2">2.日志的工作机制</h2>
-&emsp;&emsp; 以Log4j2为例。
+以Log4j2为例。
 <br>
     ![Log4j2_Classes](https://github.com/wang-0821/kotlin_framework/raw/master/log4j2_classes_pic.jpg)
 <br>
