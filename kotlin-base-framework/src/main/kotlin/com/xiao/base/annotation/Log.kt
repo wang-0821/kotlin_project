@@ -6,7 +6,7 @@ package com.xiao.base.annotation
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
-@Component
+@AnnotationScan
 annotation class Log(
     val value: String = ""
 )
