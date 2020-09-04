@@ -4,13 +4,17 @@ import com.xiao.rpc.io.Connection
 import com.xiao.rpc.io.Exchange
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
+import org.slf4j.LoggerFactory
 
 /**
  *
  * @author lix wang
  */
 class ExchangeHandler(override val chain: Chain) : Handler {
+    private val log = LoggerFactory.getLogger(ExchangeHandler::class.java)
+
     override fun handle(): Response {
+        log.info("Start exchange handler.")
         check(chain.exchange.connection != null) {
             "ExchangeHandler can not find valid connection."
         }

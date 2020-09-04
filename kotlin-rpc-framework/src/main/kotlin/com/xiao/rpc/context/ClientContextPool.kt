@@ -29,7 +29,7 @@ abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAwar
     private var cleanUpDuration: Long? = null
     private var state = RunningState()
 
-    private val log = LoggerFactory.getLogger(this::class.java)
+    private val log = LoggerFactory.getLogger(ClientContextPool::class.java)
 
     fun clientConfig(key: Context.Key<*>, config: ClientContextConfig) {
         contextClientConfig[key] = config

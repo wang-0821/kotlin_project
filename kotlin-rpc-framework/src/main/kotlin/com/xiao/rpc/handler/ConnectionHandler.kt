@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory
  */
 class ConnectionHandler(override val chain: Chain) : Handler {
     private val log = LoggerFactory.getLogger(ConnectionHandler::class.java)
+
     override fun handle(): Response {
         log.info("Entered ${this::class.java.simpleName}.")
         val startTime = System.currentTimeMillis()

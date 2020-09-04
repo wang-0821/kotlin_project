@@ -2,13 +2,17 @@ package com.xiao.rpc.handler
 
 import com.xiao.rpc.helper.RouteHelper
 import com.xiao.rpc.io.Response
+import org.slf4j.LoggerFactory
 
 /**
  *
  * @author lix wang
  */
 class RouteHandler(override val chain: Chain) : Handler {
+    private val log = LoggerFactory.getLogger(RouteHelper::class.java)
+
     override fun handle(): Response {
+        log.info("Start route handler.")
         val startTime = System.currentTimeMillis()
         val routes = RouteHelper.findRoutes(chain.client, chain.exchange.address)
         check(routes.isNotEmpty()) {

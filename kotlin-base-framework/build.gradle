@@ -1,3 +1,4 @@
 dependencies {
     compile libs['kotlin-coroutines-core']
+    compile libs['log4j-slf4j-impl']
 }
