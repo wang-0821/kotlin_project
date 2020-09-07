@@ -15,4 +15,8 @@ internal class WrappedByteArrayInputStream : ByteArrayInputStream {
         count = (offset + length).coerceAtMost(buf.size)
         mark = offset
     }
+
+    override fun toString(): String {
+        return "(pos: ${pos}, count: ${count}, mark: ${mark})"
+    }
 }

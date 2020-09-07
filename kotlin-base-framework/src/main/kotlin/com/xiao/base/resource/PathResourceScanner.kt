@@ -1,6 +1,6 @@
 package com.xiao.base.resource
 
-import org.slf4j.LoggerFactory
+import com.xiao.base.logging.Logging
 import java.io.File
 import java.net.URL
 import java.util.Enumeration
@@ -10,8 +10,6 @@ import java.util.Enumeration
  * @author lix wang
  */
 class PathResourceScanner(private val resourceLoader: ResourceLoader = DefaultResourceLoader) {
-    private val log = LoggerFactory.getLogger(PathResourceScanner::class.java)
-
     fun scanByPackage(basePackage: String): List<KtResource> {
         if (basePackage.isNullOrBlank()) {
             return emptyList()
@@ -98,4 +96,6 @@ class PathResourceScanner(private val resourceLoader: ResourceLoader = DefaultRe
             null
         }
     }
+
+    companion object : Logging()
 }

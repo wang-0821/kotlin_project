@@ -1,18 +1,18 @@
 package com.xiao.rpc.handler
 
+import com.xiao.base.annotation.Log
+import com.xiao.base.logging.Logging
+import com.xiao.rpc.Constants
 import com.xiao.rpc.io.Connection
 import com.xiao.rpc.io.Exchange
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
-import org.slf4j.LoggerFactory
 
 /**
  *
  * @author lix wang
  */
 class ExchangeHandler(override val chain: Chain) : Handler {
-    private val log = LoggerFactory.getLogger(ExchangeHandler::class.java)
-
     override fun handle(): Response {
         log.info("Start exchange handler.")
         check(chain.exchange.connection != null) {
@@ -31,4 +31,7 @@ class ExchangeHandler(override val chain: Chain) : Handler {
         println("***** ExechangeHandler cost: ${endTime - startTime} ms")
         return result
     }
+
+    @Log(Constants.RPC_LOGGER)
+    companion object : Logging()
 }

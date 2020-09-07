@@ -22,12 +22,13 @@ object Rpc {
 fun main() {
     val time1 = System.currentTimeMillis()
     val client = Client()
-    val request = UrlParser.parseUrl("https://www.baidu.com")
+    val request = UrlParser.parseUrl("http://www.baidu.com")
     for (i in 1..100) {
         val a = System.currentTimeMillis()
         client.newCall(request).execute().contentAsString()
         val b = System.currentTimeMillis()
         println("Task-$i cost ${b - a} ms")
+        println()
     }
     val time2 = System.currentTimeMillis()
 

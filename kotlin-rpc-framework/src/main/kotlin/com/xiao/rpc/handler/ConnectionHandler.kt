@@ -1,17 +1,17 @@
 package com.xiao.rpc.handler
 
+import com.xiao.base.annotation.Log
+import com.xiao.base.logging.Logging
+import com.xiao.rpc.Constants
 import com.xiao.rpc.helper.ConnectionHelper
 import com.xiao.rpc.helper.RouteHelper
 import com.xiao.rpc.io.Response
-import org.slf4j.LoggerFactory
 
 /**
  *
  * @author lix wang
  */
 class ConnectionHandler(override val chain: Chain) : Handler {
-    private val log = LoggerFactory.getLogger(ConnectionHandler::class.java)
-
     override fun handle(): Response {
         log.info("Entered ${this::class.java.simpleName}.")
         val startTime = System.currentTimeMillis()
@@ -28,4 +28,7 @@ class ConnectionHandler(override val chain: Chain) : Handler {
         println("*** ConnectionHandler cost: ${endTime - startTime} ms")
         return chain.execute()
     }
+
+    @Log(Constants.RPC_LOGGER)
+    companion object : Logging()
 }

@@ -24,4 +24,8 @@ class Route(val address: Address, val inetSocketAddress: InetSocketAddress) {
         result = 31 * result + inetSocketAddress.hashCode()
         return result
     }
+
+    override fun toString(): String {
+        return "Route(address=$address, inetSocketAddress=$inetSocketAddress)"
+    }
 }

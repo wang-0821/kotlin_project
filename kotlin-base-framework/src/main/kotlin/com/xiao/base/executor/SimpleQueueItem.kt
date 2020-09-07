@@ -1,6 +1,6 @@
 package com.xiao.base.executor
 
-import org.slf4j.LoggerFactory
+import com.xiao.base.logging.Logging
 
 /**
  *
@@ -11,7 +11,6 @@ class SimpleQueueItem<T>(
     runnable: Runnable,
     private val future: WrappedFuture<T>
 ) : AbstractQueueItem(name, runnable) {
-    private val log = LoggerFactory.getLogger(SimpleQueueItem::class.java)
     private val maxRetryTimes = 3
 
     override fun run() {
@@ -52,4 +51,6 @@ class SimpleQueueItem<T>(
             future.timeTrace = ExecuteTimeTrace()
         }
     }
+
+    companion object : Logging()
 }

@@ -18,6 +18,7 @@ class WrappedInputStream(
     private var realInputStream: InputStream? = null
     private var chunkedLimit: Int = -1
     private var endInputStream = false
+    private val minBufferFillSize = 4
 
     override fun read(): Int {
         return inputStream.read()
@@ -72,14 +73,16 @@ class WrappedInputStream(
 
     private fun checkChunkedByteArrayInputStream(inputStream: WrappedByteArrayInputStream) {
         if (inputStream.available() <= 0) {
-            fillChunkedByteBuffer()
+            val start = System.currentTimeMillis()
+            fillChunkedByteBufferWithMinSize(minBufferFillSize)
+            println("Fill chunked consume ${System.currentTimeMillis() - start}")
             inputStream.replace(chunkedBuffer.array(), chunkedBuffer.position(), chunkedBuffer.remaining())
             chunkedBuffer.clear()
         }
     }
 
     private fun createChunkedSimpleInputStream(): InputStream {
-        fillChunkedByteBuffer()
+        fillChunkedByteBufferWithMinSize(minBufferFillSize)
         val input = WrappedByteArrayInputStream(
             chunkedBuffer.array(), chunkedBuffer.position(), chunkedBuffer.remaining()
         )
@@ -91,22 +94,36 @@ class WrappedInputStream(
         return WrappedGZIPInputStream(createChunkedSimpleInputStream(), IoHelper.BUFFER_SIZE)
     }
 
+    private fun fillChunkedByteBufferWithMinSize(minSize: Int) {
+        while (!endInputStream) {
+            fillChunkedByteBuffer()
+            if (chunkedBuffer.position() >= minSize) {
+                chunkedBuffer.flip()
+                return
+            }
+        }
+    }
+
     private fun fillChunkedByteBuffer() {
+        if (endInputStream) {
+            return
+        }
         calculateChunkLimit()
         if (chunkedLimit <= 0) {
-            chunkedBuffer.position(0)
             chunkedBuffer.flip()
             skipLineFeed()
             return
         }
-        val capacity = chunkedBuffer.capacity()
+        val capacity = chunkedBuffer.remaining()
         if (chunkedLimit <= capacity) {
-            fillByteArray(chunkedLimit)
-            chunkedLimit = 0
-            skipLineFeed()
+            val actualRead = fillByteArray(chunkedLimit)
+            chunkedLimit -= actualRead
+            if (chunkedLimit <= 0) {
+                skipLineFeed()
+            }
         } else {
-            fillByteArray(capacity)
-            chunkedLimit -= capacity
+            val actualRead = fillByteArray(capacity)
+            chunkedLimit -= actualRead
         }
     }
 
@@ -121,16 +138,15 @@ class WrappedInputStream(
         if (byte1 == IoHelper.LINE_FEED_BYTE) {
             return
         }
-        throw IllegalStateException("Chunked length is incorrect.")
+        throw IllegalStateException("Chunked length is incorrect. $byte1")
     }
 
-    private fun fillByteArray(len: Int) {
-        var start = 0
-        for (i in 0 until len) {
-            chunkedByteArray[start++] = inputStream.read().toByte()
-        }
-        chunkedBuffer.position(start)
-        chunkedBuffer.flip()
+    private fun fillByteArray(len: Int): Int {
+        val startPos = chunkedBuffer.position()
+        val read = inputStream.read(chunkedByteArray, startPos, len)
+        println("Actual read $read.")
+        chunkedBuffer.position(read + startPos)
+        return read
     }
 
     private fun calculateChunkLimit() {

@@ -1,31 +1,29 @@
 package com.xiao.base.logging
 
 import com.xiao.base.annotation.Log
-import org.apache.logging.log4j.LogManager
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.slf4j.helpers.NOPLogger
+import org.slf4j.helpers.Util
 
 /**
  *
  * @author lix wang
  */
 abstract class Logging {
-    val log = LogManager.getLogger(this::class.java)
+    val log = logger()
 
     private fun logger(): Logger {
         val loggerAnnotation = this::class.java.getAnnotation(Log::class.java)
-        return if (loggerAnnotation != null && loggerAnnotation.value.isNotBlank()) {
-            LoggerFactory.getLogger(loggerAnnotation.value)
+        val loggerName = if (loggerAnnotation != null && loggerAnnotation.value.isNotBlank()) {
+            loggerAnnotation.value
         } else {
-            LoggerFactory.getLogger(this::class.java)
+            this::class.java.name
         }
+        val logger = LoggerFactory.getLogger(loggerName)
+        if (logger == NOPLogger.NOP_LOGGER) {
+            Util.report("There is no available logger named {$loggerName}, please implement it.")
+        }
+        return logger
     }
-}
-
-class DemoLogging: Logging() {
-}
-
-fun main() {
-    val de = DemoLogging()
-    de.log.error("Hello")
 }

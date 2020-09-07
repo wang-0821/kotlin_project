@@ -1,17 +1,19 @@
 package com.xiao.rpc.context
 
 import com.xiao.base.annotation.AnnotatedKtResource
+import com.xiao.base.annotation.Log
 import com.xiao.base.context.BeanHelper
 import com.xiao.base.context.BeanRegistry
 import com.xiao.base.context.Context
 import com.xiao.base.context.ContextAware
 import com.xiao.base.context.ContextScanner
+import com.xiao.base.logging.Logging
 import com.xiao.rpc.Client
+import com.xiao.rpc.Constants
 import com.xiao.rpc.RunningState
 import com.xiao.rpc.annotation.AutoClean
 import com.xiao.rpc.annotation.ClientContext
 import com.xiao.rpc.cleaner.Cleaner
-import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
 
 /**
@@ -28,8 +30,6 @@ abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAwar
     private val minCleanupDuration = 5000L
     private var cleanUpDuration: Long? = null
     private var state = RunningState()
-
-    private val log = LoggerFactory.getLogger(ClientContextPool::class.java)
 
     fun clientConfig(key: Context.Key<*>, config: ClientContextConfig) {
         contextClientConfig[key] = config
@@ -160,4 +160,7 @@ abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAwar
         }
         return beanRegistry
     }
+
+    @Log(Constants.RPC_LOGGER)
+    companion object : Logging()
 }

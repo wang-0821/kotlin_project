@@ -1,6 +1,7 @@
 package com.xiao.rpc.helper
 
 import com.xiao.base.context.Context
+import com.xiao.base.logging.Logging
 import com.xiao.rpc.Client
 import com.xiao.rpc.Route
 import com.xiao.rpc.context.ConnectionContextAware
@@ -10,15 +11,12 @@ import com.xiao.rpc.factory.ConnectionFactorySelector
 import com.xiao.rpc.factory.SocketFactory
 import com.xiao.rpc.factory.SocketFactorySelector
 import com.xiao.rpc.io.Connection
-import org.slf4j.LoggerFactory
 
 /**
  *
  * @author lix wang
  */
-object ConnectionHelper : ConnectionContextAware, RouteContextAware {
-    private val log = LoggerFactory.getLogger(ConnectionHelper::class.java)
-
+object ConnectionHelper : ConnectionContextAware, RouteContextAware, Logging() {
     fun findConnection(client: Client, routes: List<Route>, connectTimeout: Int): Connection? {
         var connection: Connection?
         return if (client.clientContextPool != null) {
@@ -66,7 +64,7 @@ object ConnectionHelper : ConnectionContextAware, RouteContextAware {
             val socket = socketFactory.createSocket(route, connectTimeout)
             connectionFactory.create(socket, route)
         } catch (e: Exception) {
-            log.error("Create connection failed ${e.message}", e)
+            log.error("Create connection failed, route: $route, ${e.message}.", e)
             null
         }
     }
