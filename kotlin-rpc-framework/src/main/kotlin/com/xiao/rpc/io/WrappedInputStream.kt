@@ -73,9 +73,7 @@ class WrappedInputStream(
 
     private fun checkChunkedByteArrayInputStream(inputStream: WrappedByteArrayInputStream) {
         if (inputStream.available() <= 0) {
-            val start = System.currentTimeMillis()
             fillChunkedByteBufferWithMinSize(minBufferFillSize)
-            println("Fill chunked consume ${System.currentTimeMillis() - start}")
             inputStream.replace(chunkedBuffer.array(), chunkedBuffer.position(), chunkedBuffer.remaining())
             chunkedBuffer.clear()
         }
@@ -144,7 +142,6 @@ class WrappedInputStream(
     private fun fillByteArray(len: Int): Int {
         val startPos = chunkedBuffer.position()
         val read = inputStream.read(chunkedByteArray, startPos, len)
-        println("Actual read $read.")
         chunkedBuffer.position(read + startPos)
         return read
     }

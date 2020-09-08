@@ -133,9 +133,7 @@ object IoHelper {
         val charBuffer = CharBuffer.wrap(charArray)
         val charsetDecoder = charset.newDecoder()
         var total = 0
-        var times = 0
         while (true) {
-            times++
             val byteBufferRemaining = byteBuffer.remaining()
             val count = readBlock(inputStream, byteArray, byteBuffer.position(), byteBufferRemaining)
             if (count > 0) {
@@ -154,7 +152,6 @@ object IoHelper {
                 check(length < 0 || total == length) {
                     "InputStream length $total is not equals with expected $length."
                 }
-                println("Read times $times, total $total")
                 byteBuffer.flip()
                 charsetDecoder.decode(byteBuffer, charBuffer, true)
                 charBuffer.flip()

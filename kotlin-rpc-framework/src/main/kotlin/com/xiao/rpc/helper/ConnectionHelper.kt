@@ -17,7 +17,11 @@ import com.xiao.rpc.io.Connection
  * @author lix wang
  */
 object ConnectionHelper : ConnectionContextAware, RouteContextAware, Logging() {
-    fun findConnection(client: Client, routes: List<Route>, connectTimeout: Int): Connection? {
+    fun findConnection(
+        client: Client,
+        routes: List<Route>,
+        connectTimeout: Int
+    ): Connection? {
         var connection: Connection?
         return if (client.clientContextPool != null) {
             connection = getConnectionWithCache(client.clientContextPool!!.key, routes)

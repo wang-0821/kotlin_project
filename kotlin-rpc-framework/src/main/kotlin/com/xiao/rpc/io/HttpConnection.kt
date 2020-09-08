@@ -31,6 +31,7 @@ class HttpConnection(
     private var inputStream: InputStream? = null
     private var outputStream: OutputStream? = null
     private var currentResponse: Response? = null
+    private var writeTimeout: Int = 0
 
     override fun connect() {
         if (route.address.isTls) {
@@ -58,6 +59,14 @@ class HttpConnection(
     override fun response(exchange: Exchange): Response {
         currentResponse = parseToResponse(inputStream!!, realResponseListener)
         return currentResponse!!
+    }
+
+    override fun readTimeout(timeout: Int) {
+        socket.soTimeout = timeout
+    }
+
+    override fun writeTimeout(timeout: Int) {
+        this.writeTimeout = timeout
     }
 
     override fun tryClose(keepAliveMills: Int): Boolean {

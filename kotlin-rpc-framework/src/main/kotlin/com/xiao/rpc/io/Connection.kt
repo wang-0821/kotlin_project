@@ -21,4 +21,8 @@ interface Connection : CloseableResource {
     fun finishRequest()
 
     fun response(exchange: Exchange): Response
+
+    fun readTimeout(timeout: Int)
+
+    fun writeTimeout(timeout: Int)
 }
