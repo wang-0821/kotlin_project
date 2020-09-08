@@ -6,50 +6,37 @@ import com.xiao.base.logging.Logging
  *
  * @author lix wang
  */
-class SimpleQueueItem<T>(
+class SimpleQueueItem(
     name: String,
-    runnable: Runnable,
-    private val future: WrappedFuture<T>
+    runnable: Runnable
 ) : AbstractQueueItem(name, runnable) {
     private val maxRetryTimes = 3
+    private var retryTimes = 0
 
     override fun run() {
-        checkTimeTrace(future)
-        future.timeTrace!!.startTime = System.currentTimeMillis()
+        val startTime = System.currentTimeMillis()
         try {
             runnable.run()
         } catch (e: Exception) {
-            log.error("Execute async task $name failed. ${e.message}", e)
+            log.error("Task-$name execute failed. ${e.message}", e)
             retry()
-        } finally {
-            future.timeTrace!!.endTime = System.currentTimeMillis()
         }
+        log.info("Task-$name succeed, retried $retryTimes times, consume ${System.currentTimeMillis() - startTime} ms.")
     }
 
     private fun retry() {
-        val retryTimeTraces = mutableListOf<ExecuteTimeTrace>()
+        val startTime = System.currentTimeMillis()
         for (i in 1..maxRetryTimes) {
-            val timeTrace = ExecuteTimeTrace()
-            timeTrace.startTime = System.currentTimeMillis()
+            retryTimes = i
             try {
                 runnable.run()
-                future.retryTimeTraces = retryTimeTraces
-                future.timeTrace!!.endTime = System.currentTimeMillis()
                 break
             } catch (e: Exception) {
-                log.error("Retry-$i async task $name failed. ${e.message}", e)
-            } finally {
-                timeTrace.endTime = System.currentTimeMillis()
-                retryTimeTraces.add(timeTrace)
+                log.error("Task-$name retry-$retryTimes failed. ${e.message}", e)
             }
         }
-        throw RuntimeException("Retry async task $name failed.")
-    }
-
-    private fun checkTimeTrace(future: WrappedFuture<T>) {
-        if (future.timeTrace == null) {
-            future.timeTrace = ExecuteTimeTrace()
-        }
+        log.error("Task-$name failed, retried $retryTimes times, consume ${System.currentTimeMillis() - startTime} ms.")
+        throw RuntimeException("Task-$name failed.")
     }
 
     companion object : Logging()

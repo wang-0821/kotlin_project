@@ -13,8 +13,6 @@ import com.xiao.rpc.io.Response
  */
 class ConnectionHandler(override val chain: Chain) : Handler {
     override fun handle(): Response {
-        log.info("Entered ${this::class.java.simpleName}.")
-        val startTime = System.currentTimeMillis()
         val routes = chain.exchange.routes ?: RouteHelper.findRoutes(chain.client, chain.exchange.address)
         check(routes.isNotEmpty()) {
             "ConnectionHandler can not find valid routes."
@@ -24,8 +22,6 @@ class ConnectionHandler(override val chain: Chain) : Handler {
             "ConnectionHandler can not find valid connection."
         }
         chain.exchange.connection = connection
-        val endTime = System.currentTimeMillis()
-        println("*** ConnectionHandler cost: ${endTime - startTime} ms")
         return chain.execute()
     }
 

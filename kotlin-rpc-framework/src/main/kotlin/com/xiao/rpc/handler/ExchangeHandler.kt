@@ -14,7 +14,6 @@ import com.xiao.rpc.io.Response
  */
 class ExchangeHandler(override val chain: Chain) : Handler {
     override fun handle(): Response {
-        log.info("Start exchange handler.")
         check(chain.exchange.connection != null) {
             "ExchangeHandler can not find valid connection."
         }
@@ -22,14 +21,10 @@ class ExchangeHandler(override val chain: Chain) : Handler {
     }
 
     private fun doRequest(connection: Connection, request: Request, exchange: Exchange): Response {
-        val startTime = System.currentTimeMillis()
         connection.writeHeaders(request)
         connection.writeBody(request)
         connection.finishRequest()
-        val result = connection.response(exchange)
-        val endTime = System.currentTimeMillis()
-        println("***** ExechangeHandler cost: ${endTime - startTime} ms")
-        return result
+        return connection.response(exchange)
     }
 
     @Log(Constants.RPC_LOGGER)

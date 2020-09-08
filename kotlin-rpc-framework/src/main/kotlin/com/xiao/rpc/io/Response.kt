@@ -59,7 +59,6 @@ class Response : Closeable {
     }
 
     fun contentAsString(): String {
-        val startTime = System.currentTimeMillis()
         val contentLength = headerMap[ContentHeaders.CONTENT_LENGTH.text.toUpperCase()]?.get(0)?.value?.toInt() ?: -1
         var charset: Charset? = null
         headerMap[ContentHeaders.CONTENT_TYPE.text.toUpperCase()]?.get(0)?.let {
@@ -77,8 +76,6 @@ class Response : Closeable {
             IoHelper.contentAsString(content, charset!!)
         }
         close()
-        val endTime = System.currentTimeMillis()
-        println("*** Content to string cost: ${endTime - startTime} ms")
         return result
     }
 

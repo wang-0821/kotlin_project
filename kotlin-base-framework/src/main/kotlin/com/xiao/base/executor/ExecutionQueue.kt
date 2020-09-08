@@ -2,6 +2,7 @@ package com.xiao.base.executor
 
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.Future
 import java.util.concurrent.FutureTask
 import java.util.concurrent.locks.ReentrantLock
 
@@ -19,7 +20,7 @@ class ExecutionQueue {
         this.executorService = executorService
     }
 
-    fun <T> submit(taskName: String, callable: Callable<T>): WrappedFuture<T> {
+    fun <T> submit(taskName: String, callable: Callable<T>): Future<T> {
         val name = if (taskName.isNullOrBlank()) {
             "Queue-Callable"
         } else {
@@ -30,7 +31,7 @@ class ExecutionQueue {
         }
     }
 
-    fun <T> submit(callable: Callable<T>): WrappedFuture<T> {
+    fun <T> submit(callable: Callable<T>): Future<T> {
         return submit("", callable)
     }
 
@@ -49,17 +50,13 @@ class ExecutionQueue {
         submit("", runnable)
     }
 
-    private fun <T> submitTask(taskName: String, futureTaskGenerator: () -> FutureTask<T>): WrappedFuture<T> {
+    private fun <T> submitTask(taskName: String, futureTaskGenerator: () -> FutureTask<T>): Future<T> {
         lock.lock()
         try {
-            val submitTime = System.currentTimeMillis()
             val task = futureTaskGenerator()
-            val future = WrappedFuture<T>(task).apply {
-                this.submitTime = submitTime
-            }
-            val queueItem = SimpleQueueItem(taskName, task, future)
+            val queueItem = SimpleQueueItem(taskName, task)
             executorService.submit(queueItem)
-            return future
+            return task
         } catch (e: Exception) {
             throw IllegalStateException(
                 "Submit task $taskName to $executionQueueName ExecutionQueue failed. ${e.message}")
