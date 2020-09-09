@@ -14,10 +14,13 @@ import com.xiao.rpc.io.Response
  */
 class ExchangeHandler(override val chain: Chain) : Handler {
     override fun handle(): Response {
+        val startTime = System.currentTimeMillis()
         check(chain.exchange.connection != null) {
             "ExchangeHandler can not find valid connection."
         }
-        return doRequest(chain.exchange.connection!!, chain.request, chain.exchange)
+        val result = doRequest(chain.exchange.connection!!, chain.request, chain.exchange)
+        log.debug("ExchangeHandler consume ${System.currentTimeMillis() - startTime} ms.")
+        return result
     }
 
     private fun doRequest(connection: Connection, request: Request, exchange: Exchange): Response {

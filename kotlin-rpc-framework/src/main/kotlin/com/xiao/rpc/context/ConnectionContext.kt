@@ -1,6 +1,7 @@
 package com.xiao.rpc.context
 
 import com.xiao.base.context.Context
+import com.xiao.base.logging.Logging
 import com.xiao.rpc.Route
 import com.xiao.rpc.annotation.ClientContext
 import com.xiao.rpc.io.Connection
@@ -12,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 @ClientContext
 class ConnectionContext(private val contextConfig: ClientContextConfig) : Context {
-    companion object Key : Context.Key<ConnectionContext>
+    companion object Key : Context.Key<ConnectionContext>, Logging()
     override val key: Context.Key<ConnectionContext>
         get() = Key
 
@@ -36,6 +37,7 @@ class ConnectionContext(private val contextConfig: ClientContextConfig) : Contex
     fun add(connection: Connection) {
         synchronized(connectionPool) {
             if (isFull(connection.route())) {
+                log.warn("Connection-${connection.route().address} is over count ${contextConfig.singleCorePoolSize}.")
                 return
             }
             var connections = connectionPool[connection.route()]

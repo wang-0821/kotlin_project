@@ -26,9 +26,8 @@ class ExecutionQueue {
         } else {
             taskName
         }
-        return submitTask(name) {
-            FutureTask(callable)
-        }
+        val queueItem = SimpleQueueItem(name, callable)
+        return submitCallable(queueItem)
     }
 
     fun <T> submit(callable: Callable<T>): Future<T> {
@@ -41,25 +40,35 @@ class ExecutionQueue {
         } else {
             taskName
         }
-        submitTask(name) {
-            FutureTask<Void>(runnable, null)
-        }
+        val queueItem = SimpleQueueItem<Void>(name, Callable { runnable.run() as Void })
+        submitRunnable(queueItem)
     }
 
     fun submit(runnable: Runnable) {
         submit("", runnable)
     }
 
-    private fun <T> submitTask(taskName: String, futureTaskGenerator: () -> FutureTask<T>): Future<T> {
+    private fun <T> submitCallable(queueItem: QueueItem<T>): Future<T> {
         lock.lock()
         try {
-            val task = futureTaskGenerator()
-            val queueItem = SimpleQueueItem(taskName, task)
-            executorService.submit(queueItem)
-            return task
+            val future = FutureTask<T>(queueItem)
+            executorService.execute { queueItem.call() }
+            return future
         } catch (e: Exception) {
             throw IllegalStateException(
-                "Submit task $taskName to $executionQueueName ExecutionQueue failed. ${e.message}")
+                "Submit task ${queueItem.name} to $executionQueueName ExecutionQueue failed. ${e.message}")
+        } finally {
+            lock.unlock()
+        }
+    }
+
+    private fun submitRunnable(queueItem: SimpleQueueItem<Void>) {
+        lock.lock()
+        try {
+            executorService.execute { queueItem.call() }
+        } catch (e: Exception) {
+            throw IllegalStateException(
+                "Submit task ${queueItem.name} to $executionQueueName ExecutionQueue failed. ${e.message}")
         } finally {
             lock.unlock()
         }
