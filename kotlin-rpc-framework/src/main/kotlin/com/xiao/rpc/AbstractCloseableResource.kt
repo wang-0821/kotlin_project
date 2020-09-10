@@ -5,7 +5,7 @@ package com.xiao.rpc
  * @author lix wang
  */
 abstract class AbstractCloseableResource(private val runningState: RunningState) : CloseableResource {
-    override fun tryClose(keepAliveMills: Int): Boolean {
+    override fun tryClose(keepAliveMills: Long): Boolean {
         synchronized(runningState) {
             return if (runningState.state() == RunningState.RUNNING) {
                 false

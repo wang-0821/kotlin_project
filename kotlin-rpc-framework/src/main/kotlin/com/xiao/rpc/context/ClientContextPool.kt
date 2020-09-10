@@ -6,14 +6,13 @@ import com.xiao.base.context.BeanHelper
 import com.xiao.base.context.BeanRegistry
 import com.xiao.base.context.Context
 import com.xiao.base.context.ContextAware
-import com.xiao.base.context.ContextScanner
 import com.xiao.base.logging.Logging
+import com.xiao.rpc.Cleaner
 import com.xiao.rpc.Client
 import com.xiao.rpc.Constants
 import com.xiao.rpc.RunningState
 import com.xiao.rpc.annotation.AutoClean
 import com.xiao.rpc.annotation.ClientContext
-import com.xiao.rpc.cleaner.Cleaner
 import java.util.concurrent.TimeUnit
 
 /**
@@ -23,13 +22,17 @@ import java.util.concurrent.TimeUnit
  */
 abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAware {
     private val contextClientConfig = mutableMapOf<Context.Key<*>, ClientContextConfig>()
-    private val defaultClientContextConfig = ClientContextConfig(16, 60, TimeUnit.SECONDS)
+    private val defaultClientContextConfig = ClientContextConfig(16, 10, TimeUnit.SECONDS)
     private val clientContextContainer = mutableMapOf<Context.Key<*>, Context>()
     private val cleanerContainer = mutableListOf<Cleaner>()
     private var beanRegistry: BeanRegistry? = null
     private val minCleanupDuration = 5000L
     private var cleanUpDuration: Long? = null
     private var state = RunningState()
+
+    init {
+        register(key)
+    }
 
     fun clientConfig(key: Context.Key<*>, config: ClientContextConfig) {
         contextClientConfig[key] = config
@@ -40,10 +43,18 @@ abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAwar
     }
 
     fun start() {
-        ContextScanner.scanAndExecute(Client.BASE_SCAN_PACKAGE)
-        val clientContextClasses = ContextScanner.annotatedKtResources.filter { it.isAnnotated(ClientContext::class) }
-        val contextCleanerClasses = ContextScanner.annotatedKtResources.filter { it.isAnnotated(AutoClean::class) }
+        val clientContextClasses = Client.annotatedResources.filter { it.isAnnotated(ClientContext::class) }
+        val contextCleanerClasses = Client.annotatedResources.filter { it.isAnnotated(AutoClean::class) }
         registerClientContexts(clientContextClasses)
+        val cleaners = clientContextContainer.values
+            .filter {
+                it is Cleaner
+                    && it::class.java.isAnnotationPresent(AutoClean::class.java)
+                    && !cleanerContainer.contains(it)
+            }.map {
+                it as Cleaner
+            }
+        cleanerContainer.addAll(cleaners)
         registerCleaners(contextCleanerClasses)
         startClean()
     }
@@ -62,7 +73,7 @@ abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAwar
         synchronized(state) {
             val thread = Thread(Runnable {
                 cleanupRunnable()
-            })
+            }, "RpcCleanerThread")
             thread.isDaemon = true
             thread.start()
             state.updateState(RunningState.RUNNING)
@@ -76,16 +87,10 @@ abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAwar
                 return
             }
             cleanerContainer.forEach { cleaner ->
-                clientContextContainer.values.forEach {
-                    try {
-                        cleaner.cleanup(it)
-                    } catch (e: Exception) {
-                        log.error(
-                            "Cleaner ${cleaner.javaClass.simpleName} cleanup ${it.javaClass.simpleName} failed." +
-                                    "${e.message}",
-                            e
-                        )
-                    }
+                try {
+                    cleaner.cleanup()
+                } catch (e: Exception) {
+                    log.error("Cleaner ${cleaner.javaClass.simpleName} cleanup  failed, ${e.message}", e)
                 }
             }
             Thread.sleep(sleepDuration)
@@ -112,6 +117,9 @@ abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAwar
 
     private fun registerCleaners(cleaners : List<AnnotatedKtResource>) {
         for (cleaner in cleaners) {
+            if (cleanerContainer.any { it::class.java == cleaner.resource.clazz.java }) {
+                continue
+            }
             val cleanerInstance = BeanHelper.newInstance<Cleaner>(cleaner.resource.clazz.java)
             cleanerInstance.let {
                 cleanerContainer.add(it)

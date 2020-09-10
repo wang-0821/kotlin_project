@@ -1,5 +1,8 @@
 package com.xiao.rpc.io
 
+import com.xiao.base.annotation.Log
+import com.xiao.base.logging.Logging
+import com.xiao.rpc.Constants
 import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.Protocol
 import com.xiao.rpc.ResponseListener
@@ -59,6 +62,7 @@ class Response : Closeable {
     }
 
     fun contentAsString(): String {
+        val startTime = System.currentTimeMillis()
         val contentLength = headerMap[ContentHeaders.CONTENT_LENGTH.text.toUpperCase()]?.get(0)?.value?.toInt() ?: -1
         var charset: Charset? = null
         headerMap[ContentHeaders.CONTENT_TYPE.text.toUpperCase()]?.get(0)?.let {
@@ -76,6 +80,7 @@ class Response : Closeable {
             IoHelper.contentAsString(content, charset!!)
         }
         close()
+        log.info("Response as string consume ${System.currentTimeMillis() - startTime} ms")
         return result
     }
 
@@ -83,4 +88,7 @@ class Response : Closeable {
         content.close()
         listener?.afterResponse()
     }
+
+    @Log(Constants.RPC_LOGGER)
+    companion object: Logging()
 }

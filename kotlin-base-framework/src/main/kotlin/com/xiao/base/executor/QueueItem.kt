@@ -13,12 +13,11 @@ abstract class QueueItem<T>(val name: String) : Callable<T> {
     private val maxRetryTimes = 3
     private var retryTimes = 0
 
-    fun execute(): T {
-        val result: T
+    override fun call(): T {
         ThreadContext.put("RpcRequestId", UUID.randomUUID().toString())
         val startTime = System.currentTimeMillis()
-        result = try {
-            call()
+        val result = try {
+            execute()
         } catch (e: Exception) {
             log.error("Task-$name execute failed. ${e.message}", e)
             retry()
@@ -28,12 +27,14 @@ abstract class QueueItem<T>(val name: String) : Callable<T> {
         return result
     }
 
+    abstract fun execute(): T
+
     private fun retry(): T {
         val startTime = System.currentTimeMillis()
         for (i in 1..maxRetryTimes) {
             retryTimes++
             try {
-                return call()
+                return execute()
             } catch (e: Exception) {
                 log.error("Task-$name retry-$retryTimes failed. ${e.message}", e)
             }

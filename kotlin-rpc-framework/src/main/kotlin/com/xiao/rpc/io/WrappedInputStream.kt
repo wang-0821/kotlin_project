@@ -20,8 +20,6 @@ class WrappedInputStream(
     private var chunkedLimit: Int = -1
     private var endInputStream = false
     private val minBufferFillSize = 4
-    private var expectTotal = 0
-    private var actualTotal = 0
 
     override fun read(): Int {
         return inputStream.read()
@@ -146,11 +144,10 @@ class WrappedInputStream(
         try {
             val startPos = chunkedBuffer.position()
             val read = inputStream.read(chunkedByteArray, startPos, len)
-            actualTotal += read
             chunkedBuffer.position(read + startPos)
             return read
         } catch (e: Exception) {
-            log.error("InputStream read buffer failed. ${e.message}, expect $expectTotal, actual $actualTotal, endOfStream $endInputStream", e)
+            log.error("Socket read failed, available: ${inputStream.available()}.")
             throw e
         }
     }
@@ -158,7 +155,6 @@ class WrappedInputStream(
     private fun calculateChunkLimit() {
         if (chunkedLimit <= 0 && !endInputStream) {
             chunkedLimit = Integer.parseInt(IoHelper.readPlainTextLine(inputStream), 16)
-            expectTotal += chunkedLimit
             if (chunkedLimit <= 0) {
                 endInputStream = true
             }

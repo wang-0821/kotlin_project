@@ -2,7 +2,9 @@ package com.xiao.rpc.context
 
 import com.xiao.base.context.Context
 import com.xiao.base.logging.Logging
+import com.xiao.rpc.Cleaner
 import com.xiao.rpc.Route
+import com.xiao.rpc.annotation.AutoClean
 import com.xiao.rpc.annotation.ClientContext
 import com.xiao.rpc.io.Connection
 import java.util.concurrent.ConcurrentHashMap
@@ -11,8 +13,9 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * @author lix wang
  */
+@AutoClean
 @ClientContext
-class ConnectionContext(private val contextConfig: ClientContextConfig) : Context {
+class ConnectionContext(private val contextConfig: ClientContextConfig) : Cleaner, Context {
     companion object Key : Context.Key<ConnectionContext>, Logging()
     override val key: Context.Key<ConnectionContext>
         get() = Key
@@ -53,5 +56,14 @@ class ConnectionContext(private val contextConfig: ClientContextConfig) : Contex
     private fun isFull(route: Route): Boolean {
         val pooledSize = connectionPool[route]?.size ?: 0
         return contextConfig.singleCorePoolSize <= pooledSize
+    }
+
+    override fun cleanup() {
+        log.info("Start cleanup ConnectionContext.")
+        connectionPool.entries.forEach {
+            it.value.forEach {
+                it.tryClose(contextConfig.timeUnit.toMillis(contextConfig.idleTimeout))
+            }
+        }
     }
 }

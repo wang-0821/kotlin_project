@@ -8,7 +8,7 @@ import com.xiao.rpc.Route
  *
  * @author lix wang
  */
-interface RouteContextAware : ClientContextAware {
+interface RouteContextAware : ClientContextPoolAware {
     fun getRoute(contextPoolKey: Context.Key<*>, address: Address): List<Route>? {
         return context(contextPoolKey)?.get(address)
     }

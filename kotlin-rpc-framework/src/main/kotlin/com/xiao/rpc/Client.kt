@@ -1,5 +1,6 @@
 package com.xiao.rpc
 
+import com.xiao.base.annotation.AnnotatedKtResource
 import com.xiao.base.context.ContextScanner
 import com.xiao.rpc.context.ClientContextPool
 import com.xiao.rpc.context.DefaultClientContextPool
@@ -19,7 +20,6 @@ class Client {
     var readTimeout = DEFAULT_TIMEOUT
     var writeTimeout = DEFAULT_TIMEOUT
     var clientContextPool: ClientContextPool? = null
-    private set
 
     init {
         refreshContext()
@@ -60,24 +60,39 @@ class Client {
         return Call(this, request, builder)
     }
 
-    fun clientContextPool(clientContextPool: ClientContextPool) {
-        this.clientContextPool = clientContextPool
-    }
-
+    /**
+     * 这里有可能一个线程执行到同步代码块中，另一个在等待获取同步锁，因此需要在同步代码块中再次判断刷新状态，避免重复刷新。
+     * 之所以不在方法上加同步锁，是因为这样每次都需要获取锁，通过先对状态的判断，可减少锁的使用。
+     *
+     * 这里需要先设置[refreshed]值为true再加载资源，因为类加载初始化阶段，会执行类构造器<clinit>() 方法，
+     * 如果代码中会调用这个方法来加载类资源，且即将加载类的中也有静态属性或静态代码块会调用这个方法，那么[refreshed]值就会一直是false，
+     * 进而会导致多次加载。
+     */
     private fun refreshContext() {
-        ContextScanner.scanAndExecute(BASE_SCAN_PACKAGE)
+        if (refreshed) {
+            return
+        }
+        synchronized(Client::class) {
+            if (refreshed) {
+                return
+            }
+            refreshed = true
+            annotatedResources = ContextScanner.scanAnnotatedResources(BASE_SCAN_PACKAGE)
+            ContextScanner.processAnnotatedResources(annotatedResources)
+        }
     }
 
     companion object  {
         const val DEFAULT_TIMEOUT = 5000
         val BASE_SCAN_PACKAGE = this::class.packageName()
+        var annotatedResources: List<AnnotatedKtResource> = listOf()
+        @Volatile var refreshed = false
     }
 }
 
 fun main() {
     val client = Client()
     val contextPool = DefaultClientContextPool()
-    client.clientContextPool(contextPool)
     contextPool.start()
 
     val response = client.newCall(UrlParser.parseUrl("https://www.baidu.com")).execute()

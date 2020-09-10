@@ -5,7 +5,8 @@ ext {
             kotlinx: '1.3.5',
             jackson: '2.11.2',
             slf4j: '1.7.30',
-            log4j2: '2.13.3'
+            log4j2: '2.13.3',
+            disruptor: '3.4.2'
     ]
 
     libs = [
@@ -25,5 +26,6 @@ ext {
             "slf4j-api": "org.slf4j:slf4j-api:$version.slf4j",
             "log4j-core": "org.apache.logging.log4j:log4j-core:$version.log4j2",
             "log4j-slf4j-impl": "org.apache.logging.log4j:log4j-slf4j-impl:$version.log4j2",
+            "disruptor": "com.lmax:disruptor:$version.disruptor"
     ]
 }

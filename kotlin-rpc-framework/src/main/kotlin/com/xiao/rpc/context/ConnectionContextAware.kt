@@ -8,7 +8,7 @@ import com.xiao.rpc.io.Connection
  *
  * @author lix wang
  */
-interface ConnectionContextAware : ClientContextAware {
+interface ConnectionContextAware : ClientContextPoolAware {
     fun getConnection(contextPoolKey: Context.Key<*>, route: Route): Connection? {
         return context(contextPoolKey)?.get(route)
     }

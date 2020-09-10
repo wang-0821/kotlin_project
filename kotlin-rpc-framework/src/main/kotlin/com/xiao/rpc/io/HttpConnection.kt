@@ -69,7 +69,7 @@ class HttpConnection(
         this.writeTimeout = timeout
     }
 
-    override fun tryClose(keepAliveMills: Int): Boolean {
+    override fun tryClose(keepAliveMills: Long): Boolean {
         val result = closeableResource.tryClose(keepAliveMills)
         if (result) {
             outputStream?.close()
