@@ -40,6 +40,16 @@ object ConnectionHelper : ConnectionContextAware, RouteContextAware, Logging() {
         }
     }
 
+    fun getConnectionWithCache(clientContextPoolKey: Context.Key<*>, routes: List<Route>): Connection? {
+        for (route in routes) {
+            val connection = getConnection(clientContextPoolKey, route)
+            if (connection != null) {
+                return connection
+            }
+        }
+        return null
+    }
+
     private fun createConnection(
         routes: List<Route>,
         connectTimeout: Int,
@@ -66,20 +76,15 @@ object ConnectionHelper : ConnectionContextAware, RouteContextAware, Logging() {
     ): Connection? {
         return try {
             val socket = socketFactory.createSocket(route, connectTimeout)
-            connectionFactory.create(socket, route)
+            val connection = connectionFactory.create(socket, route)
+            if (connection.tryUse()) {
+                connection
+            } else {
+                null
+            }
         } catch (e: Exception) {
             log.error("Create connection failed, route: $route, ${e.message}.", e)
             null
         }
-    }
-
-    private fun getConnectionWithCache(key: Context.Key<*>, routes: List<Route>): Connection? {
-        for (route in routes) {
-            val connection = getConnection(key, route)
-            if (connection != null) {
-                return connection
-            }
-        }
-        return null
     }
 }

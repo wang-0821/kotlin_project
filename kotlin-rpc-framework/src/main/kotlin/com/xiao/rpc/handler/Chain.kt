@@ -27,6 +27,7 @@ class Chain(val client: Client, val request: Request) {
         if (index > handlers.size) {
             throw IndexOutOfBoundsException("Chain handler execute out of bounds.")
         }
+
         @Suppress("USELESS_ELVIS")
         val result = handlers[index++].handle() ?: throw IllegalStateException("Chain execute result must not null.")
         afterExecute()

@@ -59,10 +59,33 @@ class ConnectionContext(private val contextConfig: ClientContextConfig) : Cleane
     }
 
     override fun cleanup() {
+        var cleaned = 0
         log.info("Start cleanup ConnectionContext.")
-        connectionPool.entries.forEach {
-            it.value.forEach {
-                it.tryClose(contextConfig.timeUnit.toMillis(contextConfig.idleTimeout))
+        val emptyRoutes = mutableListOf<Route>()
+        connectionPool.entries.forEach { entry ->
+            entry.value.forEach { connection ->
+                if (connection.tryClose(contextConfig.timeUnit.toMillis(contextConfig.idleTimeout))) {
+                    entry.value.remove(connection)
+                    cleaned++
+                    if (entry.value.isEmpty()) {
+                        emptyRoutes.add(entry.key)
+                    }
+                }
+            }
+        }
+        if (emptyRoutes.isNotEmpty())  {
+            removeEntries(emptyRoutes)
+        }
+        log.debug("Cleaned $cleaned connections.")
+    }
+
+    private fun removeEntries(routes: List<Route>) {
+        synchronized(connectionPool) {
+            routes.forEach {
+                val connections = connectionPool[it]
+                if (connections != null && connections.isEmpty()) {
+                    connectionPool.remove(it)
+                }
             }
         }
     }

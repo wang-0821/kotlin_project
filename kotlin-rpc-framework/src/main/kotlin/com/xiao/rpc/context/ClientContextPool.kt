@@ -35,38 +35,54 @@ abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAwar
     }
 
     fun clientConfig(key: Context.Key<*>, config: ClientContextConfig) {
+        checkStarted()
         contextClientConfig[key] = config
     }
 
     fun clientConfig(key: Context.Key<*>): ClientContextConfig {
+        checkStarted()
         return contextClientConfig[key] ?: defaultClientContextConfig
     }
 
     fun start() {
-        val clientContextClasses = Client.annotatedResources.filter { it.isAnnotated(ClientContext::class) }
-        val contextCleanerClasses = Client.annotatedResources.filter { it.isAnnotated(AutoClean::class) }
-        registerClientContexts(clientContextClasses)
-        val cleaners = clientContextContainer.values
-            .filter {
-                it is Cleaner
-                    && it::class.java.isAnnotationPresent(AutoClean::class.java)
-                    && !cleanerContainer.contains(it)
-            }.map {
-                it as Cleaner
+        synchronized(state) {
+            if (state.state() == RunningState.RUNNING) {
+                return
             }
-        cleanerContainer.addAll(cleaners)
-        registerCleaners(contextCleanerClasses)
-        startClean()
+            val clientContextClasses = Client.annotatedResources.filter { it.isAnnotated(ClientContext::class) }
+            val contextCleanerClasses = Client.annotatedResources.filter { it.isAnnotated(AutoClean::class) }
+            registerClientContexts(clientContextClasses)
+            val cleaners = clientContextContainer.values
+                .filter {
+                    it is Cleaner
+                            && it::class.java.isAnnotationPresent(AutoClean::class.java)
+                            && !cleanerContainer.contains(it)
+                }.map {
+                    it as Cleaner
+                }
+            cleanerContainer.addAll(cleaners)
+            registerCleaners(contextCleanerClasses)
+            startClean()
+            state.updateState(RunningState.RUNNING)
+        }
     }
 
     fun stop() {
         synchronized(state) {
+            checkStarted()
             state.updateState(RunningState.TERMINATE)
         }
     }
 
     fun getContext(key: Context.Key<*>): Context? {
+        checkStarted()
         return clientContextContainer[key]
+    }
+
+    private fun checkStarted() {
+        check(state.state() == RunningState.RUNNING) {
+            "${this::class.java.simpleName} has not started."
+        }
     }
 
     private fun startClean() {

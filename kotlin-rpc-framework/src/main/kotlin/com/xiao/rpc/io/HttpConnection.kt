@@ -21,9 +21,7 @@ class HttpConnection(
     private val closeableResource = object : AbstractCloseableResource(runningState) {}
     private val realResponseListener = responseListener ?: object : ResponseListener {
         override fun afterResponse() {
-            synchronized(runningState) {
-                runningState.updateState(RunningState.RUNNING, RunningState.READY)
-            }
+            unUse()
         }
     }
 
