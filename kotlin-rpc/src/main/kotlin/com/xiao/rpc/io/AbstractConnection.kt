@@ -1,12 +1,12 @@
 package com.xiao.rpc.io
 
+import com.xiao.base.util.JacksonUtils
 import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.ResponseListener
 import com.xiao.rpc.Route
 import com.xiao.rpc.factory.SslSocketFactorySelector
 import com.xiao.rpc.helper.IoHelper.CRLF
 import com.xiao.rpc.helper.ResponseHelper
-import com.xiao.base.util.JacksonUtils
 import java.io.InputStream
 import java.net.Socket
 import java.net.URLEncoder
@@ -18,24 +18,26 @@ import javax.net.ssl.SSLSocket
  */
 abstract class AbstractConnection : Connection {
     override fun writeHeaders(request: Request) {
+        val headerMap = request.headers().associateByTo(mutableMapOf(), { it.name })
         val path = request.path()?.let {
             URLEncoder.encode(it, "UTF-8")
         } ?: "/"
         var headerLine = "${request.method().name} $path ${request.protocol().text}$CRLF"
-        if (request.header("Host") == null) {
-            request.header(Header("Host", request.host() + ":" + request.port()))
+
+        if (headerMap["Host"] == null) {
+            headerMap["Host"] = Header("Host", request.host() + ":" + request.port())
         }
-        if (request.header("Connection") == null) {
-            request.header(Header("Connection", "Keep-Alive"))
+        if (headerMap["Connection"] == null) {
+            headerMap["Connection"] = Header("Connection", "Keep-Alive")
         }
-        if (request.header(ContentHeaders.ACCEPT_ENCODING.text) == null) {
-            request.header(Header(ContentHeaders.ACCEPT_ENCODING.text, "gzip"))
+        if (headerMap[ContentHeaders.ACCEPT_ENCODING.text] == null) {
+            headerMap[ContentHeaders.ACCEPT_ENCODING.text] = Header(ContentHeaders.ACCEPT_ENCODING.text, "gzip")
         }
-        if (request.header("User-Agent") == null) {
-            request.header(Header("User-Agent", "lix-http/${System.getProperty("projectMavenVersion")}"))
+        if (headerMap["User-Agent"] == null) {
+            headerMap["User-Agent"] = Header("User-Agent", "lix-http-client")
         }
 
-        for (header in request.headers()) {
+        for (header in headerMap.values) {
             headerLine += "${header.name}: ${header.value}$CRLF"
         }
         headerLine += CRLF
