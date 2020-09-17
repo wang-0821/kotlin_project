@@ -1,8 +1,6 @@
 package com.xiao.base.executor
 
 import com.xiao.base.logging.Logging
-import org.apache.logging.log4j.ThreadContext
-import java.util.UUID
 import java.util.concurrent.Callable
 
 /**
@@ -14,7 +12,6 @@ abstract class QueueItem<T>(val name: String) : Callable<T> {
     private var retryTimes = 0
 
     override fun call(): T {
-        ThreadContext.put("RpcRequestId", UUID.randomUUID().toString())
         val startTime = System.currentTimeMillis()
         val result = try {
             execute()
@@ -23,7 +20,6 @@ abstract class QueueItem<T>(val name: String) : Callable<T> {
             retry()
         }
         log.info("Task-$name succeed, retried $retryTimes times, consume ${System.currentTimeMillis() - startTime} ms.")
-        ThreadContext.clearMap()
         return result
     }
 

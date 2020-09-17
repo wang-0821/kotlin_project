@@ -18,4 +18,8 @@ object ExecutorUtil {
     fun<T> submit(callable: Callable<T>): Future<T> {
         return executor.submit(callable)
     }
+
+    fun<T> submit(queueItem: QueueItem<T>): Future<T> {
+        return executor.submit(queueItem)
+    }
 }

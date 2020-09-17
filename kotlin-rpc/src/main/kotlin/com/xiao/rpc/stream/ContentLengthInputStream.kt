@@ -11,37 +11,50 @@ class ContentLengthInputStream(
     private val contentLength: Int
 ): InputStream() {
     private var pos = 0
-    private var reachEnd = false
+    private var eof = false
     private var closed = false
 
     override fun available(): Int {
-        return if (reachEnd) {
-            -1
+        return if (eof || closed) {
+            0
         } else {
             contentLength - pos
         }
     }
 
     override fun read(): Int {
-        return if (available() > 0) {
-            inputStream.read()
-        } else {
-            -1
+        if (available() <= 0) {
+            return -1
         }
+        val bytecode = inputStream.read()
+        val read = if (bytecode == -1) {
+            -1
+        } else {
+            1
+        }
+        updatePos(read)
+        return bytecode
     }
 
     override fun read(b: ByteArray, off: Int, len: Int): Int {
-        val read = inputStream.read(b, off, available().coerceAtMost(len))
-        if (read < 0) {
-            reachEnd = true
+        if (available() <= 0) {
             return -1
         }
-        pos += read
+        val read = inputStream.read(b, off, available().coerceAtMost(len))
+        updatePos(read)
         return read
     }
 
     override fun close() {
         closed = true
-        inputStream.close()
+    }
+
+    private fun updatePos(read: Int) {
+        if (read < 0) {
+            eof = true
+            return
+        } else {
+            pos += read
+        }
     }
 }

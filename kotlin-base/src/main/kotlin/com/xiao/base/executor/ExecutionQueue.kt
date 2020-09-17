@@ -34,6 +34,10 @@ class ExecutionQueue {
         return submitCallable(queueItem)
     }
 
+    fun <T> submit(queueItem: QueueItem<T>): Future<T> {
+        return submitCallable(queueItem)
+    }
+
     fun <T> submit(callable: Callable<T>): Future<T> {
         return submit("", callable)
     }

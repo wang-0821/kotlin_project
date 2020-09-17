@@ -11,7 +11,7 @@ import java.nio.charset.Charset
  * @author lix wang
  */
 object IoHelper {
-    private const val KILO = 1024
+    const val KILO = 1024
     const val BUFFER_SIZE = 8 * KILO
     const val CRLF = "\r\n"
     const val CARRIAGE_RETURN_BYTE = '\r'.toByte()

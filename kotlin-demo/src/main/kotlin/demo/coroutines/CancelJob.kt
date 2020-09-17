@@ -1,4 +1,4 @@
-package com.xiao.base.demo.coroutines
+package demo.coroutines
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable

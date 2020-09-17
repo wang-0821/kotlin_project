@@ -1,4 +1,4 @@
-package com.xiao.base.demo
+package demo
 
 /**
  *

@@ -1,10 +1,12 @@
 package com.xiao.rpc
 
 import com.xiao.base.executor.ExecutorUtil
+import com.xiao.base.executor.QueueItem
 import com.xiao.base.logging.Logging
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.util.UrlParser
-import java.util.concurrent.Callable
+import org.apache.logging.log4j.ThreadContext
+import java.util.UUID
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
@@ -15,10 +17,21 @@ import java.util.concurrent.TimeUnit
 object Rpc: Logging() {
     val client = Client()
 
-    fun future(name: String, request: Request): Future<String> {
-        return ExecutorUtil.submit(name, Callable {
-            client.newCall(request).execute().contentAsString()
-        })
+    fun asyncCall(name: String, request: Request): Future<String?> {
+        return ExecutorUtil.submit(
+            object : QueueItem<String?>(name) {
+                override fun execute(): String? {
+                    return client.newCall(request).execute().asString()
+                }
+
+                override fun call(): String? {
+                    ThreadContext.put("RpcRequestId", UUID.randomUUID().toString())
+                    val result = super.call()
+                    ThreadContext.clearMap()
+                    return result
+                }
+            }
+        )
     }
 }
 
@@ -39,9 +52,9 @@ fun main() {
 
 
     val time2 = System.currentTimeMillis()
-    val futures = mutableListOf<Future<String>>()
+    val futures = mutableListOf<Future<String?>>()
     for (i in 1..50) {
-        futures.add(Rpc.future("Task-$i", request))
+        futures.add(Rpc.asyncCall("Task-$i", request))
     }
     for (i in futures.indices) {
         val startTime = System.currentTimeMillis()

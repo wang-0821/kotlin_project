@@ -1,5 +1,6 @@
 package com.xiao.rpc.helper
 
+import com.xiao.rpc.ContentEncodingType
 import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.Protocol
 import com.xiao.rpc.ResponseListener
@@ -26,7 +27,9 @@ object ResponseHelper {
         // get content headers
         val contentEncoding = headers.lastOrNull {
             it.name.toUpperCase() == ContentHeaders.CONTENT_ENCODING.text.toUpperCase()
-        }?.value
+        }?.value?.let {
+            ContentEncodingType.parse(it)
+        } ?: ContentEncodingType.IDENTITY
         val transferEncoding = headers.lastOrNull {
             it.name.toUpperCase() == ContentHeaders.TRANSFER_ENCODING.text.toUpperCase()
         }?.value
@@ -51,7 +54,7 @@ object ResponseHelper {
         inputStream: InputStream,
         contentLength: Long,
         contentType: String?,
-        contentEncoding: String?,
+        contentEncoding: ContentEncodingType,
         transferEncoding: String?
     ): HttpResponseContent {
         var charset: Charset? = null
@@ -67,7 +70,8 @@ object ResponseHelper {
             contentType,
             contentLength,
             charset,
-            StreamUtils.calculateRealInputStream(inputStream, contentEncoding, transferEncoding)
+            StreamUtils.calculateRealInputStream(
+                inputStream, contentLength, contentEncoding, transferEncoding)
         )
     }
 

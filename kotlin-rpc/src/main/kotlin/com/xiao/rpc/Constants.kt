@@ -6,4 +6,5 @@ package com.xiao.rpc
  */
 object Constants {
     const val RPC_LOGGER = "RpcLogger"
+    const val TRANSFER_ENCODING_CHUNKED = "chunked"
 }

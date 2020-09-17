@@ -1,4 +1,4 @@
-package com.xiao.base.demo
+package demo
 
 import java.io.IOException
 import java.net.ServerSocket

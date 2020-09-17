@@ -1,4 +1,4 @@
-package com.xiao.base.demo
+package demo
 
 import java.io.BufferedReader
 import java.io.InputStreamReader

@@ -1,4 +1,5 @@
 dependencies {
-    compile project(":kotlin-base-framework")
-    compile libs["jackson-databind"]
+    compile project(":kotlin-base")
+    compile libs['log4j-slf4j-impl']
+    compile libs['disruptor']
 }

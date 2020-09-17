@@ -1,4 +1,4 @@
-package com.xiao.rpc.util
+package com.xiao.base.util
 
 import com.fasterxml.jackson.databind.ObjectMapper
 

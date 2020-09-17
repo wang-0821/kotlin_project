@@ -6,7 +6,7 @@ import com.xiao.rpc.Route
 import com.xiao.rpc.factory.SslSocketFactorySelector
 import com.xiao.rpc.helper.IoHelper.CRLF
 import com.xiao.rpc.helper.ResponseHelper
-import com.xiao.rpc.util.JacksonUtils
+import com.xiao.base.util.JacksonUtils
 import java.io.InputStream
 import java.net.Socket
 import java.net.URLEncoder

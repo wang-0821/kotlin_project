@@ -1,4 +1,4 @@
-package com.xiao.rpc.util
+package com.xiao.base.util
 
 import kotlin.reflect.KClass
 

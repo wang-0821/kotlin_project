@@ -2,14 +2,13 @@ package com.xiao.rpc
 
 import com.xiao.base.annotation.AnnotatedKtResource
 import com.xiao.base.context.ContextScanner
+import com.xiao.base.util.packageName
 import com.xiao.rpc.context.ClientContextPool
-import com.xiao.rpc.context.DefaultClientContextPool
 import com.xiao.rpc.handler.Chain
 import com.xiao.rpc.io.Exchange
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
 import com.xiao.rpc.util.UrlParser
-import com.xiao.rpc.util.packageName
 
 /**
  *
@@ -92,9 +91,6 @@ class Client {
 
 fun main() {
     val client = Client()
-    val contextPool = DefaultClientContextPool()
-    contextPool.start()
-
-    val response = client.newCall(UrlParser.parseUrl("https://www.baidu.com")).execute()
-    println("Response*********** ${response.contentAsString()} *******")
+    val response = client.newCall(UrlParser.parseUrl("http://www.baidu.com")).execute()
+    println("Response*********** ${response.asString()} *******")
 }

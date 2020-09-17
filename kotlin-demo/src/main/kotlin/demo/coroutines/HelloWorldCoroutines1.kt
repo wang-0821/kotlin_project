@@ -1,4 +1,4 @@
-package com.xiao.base.demo.coroutines
+package demo.coroutines
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
