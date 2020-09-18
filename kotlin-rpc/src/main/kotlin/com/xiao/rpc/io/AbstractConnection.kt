@@ -54,8 +54,8 @@ abstract class AbstractConnection : Connection {
         write(body.toByteArray())
     }
 
-    protected fun parseToResponse(inputStream: InputStream, responseListener: ResponseListener): Response {
-        return ResponseHelper.parseResponse(inputStream, responseListener)
+    protected fun parseToResponse(inputStream: InputStream, responseListener: ResponseListener, socket: Socket): Response {
+        return ResponseHelper.parseResponse(inputStream, responseListener, socket)
     }
 
     protected fun connectTls(socket: Socket, route: Route): SSLSocket {

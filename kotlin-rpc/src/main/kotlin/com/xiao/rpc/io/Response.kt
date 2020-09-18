@@ -2,7 +2,10 @@ package com.xiao.rpc.io
 
 import com.xiao.rpc.Protocol
 import com.xiao.rpc.ResponseListener
+import com.xiao.rpc.stream.ChunkedInputStream
 import java.io.Closeable
+import java.net.Socket
+import java.time.Instant
 
 /**
  *
@@ -39,12 +42,15 @@ class Response : Closeable {
      */
     private val listener: ResponseListener?
 
+    private val socket: Socket?
+
     constructor(
         protocol: Protocol,
         status: Int,
         headers: List<Header>,
         content: HttpResponseContent?,
-        listener: ResponseListener?
+        listener: ResponseListener?,
+        socket: Socket?
     ) {
         this.protocol = protocol
         this.status = status
@@ -52,11 +58,17 @@ class Response : Closeable {
         this.content = content
         this.headerMap = headers.groupBy { it.name.toUpperCase() }
         this.listener = listener
+        this.socket = socket
     }
 
     fun asString(): String? {
         try {
-            return content?.asString()
+            val result = content?.asString()
+            println("Total read count size: ${ChunkedInputStream.totalLocal.get()}")
+            return result
+        } catch (e: Exception) {
+            println("Socket $socket, time ${Instant.now()}")
+          throw e
         } finally {
             listener?.afterResponse()
         }

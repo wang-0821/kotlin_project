@@ -35,7 +35,7 @@ class DefaultHttpResponseContent(
         } else {
             IoHelper.contentAsString(inputStream, charset)
         }
-        log.info("Content as string consume: ${System.currentTimeMillis() - startTime} ms.")
+        log.info("Content as string consume: ${System.currentTimeMillis() - startTime}")
         return result
     }
 

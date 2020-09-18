@@ -9,7 +9,7 @@ import java.util.concurrent.Future
  */
 object ExecutorUtil {
     private val executorService = ExecutorServiceFactory.newDefaultThreadPoolExecutor(4)
-    private val executor = ExecutionQueue("AsyncExecutionQueue", executorService)
+    val executor = ExecutionQueue("AsyncExecutionQueue", executorService)
 
     fun<T> submit(name: String, callable: Callable<T>): Future<T> {
         return executor.submit(name, callable)

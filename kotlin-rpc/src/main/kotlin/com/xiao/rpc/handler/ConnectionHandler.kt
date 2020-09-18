@@ -1,5 +1,6 @@
 package com.xiao.rpc.handler
 
+import com.xiao.base.logging.Logging
 import com.xiao.rpc.helper.ConnectionHelper
 import com.xiao.rpc.helper.RouteHelper
 import com.xiao.rpc.io.Response
@@ -20,6 +21,9 @@ class ConnectionHandler(override val chain: Chain) : Handler {
         }
         connection.readTimeout(chain.exchange.readTimeout)
         chain.exchange.connection = connection
+        log.info("Connection route ${connection.route()}")
         return chain.execute()
     }
+
+    companion object : Logging()
 }

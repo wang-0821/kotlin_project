@@ -55,7 +55,7 @@ class HttpConnection(
     }
 
     override fun response(exchange: Exchange): Response {
-        currentResponse = parseToResponse(inputStream!!, realResponseListener)
+        currentResponse = parseToResponse(inputStream!!, realResponseListener, socket)
         return currentResponse!!
     }
 

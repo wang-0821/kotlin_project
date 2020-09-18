@@ -10,6 +10,7 @@ import com.xiao.rpc.io.HttpResponseContent
 import com.xiao.rpc.io.Response
 import com.xiao.rpc.util.StreamUtils
 import java.io.InputStream
+import java.net.Socket
 import java.nio.charset.Charset
 
 /**
@@ -17,7 +18,7 @@ import java.nio.charset.Charset
  * @author lix wang
  */
 object ResponseHelper {
-    fun parseResponse(inputStream: InputStream, responseListener: ResponseListener): Response {
+    fun parseResponse(inputStream: InputStream, responseListener: ResponseListener, socket: Socket): Response {
         val startLine = IoHelper.readPlainTextLine(inputStream)
         val startLineSplits = startLine.split(" ")
         val protocol = Protocol.parseProtocol(startLineSplits[0])
@@ -46,7 +47,8 @@ object ResponseHelper {
             status,
             headers,
             calculateResponseContent(inputStream, contentLength, contentType, contentEncoding, transferEncoding),
-            responseListener
+            responseListener,
+            socket
         )
     }
 
