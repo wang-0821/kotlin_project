@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantLock
  * @author lix wang
  */
 class ExecutionQueue {
-    val executorService: ExecutorService
+    private val executorService: ExecutorService
     private val executionQueueName: String
     private val lock = ReentrantLock()
 

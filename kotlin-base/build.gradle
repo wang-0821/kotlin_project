@@ -1,3 +1,4 @@
 dependencies {
     compile libs["jackson-databind"]
+    compile libs['kotlin-coroutines-core']
 }

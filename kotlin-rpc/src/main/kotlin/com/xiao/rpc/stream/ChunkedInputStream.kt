@@ -90,12 +90,10 @@ class ChunkedInputStream : InputStream {
 
         byteBuffer.clear()
         val length = chunkBufferAvailable()
-        val available = inputStream.available()
         val read = try {
-            println("Available $available")
             inputStream.read(byteBuffer.array(), 0, length)
         } catch (e: Exception) {
-            println("Already read ${totalLocal.get()}.")
+            println("Already read ${totalLocal.get()}, available ${inputStream.available()}.")
             throw e
         }
         val total = (totalLocal.get() ?: 0) + read

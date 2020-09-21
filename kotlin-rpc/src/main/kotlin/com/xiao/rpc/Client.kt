@@ -8,7 +8,6 @@ import com.xiao.rpc.handler.Chain
 import com.xiao.rpc.io.Exchange
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
-import com.xiao.rpc.util.UrlParser
 
 /**
  *
@@ -87,10 +86,4 @@ class Client {
         var annotatedResources: List<AnnotatedKtResource> = listOf()
         @Volatile var refreshed = false
     }
-}
-
-fun main() {
-    val client = Client()
-    val response = client.newCall(UrlParser.parseUrl("http://www.baidu.com")).execute()
-    println("Response*********** ${response.asString()} *******")
 }

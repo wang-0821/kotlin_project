@@ -2,10 +2,8 @@ package com.xiao.rpc.io
 
 import com.xiao.rpc.Protocol
 import com.xiao.rpc.ResponseListener
-import com.xiao.rpc.stream.ChunkedInputStream
 import java.io.Closeable
 import java.net.Socket
-import java.time.Instant
 
 /**
  *
@@ -63,12 +61,7 @@ class Response : Closeable {
 
     fun asString(): String? {
         try {
-            val result = content?.asString()
-            println("Total read count size: ${ChunkedInputStream.totalLocal.get()}")
-            return result
-        } catch (e: Exception) {
-            println("Socket $socket, time ${Instant.now()}")
-          throw e
+            return content?.asString()
         } finally {
             listener?.afterResponse()
         }
