@@ -4,8 +4,6 @@ import com.xiao.base.context.Context
 import com.xiao.base.logging.Logging
 import com.xiao.rpc.Cleaner
 import com.xiao.rpc.Route
-import com.xiao.rpc.annotation.AutoClean
-import com.xiao.rpc.annotation.ClientContext
 import com.xiao.rpc.io.Connection
 import java.util.concurrent.ConcurrentHashMap
 
@@ -13,8 +11,6 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * @author lix wang
  */
-@AutoClean
-@ClientContext
 class ConnectionContext(private val contextConfig: ClientContextConfig) : Cleaner, Context {
     companion object Key : Context.Key<ConnectionContext>, Logging()
     override val key: Context.Key<ConnectionContext>

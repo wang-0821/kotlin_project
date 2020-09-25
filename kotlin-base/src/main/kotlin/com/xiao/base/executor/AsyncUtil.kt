@@ -1,6 +1,8 @@
 package com.xiao.base.executor
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlin.coroutines.CoroutineContext
 
 /**
  *
@@ -8,6 +10,10 @@ import kotlinx.coroutines.asCoroutineDispatcher
  */
 object AsyncUtil {
     private val executorService = ExecutorServiceFactory.newDefaultThreadPoolExecutor(8)
+    private val dispatcher = executorService.asCoroutineDispatcher()
     val executor = ExecutionQueue("AsyncExecutionQueue", executorService)
-    val dispatcher = executorService.asCoroutineDispatcher()
+    val coroutineScope: CoroutineScope = object : CoroutineScope {
+        override val coroutineContext: CoroutineContext
+            get() = dispatcher
+    }
 }

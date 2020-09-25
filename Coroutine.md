@@ -30,6 +30,24 @@
                 }
     ......
     
+### 挂起函数
+&emsp;&emsp; 协程使用suspend来标记函数为挂起函数，suspend并不是协程，只是用来标记这个函数可能会被挂起。被suspend修饰的函数，
+被其他suspend修饰的函数调用，这是因为每一个suspend修饰的函数，最终编译过后，函数的参数列表中会有一个Continuation。suspend函数之间的调用，
+会传递Continuation。
+
+### delay
+&emsp;&emsp; delay不会导致线程阻塞，因为delay并没有执行Thread.sleep，而是将延迟队列中添加一条DelayedTask，然后从队列中拉取任务，
+判断任务是否已经到期，这种延迟方式不会导致线程阻塞。
+
+    private fun scheduleImpl(now: Long, delayedTask: DelayedTask): Int {
+            if (isCompleted) return SCHEDULE_COMPLETED
+            val delayedQueue = _delayed.value ?: run {
+                _delayed.compareAndSet(null, DelayedTaskQueue(now))
+                _delayed.value!!
+            }
+            return delayedTask.scheduleTask(now, delayedQueue, this)
+        }
+    
 <h2 id="1">1.协程的结构</h2>
 &emsp;&emsp; 协程分为：CoroutineScope、CoroutineContent、CoroutineDispatcher、Job。
 

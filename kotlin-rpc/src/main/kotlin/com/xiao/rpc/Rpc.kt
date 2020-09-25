@@ -5,7 +5,6 @@ import com.xiao.base.executor.QueueItem
 import com.xiao.base.logging.Logging
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
-import com.xiao.rpc.util.UrlParser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
@@ -25,22 +24,23 @@ object Rpc: Logging() {
     val client = Client()
     var started = AtomicInteger(0)
 
-    fun  call(name: String, request: Request): Future<Response> {
+    fun  future(name: String, request: Request): Future<Response> {
         return AsyncUtil.executor.submit(queueItem(name, request))
     }
 
-    suspend fun CoroutineScope.deferred(name: String, request: Request): Deferred<Response> {
-        return withContext(this.coroutineContext) {
+    fun sync(name: String, request: Request): Response {
+        return queueItem(name, request).call()
+    }
+
+    suspend fun deferred(
+        name: String,
+        request: Request,
+        coroutineScope: CoroutineScope = AsyncUtil.coroutineScope
+    ): Deferred<Response> {
+        return withContext(coroutineScope.coroutineContext) {
             async {
                 queueItem(name, request).call()
             }
-        }
-    }
-
-    suspend fun <T> Deferred<T>.get(timeout: Long, timeUnit: TimeUnit): T {
-        val deferred = this
-        return withTimeout(timeUnit.toMillis(timeout)) {
-            deferred.await()
         }
     }
 
@@ -62,6 +62,9 @@ object Rpc: Logging() {
     }
 }
 
-fun main() {
-    val request = UrlParser.parseUrl("https://www.baidu.com")
+suspend fun <T> Deferred<T>.result(timeout: Long = 60000, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): T {
+    val deferred = this
+    return withTimeout(timeUnit.toMillis(timeout)) {
+        deferred.await()
+    }
 }
