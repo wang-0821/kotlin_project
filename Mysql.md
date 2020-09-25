@@ -62,3 +62,6 @@
     // 1表示启用，0表示禁用
     SET AUTOCOMMIT = 1;
     
+    // 设置事务隔离级别
+    SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED;
+    
