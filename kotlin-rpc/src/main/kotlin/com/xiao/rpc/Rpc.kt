@@ -2,7 +2,6 @@ package com.xiao.rpc
 
 import com.xiao.base.executor.AsyncUtil
 import com.xiao.base.executor.QueueItem
-import com.xiao.base.logging.Logging
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * @author lix wang
  */
-object Rpc: Logging() {
+object Rpc {
     val client = Client()
     var started = AtomicInteger(0)
 

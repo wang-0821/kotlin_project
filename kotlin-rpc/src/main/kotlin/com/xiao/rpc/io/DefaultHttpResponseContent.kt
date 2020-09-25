@@ -1,6 +1,5 @@
 package com.xiao.rpc.io
 
-import com.xiao.base.logging.Logging
 import com.xiao.rpc.helper.IoHelper
 import java.io.InputStream
 import java.nio.charset.Charset
@@ -28,20 +27,15 @@ class DefaultHttpResponseContent(
     }
 
     override fun asString(): String? {
-        val startTime = System.currentTimeMillis()
         val charset = charset ?: Charsets.UTF_8
-        val result = if (contentLength > 0) {
+        return if (contentLength > 0) {
             IoHelper.contentAsString(inputStream, charset, contentLength)
         } else {
             IoHelper.contentAsString(inputStream, charset)
         }
-        log.info("Content as string consume: ${System.currentTimeMillis() - startTime}")
-        return result
     }
 
     override fun close() {
         inputStream.close()
     }
-
-    companion object : Logging()
 }
