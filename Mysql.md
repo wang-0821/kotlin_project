@@ -361,3 +361,33 @@ MySQL对查询的静态优化只需要做一次。
         9，等值传播。如果两个列的值通过等式关联，那么MySQL能够把其中一个列的WHERE条件传递到另一列上。
         10，列表IN()的比较。在MySQL中，将IN()列表中的数据先进行排序，然后通过二分查找的方式来确定列表中的值是否满足条件。
             这是一个O(log n)复杂度的操作，等价地转换成OR的查询复杂度为O(n)，对于IN()列表中有大量取值的时候，MySQL更快。
+            
+### 数据和索引的统计信息
+&emsp;&emsp; MySQL在服务器层有查询优化器，却没有保存数据和索引的统计信息。统计信息是由存储引擎实现的，不同的存储引擎可能存储不同的统计信息。
+MySQL查询优化器在生成查询的执行计划时，需要向存储引擎获取响应的统计信息。存储引擎提供给优化器对应的统计信息，包括：每个表或者索引有多少个页面，
+每个表的每个索引的基数是多少，数据行和索引长度、索引的分布信息等。优化器根据这些信息选择一个最优的执行计划。
+
+### MySQL如何执行关联计划
+&emsp;&emsp; MySQL中每一个查询都是一次关联。对于UNION查询，MySQL先将一系列的单个查询结果放到一个临时表中，然后再重新读出临时表数据来完成
+UNION查询。MySQL对于任何关联都执行嵌套循环关联操作，即MySQL现在一个表中循环取出单条数据，然后再嵌套循环到下一个表中寻找匹配的行，
+直到找到所有表中匹配的行为止。MySQL会尝试在最后一个关联表中找到所有匹配的行，如果最后一个关联表无法找到更多的行后，MySQL返回到上一层次关联表，
+看是否能够找到更多的匹配记录，依次类推迭代执行。
+
+    // USING(col3) == ON tbl1.col3 = tbl2.col3
+    SELECT tbl1.col1, tbl2.col2
+    FROM tbl1 INNER JOIN tbl2 USING(col3)
+    WHERE tbl1.col1 IN (5, 6);
+    
+    // 上面的MySQL查询可以使用下面伪代码表示，也就是先根据左侧的where找到临时集合，然后通过循环这个集合中的元素，在JOIN中找到对应的行。
+    outer_iter = iterator over tbl1 where col1 IN (5, 6)
+    outer_raw = outer_iter.next
+    while outer_raw
+        inner_iter = iterator over tbl2 where col3 = outer_raw.col3
+        inner_raw = inner_iter.next
+        while inner_raw
+            output [outer_raw.col1, inner_raw.col2]
+            inner_raw = inner_iter.next
+        end
+        outer_raw = outer_iter.next
+    end
+    
