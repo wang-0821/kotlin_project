@@ -374,6 +374,7 @@ UNION查询。MySQL对于任何关联都执行嵌套循环关联操作，即MySQ
 看是否能够找到更多的匹配记录，依次类推迭代执行。
 
     // USING(col3) == ON tbl1.col3 = tbl2.col3
+    // 使用INNER JOIN关联查询
     SELECT tbl1.col1, tbl2.col2
     FROM tbl1 INNER JOIN tbl2 USING(col3)
     WHERE tbl1.col1 IN (5, 6);
@@ -391,3 +392,59 @@ UNION查询。MySQL对于任何关联都执行嵌套循环关联操作，即MySQ
         outer_raw = outer_iter.next
     end
     
+    // 使用OUTER JOIN关联查询
+    SELECT tbl1.col1, tbl2.col2
+    FROM tbl1 LEFT OUTER JOIN tbl2 USING(col3)
+    WHERE tbl1.col1 IN (5, 6);
+    
+    // 上面的伪代码表示为：
+    outer_iter = iterator over tbl1 where col1 IN (5, 6)
+    outer_raw = outer_iter.next
+    while outer_raw
+        inner_iter = iterator over tbl2 where col3 = other_raw.col3
+        inne_raw = inner_iter.next
+        if inner_raw
+            while inner_raw
+                output [outer_raw.col1, inner_raw.col2]
+                inner_raw = inner_iter.next
+            end
+        else
+            output [outer_raw.col1, NULL]
+        end
+        outer_raw = outer_iter.next
+    end
+    
+<br>
+&emsp;&emsp; MySQL在FROM子句中遇到子查询时，先执行子查询并将结果放到一个临时表中，然后将这个临时表当作一个普通表对待。MySQL在使用UNION时，
+也使用类似的临时表，在遇到右外连接时，MySQL将其改写成等价的左外连接。
+
+### 执行计划
+&emsp;&emsp; MySQL不会生成查询字节码来执行查询，MySQL生成查询的一棵指令树，然后通过存储引擎执行完成这颗指令树并返回结果。
+如果对某个查询执行EXPLAIN EXTENDED 后，再执行SHOW WARNINGS，就可以看到重构出的查询。
+
+### 关联查询优化器
+&emsp;&emsp; MySQL优化器最重要的一部分就是关联查询优化，它决定了多个表关联时的顺序。多表关联的时候，可以有多种不同的关联顺序来获取相同
+的执行结果。关联查询优化器通过评估不同顺序时的成本来选择一个代价最小的关联顺序。可以使用STRAIGHT_JOIN关键子重写查询，让优化器按照你认为最优
+的关联顺序执行。
+    
+    如果N个表关联，那么需要检查N的阶乘种关联顺序，我们称之为所有可能的执行计划的搜索空间。当搜索空间非常大的时候，不会逐一评估每种关联顺序的成本，
+    这时候使用贪婪搜索方式查找最优关联顺序。
+
+### 排序优化
+&emsp;&emsp; 排序是一个成本很高的操作，应该尽量避免排序或对大量数据进行排序。当不能使用索引生成排序结果时，MySQL需要自己进行排序，
+如果数量小则在内存中进行，如果数量大则需要使用磁盘，MySQL将这个过程统一称为文件排序(filesort)。如果排序数量小于排序缓冲区，
+那么MySQL使用快速排序，如果内存不够，那么MySQL先将数据分块，然后对每个独立的快速排序，然后将各个块排序结果放在磁盘上，然后对排序好的块进行合并，
+最后返回排序结果。如果查询中有LIMIT，那么LIMIT会在排序后应用。如果使用了LIMIT，那么MySQL不再对所有的结果进行排序，而是根据实际情况，
+选择抛弃不满足条件的结果，然后排序。
+
+    1，如果ORDER BY子句中的所有列都来自关联的第一个表，那么MySQL在关联处理第一个表的时候就进行文本排序。
+        这种情况EXPLAIN结果的Extra会有"Using filesort"。
+    2，除此之外所有情况，MySQL都会将关联的结果放到一个临时表中，然后在所有关联都结束后，再进行文件排序。
+        这种情况EXPLAIN结果的Extra可以看到"Using temporary; Using filesort"。
+        
+### 查询执行引擎
+&emsp;&emsp; 在查询执行阶段，MySQL只是简单的根据执行计划给出指令逐步执行，在根据执行计划逐步执行的过程中，有大量的操作需要通过调用存储引擎
+实现的接口来完成，这些接口也就是我们称为handler API的接口。查询中每一个表由一个handler的实例表示，MySQL在优化阶段为每个表创建了一个handler实例，
+优化器根据这些实例的接口可以获取表的相关信息，包括表的所有列名、索引统计信息等。
+
+    存储引擎有非常丰富的功能，但是底层接口却只有几十个，这些接口像搭积木一样能够完成查询的大部分功能。
