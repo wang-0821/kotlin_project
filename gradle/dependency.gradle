@@ -7,7 +7,8 @@ ext {
             slf4j: '1.7.30',
             log4j2: '2.13.3',
             disruptor: '3.4.2',
-            junit: '5.7.0'
+            junit: '5.7.0',
+            mybatis: '3.5.5'
     ]
 
     libs = [
@@ -28,6 +29,9 @@ ext {
             "log4j-core": "org.apache.logging.log4j:log4j-core:$version.log4j2",
             "log4j-slf4j-impl": "org.apache.logging.log4j:log4j-slf4j-impl:$version.log4j2",
             "disruptor": "com.lmax:disruptor:$version.disruptor",
-            "junit-jupiter": "org.junit.jupiter:junit-jupiter:$version.junit"
+            "junit-jupiter": "org.junit.jupiter:junit-jupiter:$version.junit",
+
+            // mybatis
+            "mybatis": "org.mybatis:mybatis:$version.mybatis"
     ]
 }

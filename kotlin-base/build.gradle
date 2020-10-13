@@ -1,4 +1,6 @@
 dependencies {
     compile libs["jackson-databind"]
     compile libs['kotlin-coroutines-core']
+    compile libs['disruptor']
+    compile libs['log4j-slf4j-impl']
 }
