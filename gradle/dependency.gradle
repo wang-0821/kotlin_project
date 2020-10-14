@@ -8,7 +8,9 @@ ext {
             log4j2: '2.13.3',
             disruptor: '3.4.2',
             junit: '5.7.0',
-            mybatis: '3.5.5'
+            mybatis: '3.5.5',
+            flyway: '7.0.2',
+            mysqlConnectorJava: '8.0.21'
     ]
 
     libs = [
@@ -32,6 +34,12 @@ ext {
             "junit-jupiter": "org.junit.jupiter:junit-jupiter:$version.junit",
 
             // mybatis
-            "mybatis": "org.mybatis:mybatis:$version.mybatis"
+            "mybatis": "org.mybatis:mybatis:$version.mybatis",
+
+            // flyway
+            "flyway-core": "org.flywaydb:flyway-core:$version.flyway",
+
+            // mysql
+            "mysql-connector-java": "mysql:mysql-connector-java:$version.mysqlConnectorJava"
     ]
 }

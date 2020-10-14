@@ -2,7 +2,7 @@
 <Configuration>
     <Appenders>
         <Console name="ConsoleAppender" target="SYSTEM_OUT" follow="true">
-            <PatternLayout pattern="%d %-5p [%t] [%X{RpcRequestId}] %c{1.} - %m%n%ex"/>
+            <PatternLayout pattern="%d %-5p [%t] [%X{X-RequestId}] %c{1.} - %m%n%ex"/>
         </Console>
     </Appenders>
 

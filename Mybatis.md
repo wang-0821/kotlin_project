@@ -1,6 +1,7 @@
 * [1.概述](#1)
 * [2.XML配置](#2)
 * [3.XML映射文件](#3)
+* [4.动态SQL](#4)
 
 <h2 id="1">1.概述</h2>
 ### SqlSessionFactoryBuilder
@@ -303,3 +304,126 @@ POOLED、JNDI。UNPOOLED：每次请求时都打开和关闭连接。POOLED: 使
     order	        可以设置为 BEFORE 或 AFTER。如果设置为 BEFORE，那么它首先会生成主键，设置 keyProperty 再执行插入语句。
                     如果设置为 AFTER，那么先执行插入语句，然后是 selectKey 中的语句 - 在插入语句内部可能有嵌入索引调用。
     statementType	同上。
+    
+<h2 id="4">4.动态SQL</h2>
+&emsp;&emsp; 动态SQL是MyBatis的强大特性之一。MyBatis 3 替换了之前的大部分元素，现在要学习的元素种类比原来的一半还少。
+
+    if
+    choose(when、otherwise)
+    trim(where、set)
+    foreach
+    
+### if
+&emsp;&emsp; 使用动态SQL最常见的情景是根据条件中包含where子句的一部分。
+    
+    <select id="findWithTitle" resultType="Blog">
+        SELECT * FROM blog
+        WHERE state = 'ACTIVE'
+        <if test="title != null">
+            AND title LIKE #{title}
+        </if>        
+    </select>
+    
+### choose、when、otherwise
+&emsp;&emsp; 有时候我们不想使用所有的条件，而是从众多条件中选择一个使用，针对这种情况MyBatis提供了choose元素。choose有点像Java中的switch。
+
+    <select id="findActiveBlogLike" resultType="Blog">
+        SELECT * FROM blog
+        WHERE state = 'ACTIVE'
+        <choose>
+            <when test="title != null">
+                AND title LIKE #{title}
+            </when>
+            <when test="author != null and author.name != null">
+                AND author_name LIKE #{author.name}
+            </when>
+            <otherwise>
+                AND featured = 1
+            </otherwise>
+        </choose>
+    </select>
+    
+### trim、where、set
+&emsp;&emsp; where元素只会在子元素返回任何内容的情况下，才插入"WHERE"子句。而且若子句的开头为"AND"或"OR"，where元素也会将它们去除。
+如果where元素与期望不同，可以通过自定义trim元素来定制where元素的功能。
+
+    <select id="findActiveBlogLike" resultType="Blog">
+        SELECT * FROM blog
+        <where>
+            <if test="state != null">
+                state = #{state}
+            </if>
+            <if tset="title != null">
+                AND title LIKE #{title}
+            </if>
+            <if test="author != null and author.name != null">
+                AND author_name LIKE #{author.name}
+            </if>
+        </where>
+    </select>
+
+    // 下面trim元素与where元素等价。
+    <trim prefix="WHERE" prefixOverrides="AND |OR">
+        ...
+    </trim>
+    
+    // 用于动态更新语句的类似解决方案叫set，set元素可以用于动态包含需要更新的列，忽略其他不更新的列。
+    // set元素会动态的在行首插入SET关键字，并删除额外的逗号。
+    <update id="updateAuthorIfNecessary">
+        UPDATE author
+            <set>
+                <if test="username != null">
+                    username=#{username},
+                </if>
+                <if test="password != null">
+                    password=#{password},
+                </if>
+            </set>
+        WHERE
+            id = #{id}
+    </update>
+    
+    // 下面trim元素与set元素等价。
+    <trim prefix="SET" suffixOverrides=",">
+        ...
+    </trim>
+    
+### foreach
+&emsp;&emsp; 动态SQL另一个常见使用场景是对集合进行遍历。
+
+    <select id="selectPostIn" resultType="domain.blog.Post">
+      SELECT *
+      FROM POST P
+      WHERE ID in
+      <foreach item="item" index="index" collection="list"
+          open="(" separator="," close=")">
+            #{item}
+      </foreach>
+    </select>
+    
+### script
+&emsp;&emsp; 要在带注解的映射器接口中使用动态SQL，可以使用script元素。
+
+    @Update({"<script>",
+          "update Author",
+          "  <set>",
+          "    <if test='username != null'>username=#{username},</if>",
+          "    <if test='password != null'>password=#{password},</if>",
+          "    <if test='email != null'>email=#{email},</if>",
+          "    <if test='bio != null'>bio=#{bio}</if>",
+          "  </set>",
+          "where id=#{id}",
+          "</script>"})
+          
+### bind
+&emsp;&emsp; bind元素允许在OGNL表达式之外创建一个变量，并将其绑定到当前的上下文。
+
+    <select id="selectBlogsLike" resultType="Blog">
+      <bind name="pattern" value="'%' + _parameter.getTitle() + '%'" />
+      SELECT * FROM BLOG
+      WHERE title LIKE #{pattern}
+    </select>
+    
+### 多数据库支持与脚本语言
+&emsp;&emsp; 如果配置了databaseIdProvider，那么可以在动态代码中使用名为"_databaseId"的变量为不同的数据库构建特定的语句。
+MyBatis支持插入脚本语言，可以使用lang属性为特定的语句指定语言，也可以在mapper接口上使用@Lang注解。

@@ -51,7 +51,7 @@ object Rpc {
 
             override fun call(): Response {
                 started.getAndIncrement()
-                ThreadContext.put("RpcRequestId", UUID.randomUUID().toString())
+                ThreadContext.put("X-RequestId", UUID.randomUUID().toString())
                 val result = super.call()
                 ThreadContext.clearMap()
                 started.getAndDecrement()
