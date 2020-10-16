@@ -1,7 +1,6 @@
-package demo.coroutines
+package com.xiao.demo.coroutines
 
 import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async

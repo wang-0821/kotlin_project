@@ -510,7 +510,7 @@ final 可以禁止覆盖。可以使用一个var属性覆盖一个val属性，�
 kotlin的泛型类型，也只是在编译期进行类型安全性检查，在运行期，泛型类型的实例不保存关于其类型参数的任何信息，这叫做类型擦除。
 
     <p>
-        void demo(Source<String> strs) {
+        void com.xiao.demo(Source<String> strs) {
             Source<? extends Object> objects = strs; // 在java中需要这么声明
         }
         
@@ -523,7 +523,7 @@ kotlin的泛型类型，也只是在编译期进行类型安全性检查，在�
             abstract fun nextT(): T
         }
         
-        fun demo(strs: Source<String>) {
+        fun com.xiao.demo(strs: Source<String>) {
             val objects: Source<Any> = strs   
         }
         
@@ -531,7 +531,7 @@ kotlin的泛型类型，也只是在编译期进行类型安全性检查，在�
             operator fun compareTo(other: T): Int
         }
         
-        fun demo(x: Comparable<Number>) {
+        fun com.xiao.demo(x: Comparable<Number>) {
             x.compareTo(1.0)
             val y: Comparable<Double> = x
         }

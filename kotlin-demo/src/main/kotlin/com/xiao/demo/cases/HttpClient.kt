@@ -1,4 +1,4 @@
-package demo
+package com.xiao.demo.cases
 
 import java.io.BufferedReader
 import java.io.InputStreamReader

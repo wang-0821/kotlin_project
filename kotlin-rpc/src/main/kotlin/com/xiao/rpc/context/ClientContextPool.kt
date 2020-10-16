@@ -113,7 +113,7 @@ abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAwar
 
     private fun registerClientContexts(contexts: List<AnnotatedKtResource>) {
         for (context in contexts) {
-            val clientContext = constructClientContext<Context>(context.resource.clazz.java)
+            val clientContext = constructClientContext<Context>(context.classResource.clazz.java)
             clientContext?.let {
                 clientContextContainer[it.key] = it
                 computeCleanupDuration(it.key)
@@ -131,10 +131,10 @@ abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAwar
 
     private fun registerCleaners(cleaners : List<AnnotatedKtResource>) {
         for (cleaner in cleaners) {
-            if (cleanerContainer.any { it::class.java == cleaner.resource.clazz.java }) {
+            if (cleanerContainer.any { it::class.java == cleaner.classResource.clazz.java }) {
                 continue
             }
-            val cleanerInstance = BeanHelper.newInstance<Cleaner>(cleaner.resource.clazz.java)
+            val cleanerInstance = BeanHelper.newInstance<Cleaner>(cleaner.classResource.clazz.java)
             cleanerInstance.let {
                 cleanerContainer.add(it)
             }

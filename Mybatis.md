@@ -209,6 +209,7 @@ SqlSessionFactoryBuilder可以从XML配置文件或者一个预先配置的Confi
     
 ### 环境配置
 &emsp;&emsp; MyBatis可以配置成适应多种环境。但是每个SqlSessionFactory实例只能选择一种环境。每个数据库对应于一个SqlSessionFactory。
+每个SqlSessionFactory对应一个Environment。每个环境对应一个TransactionFactory和一个DataSource。
 
 <br>
 &emsp;&emsp; 事务管理器(transactionManager)，在MyBatis中有两种类型的事务管理器(JDBC || MANAGED)，JDBC-这个配置直接使用了JDBC的提交和回滚设施，

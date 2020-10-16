@@ -1,10 +1,9 @@
-package demo.coroutines
+package com.xiao.demo.coroutines
 
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.coroutineScope

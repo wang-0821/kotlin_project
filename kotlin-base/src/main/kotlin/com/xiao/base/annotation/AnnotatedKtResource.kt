@@ -1,13 +1,13 @@
 package com.xiao.base.annotation
 
-import com.xiao.base.resource.KtResource
+import com.xiao.base.resource.KtClassResource
 import kotlin.reflect.KClass
 
 /**
  *
  * @author lix wang
  */
-class AnnotatedKtResource(val resource: KtResource, val annotations: List<Annotation>) {
+class AnnotatedKtResource(val classResource: KtClassResource, val annotations: List<Annotation>) {
     fun <T : Annotation> isAnnotated(annotation: KClass<T>): Boolean {
         return annotations.any { it.annotationClass == annotation }
     }

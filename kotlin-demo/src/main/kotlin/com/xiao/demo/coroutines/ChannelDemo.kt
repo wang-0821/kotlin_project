@@ -1,4 +1,4 @@
-package demo.coroutines
+package com.xiao.demo.coroutines
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch

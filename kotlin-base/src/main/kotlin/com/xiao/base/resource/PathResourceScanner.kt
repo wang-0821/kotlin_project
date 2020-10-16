@@ -9,25 +9,38 @@ import java.util.Enumeration
  *
  * @author lix wang
  */
-class PathResourceScanner(private val resourceLoader: ResourceLoader = DefaultResourceLoader) {
-    fun scanByPackage(basePackage: String): List<KtResource> {
+object PathResourceScanner : Logging() {
+    private val defaultClassLoader = Thread.currentThread().contextClassLoader ?: ClassLoader.getSystemClassLoader()
+
+    fun scanClassResourcesByPackage(
+        basePackage: String
+    ): List<KtClassResource> {
         if (basePackage.isNullOrBlank()) {
             return emptyList()
         }
+        val classLoader = defaultClassLoader
+        return retrieveClassResources(
+            scanFileResourcesByPackage(basePackage, ClassResourceMatcher, classLoader),
+            classLoader
+        )
+    }
 
-        val result = mutableListOf<KtResource>()
+    fun scanFileResourcesByPackage(
+        basePackage: String,
+        matcher: ResourceMatcher,
+        classLoader: ClassLoader = defaultClassLoader
+    ): List<KtFileResource> {
+        val result = mutableListOf<KtFileResource>()
         val realBasePackage = basePackage.replace(".", "/")
-        val classLoader = resourceLoader.getClassLoader()
-        val resourceUrls: Enumeration<URL> = classLoader?.getResources(realBasePackage)
+        val resourceUrls: Enumeration<URL> = classLoader.getResources(realBasePackage)
             ?: ClassLoader.getSystemResources(realBasePackage)
         while (resourceUrls.hasMoreElements()) {
             val rootFile = File(resourceUrls.nextElement().toURI().schemeSpecificPart)
-            val targetFiles = findResourceFiles(rootFile, resourceLoader.getMatcher())
-            result.addAll(retrieveValidateResources(basePackage, rootFile.absolutePath, targetFiles))
+            val targetFiles = findResourceFiles(rootFile, matcher)
+            result.addAll(targetFiles.map { KtFileResource(it, it.absolutePath) })
         }
         return result
     }
-
 
     private fun findResourceFiles(rootDir: File, matcher: ResourceMatcher?): Set<File> {
         if (!rootDir.exists() || !rootDir.isDirectory || !rootDir.canRead()) {
@@ -50,52 +63,48 @@ class PathResourceScanner(private val resourceLoader: ResourceLoader = DefaultRe
         }
         files.sort()
         for (content in files) {
-            if (content.isDirectory && matcher?.matchingDirectory(rootAbsolutePath, content) != false) {
+            if (content.isDirectory && matcher?.matchingDirectory(content) != false) {
                 if (content.canRead()) {
                     retrieveMatchingFiles(rootAbsolutePath, content, matcher, result)
                 }
             }
-            if (content.isFile && matcher?.matchingFile(rootAbsolutePath, content) != false) {
+            if (content.isFile && matcher?.matchingFile(content) != false) {
                 result.add(content)
             }
         }
     }
 
-    private fun retrieveValidateResources(
-        basePackage: String,
-        rootAbsolutePath: String,
-        files: Set<File>
-    ): List<KtResource> {
-        val result = mutableListOf<KtResource>()
-        for (file in files) {
-            retrieveValidateResource(basePackage, rootAbsolutePath, file)?.let {
+    private fun retrieveClassResources(
+        ktFileResources: List<KtFileResource>,
+        classLoader: ClassLoader
+    ): List<KtClassResource> {
+        val result = mutableListOf<KtClassResource>()
+        for (file in ktFileResources) {
+            retrieveClassResource(file, classLoader)?.let {
                 result.add(it)
             }
         }
         return result
     }
 
-    private fun retrieveValidateResource(
-        basePackage: String,
-        rootAbsolutePath: String,
-        file: File
-    ): KtResource? {
+    private fun retrieveClassResource(
+        ktFileResource: KtFileResource,
+        classLoader: ClassLoader
+    ): KtClassResource? {
         return try {
-            var path = file.absolutePath.removePrefix(rootAbsolutePath)
-                .replace(File.separator, ".")
-                .removeSuffix(".class")
-            path = basePackage + path
-            val kClass = resourceLoader.getClassLoader()?.let {
-                Class.forName(path, true, resourceLoader.getClassLoader()).kotlin
-            } ?: kotlin.run {
-                Class.forName(path).kotlin
+            val classNameSplitArray = ktFileResource.file.path.split("/")
+            if (classNameSplitArray.isEmpty() || !classNameSplitArray.last().endsWith(".class")) {
+                return null
             }
-            KtResource(file, file.path, kClass)
+            val mainDirIndex = classNameSplitArray.indexOf("main")
+            val className = classNameSplitArray.subList(mainDirIndex + 1, classNameSplitArray.size)
+                .joinToString(".")
+                .removeSuffix(".class")
+            val kClass = Class.forName(className, true, classLoader).kotlin
+            KtClassResource(ktFileResource.file, ktFileResource.file.path, kClass)
         } catch (e: Exception) {
             log.error("Retrieve resource failed. ${e.message}", e)
             null
         }
     }
-
-    companion object : Logging()
 }
