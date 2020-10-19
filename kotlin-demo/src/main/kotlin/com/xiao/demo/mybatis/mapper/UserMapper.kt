@@ -9,4 +9,6 @@ import org.apache.ibatis.annotations.Param
  */
 interface UserMapper {
     fun getById(@Param("id") id: Long): User
+
+    fun updatePasswordById(@Param("id") id: Long, @Param("password") password: String)
 }

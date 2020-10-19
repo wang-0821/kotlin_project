@@ -13,4 +13,13 @@
         WHERE
             id = #{id}
     </select>
+
+    <update id="updatePasswordById" parameterType="map">
+        UPDATE
+            users
+        SET
+            password = #{password}
+        WHERE
+            id = #{id}
+    </update>
 </mapper>
