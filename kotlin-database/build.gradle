@@ -1,5 +1,6 @@
 dependencies {
     compile libs['mybatis']
+    compile libs['HikariCP']
     compile libs['flyway-core']
     compile libs['mysql-connector-java']
 }

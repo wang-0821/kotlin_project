@@ -1,5 +1,6 @@
 package com.xiao.demo.mybatis.mapper
 
+import com.xiao.demo.model.User
 import org.apache.ibatis.annotations.Param
 import org.apache.ibatis.annotations.Select
 
@@ -9,5 +10,5 @@ import org.apache.ibatis.annotations.Select
  */
 interface UserMapperV2 {
     @Select("SELECT * FROM users WHERE id = #{id}")
-    fun getById(@Param("id") id: Long)
+    fun getById(@Param("id") id: Long): User
 }

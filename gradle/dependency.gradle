@@ -10,7 +10,8 @@ ext {
             junit: '5.7.0',
             mybatis: '3.5.5',
             flyway: '7.0.2',
-            mysqlConnectorJava: '8.0.21'
+            mysqlConnectorJava: '8.0.21',
+            hikariCP: '3.4.5'
     ]
 
     libs = [
@@ -33,13 +34,14 @@ ext {
             "disruptor": "com.lmax:disruptor:$version.disruptor",
             "junit-jupiter": "org.junit.jupiter:junit-jupiter:$version.junit",
 
+            // database
             // mybatis
             "mybatis": "org.mybatis:mybatis:$version.mybatis",
-
             // flyway
             "flyway-core": "org.flywaydb:flyway-core:$version.flyway",
-
             // mysql
-            "mysql-connector-java": "mysql:mysql-connector-java:$version.mysqlConnectorJava"
+            "mysql-connector-java": "mysql:mysql-connector-java:$version.mysqlConnectorJava",
+            // datasource
+            "HikariCP": "com.zaxxer:HikariCP:$version.hikariCP"
     ]
 }
