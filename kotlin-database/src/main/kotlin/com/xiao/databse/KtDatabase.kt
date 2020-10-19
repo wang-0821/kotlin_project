@@ -1,6 +1,7 @@
 package com.xiao.databse
 
 /**
+ * TODO 利用注解加容器的方式，可以简化多数据源配置。
  *
  * @author lix wang
  */
