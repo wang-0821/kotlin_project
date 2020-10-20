@@ -49,7 +49,7 @@ subprojects {
 		compile libs['kotlin-stdlib']
 		compile libs['kotlin-reflect']
 		compile libs['slf4j-api']
-		testCompile libs['junit-jupiter']
+		compile libs['junit-jupiter']
 	}
 
 	// set encoding

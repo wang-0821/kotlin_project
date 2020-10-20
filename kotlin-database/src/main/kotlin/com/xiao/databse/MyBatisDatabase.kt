@@ -17,36 +17,63 @@ import java.nio.file.Files
  *
  * @author lix wang
  */
-object SqlSessionFactoryHelper {
-    private const val CLASSPATH_INCLUDE_JAR_PREFIX = "classpath*:"
-    private const val ENVIRONMENT_NAME_SUFFIX = "Environment"
-    private const val MAXIMUM_POOL_SIZE = 32
-    private const val MINIMUM_IDLE = 1
-    private const val CONNECTION_TIMEOUT = 5000L
-    private const val IDLE_TIMEOUT = 60 * 1000L
+abstract class MyBatisDatabase(
+    val url: String,
+    val username: String,
+    val password: String
+) {
+    @Volatile private var sqlSessionFactory: SqlSessionFactory? = null
+    private val config: KtDatabase
 
-    fun createSqlSessionFactory(
-        name: String,
-        mapperXmlPath: String,
-        mapperPath: String,
-        databaseUrl: String,
-        username: String,
-        password: String
-    ): SqlSessionFactory {
+    init {
+        val annotationName = KtDatabase::class.simpleName
+       val config = javaClass.getAnnotation(KtDatabase::class.java)
+            ?: throw IllegalArgumentException("${javaClass.simpleName} must annotated by $annotationName")
+
+        if (config.mapperPath.isEmpty() && config.mapperXmlPath.isEmpty()) {
+            throw IllegalArgumentException("$annotationName mapperPath and mapperXmlPath can't be both empty.")
+        }
+        this.config = config
+    }
+
+    fun datasetPath(): String {
+        return config.dataSetPath
+    }
+
+    fun name(): String {
+        return config.name + DATABASE_SUFFIX
+    }
+
+    fun sqlSessionFactory(): SqlSessionFactory {
+        if (sqlSessionFactory != null) {
+            return sqlSessionFactory!!
+        }
+        synchronized(this) {
+            if (sqlSessionFactory == null) {
+                sqlSessionFactory = createSqlSessionFactory()
+            }
+            return sqlSessionFactory!!
+        }
+    }
+
+    private fun createSqlSessionFactory(): SqlSessionFactory {
         val configuration = Configuration()
         configuration.isMapUnderscoreToCamelCase = true
         configuration.isLazyLoadingEnabled = true
 
         // scan mappers
-        scanXmlMappers(configuration, mapperXmlPath)
-        scanMappers(configuration, mapperPath)
+        scanXmlMappers(configuration, config.mapperXmlPath)
+        scanMappers(configuration, config.mapperPath)
 
-        setEnvironment(name, configuration, databaseUrl, username, password)
-        val sqlSessionFactoryBuilder = SqlSessionFactoryBuilder()
-        return sqlSessionFactoryBuilder.build(configuration)
+        setEnvironment(config.name + ENVIRONMENT_NAME_SUFFIX, configuration, url, username, password)
+        return SqlSessionFactoryBuilder().build(configuration)
     }
 
     private fun scanXmlMappers(configuration: Configuration, mapperXmlPath: String) {
+        if (mapperXmlPath.isBlank()) {
+            return
+        }
+
         val path = if (mapperXmlPath.startsWith(CLASSPATH_INCLUDE_JAR_PREFIX)) {
             mapperXmlPath.substring(CLASSPATH_INCLUDE_JAR_PREFIX.length)
         } else {
@@ -76,6 +103,10 @@ object SqlSessionFactoryHelper {
     }
 
     private fun scanMappers(configuration: Configuration, mapperPath: String) {
+        if (mapperPath.isBlank()) {
+            return
+        }
+
         val resources = PathResourceScanner.scanClassResourcesByPackage(mapperPath)
         val mapperInterfaces = resources.map { it.clazz.java }.filter { it.isInterface }
         mapperInterfaces.forEach {
@@ -105,9 +136,19 @@ object SqlSessionFactoryHelper {
         }
 
         configuration.environment = Environment(
-            name + ENVIRONMENT_NAME_SUFFIX,
+            name,
             JdbcTransactionFactory(),
             HikariDataSource(config)
         )
+    }
+
+    companion object {
+        private const val CLASSPATH_INCLUDE_JAR_PREFIX = "classpath*:"
+        private const val ENVIRONMENT_NAME_SUFFIX = "Environment"
+        private const val MAXIMUM_POOL_SIZE = 32
+        private const val MINIMUM_IDLE = 1
+        private const val CONNECTION_TIMEOUT = 5000L
+        private const val IDLE_TIMEOUT = 60 * 1000L
+        private const val DATABASE_SUFFIX = "Database"
     }
 }
