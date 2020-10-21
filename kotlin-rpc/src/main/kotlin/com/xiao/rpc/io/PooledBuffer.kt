@@ -12,8 +12,8 @@ import java.nio.CharBuffer
 class PooledBuffer {
     private val buffers = mutableListOf<PooledCharArrayBuffer>()
     private var currentBuffer: PooledCharArrayBuffer
-    private val POOLED_BUFFER_IO_BUFFERS = object : RpcContextKey<PooledCharArrayBuffer> {}
-    private val MAX_CACHE_SIZE = 32
+    private val pooledCharArrayBuffer = object : RpcContextKey<PooledCharArrayBuffer> {}
+    private val maxCacheSize = 32
 
     constructor() {
         this.currentBuffer = PooledCharArrayBuffer(IoHelper.BUFFER_SIZE)
@@ -84,10 +84,10 @@ class PooledBuffer {
     }
 
     private fun cachePooledCharArrayBuffer(buffer: PooledCharArrayBuffer): Boolean {
-        val pooledCharArrayBuffers = RpcHelper.fetch(POOLED_BUFFER_IO_BUFFERS) {
+        val pooledCharArrayBuffers = RpcHelper.fetch(pooledCharArrayBuffer) {
             mutableListOf<PooledCharArrayBuffer>()
         }
-        return if (pooledCharArrayBuffers.size >= MAX_CACHE_SIZE) {
+        return if (pooledCharArrayBuffers.size >= maxCacheSize) {
             false
         } else {
             buffer.clear()
@@ -96,7 +96,7 @@ class PooledBuffer {
     }
 
     private fun getPooledCharArrayBuffer() : PooledCharArrayBuffer {
-        val pooledCharArrayBuffers = RpcHelper.fetch(POOLED_BUFFER_IO_BUFFERS) {
+        val pooledCharArrayBuffers = RpcHelper.fetch(pooledCharArrayBuffer) {
             mutableListOf<PooledCharArrayBuffer>()
         }
         return if (pooledCharArrayBuffers.isNotEmpty()) {
