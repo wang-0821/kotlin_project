@@ -1,15 +1,15 @@
 package com.xiao.rpc.context
 
 import com.xiao.base.annotation.AnnotatedKtResource
-import com.xiao.base.annotation.Log
+import com.xiao.base.logging.KtLogger
 import com.xiao.base.context.BeanHelper
 import com.xiao.base.context.BeanRegistry
 import com.xiao.base.context.Context
 import com.xiao.base.context.ContextAware
+import com.xiao.base.logging.LoggerType
 import com.xiao.base.logging.Logging
 import com.xiao.rpc.Cleaner
 import com.xiao.rpc.Client
-import com.xiao.rpc.Constants
 import com.xiao.rpc.RunningState
 import com.xiao.rpc.annotation.AutoClean
 import com.xiao.rpc.annotation.ClientContext
@@ -183,6 +183,6 @@ abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAwar
         return beanRegistry
     }
 
-    @Log(Constants.RPC_LOGGER)
+    @KtLogger(LoggerType.RPC)
     companion object : Logging()
 }

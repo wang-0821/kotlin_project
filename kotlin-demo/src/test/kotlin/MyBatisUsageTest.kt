@@ -1,3 +1,4 @@
+import com.xiao.databse.DataSourceHelper
 import com.xiao.databse.TransactionHelper
 import com.xiao.databse.testing.KtDataSourceTestBase
 import com.xiao.databse.testing.KtTestDatabase
@@ -27,14 +28,24 @@ class MyBatisUsageTest : KtDataSourceTestBase() {
     }
 
     @Test
-    fun `test mapper query`() {
+    fun `test mapper query with same sqlSession`() {
         val sqlSession = sqlSessionFactory.openSession()
         val userMapper = sqlSessionFactory.configuration.getMapper(UserMapper::class.java, sqlSession)
         val userMapperV2 = sqlSessionFactory.configuration.getMapper(UserMapperV2::class.java, sqlSession)
 
-        assertEquals(userMapper.getById(1).username, "user_1")
-        userMapper.updatePasswordById(1, "password_temp")
-        assertEquals(userMapperV2.getById(1).password, "password_temp")
+        assertEquals(userMapper.getById(1L).username, "user_1")
+        userMapper.updatePasswordById(1L, "password_temp")
+        assertEquals(userMapperV2.getById(1L).password, "password_temp")
+    }
+
+    @Test
+    fun `test mapper query repeatable read isolation with different sqlSession`() {
+        val userMapper = DataSourceHelper.getMapper(sqlSessionFactory, UserMapper::class.java)
+        val userMapperV2 = DataSourceHelper.getMapper(sqlSessionFactory, UserMapperV2::class.java)
+
+        assertEquals(userMapper.getById(1L).username, "user_1")
+        userMapper.updatePasswordById(1L, "password_temp")
+        assertEquals(userMapperV2.getById(1L).password, "password_temp")
     }
 
     @Test
@@ -42,14 +53,14 @@ class MyBatisUsageTest : KtDataSourceTestBase() {
         val sqlSession = sqlSessionFactory.openSession()
         val userMapper = sqlSessionFactory.configuration.getMapper(UserMapper::class.java, sqlSession)
 
-        assertEquals(userMapper.getById(1).password, "password_1")
+        assertEquals(userMapper.getById(1L).password, "password_1")
         val exception = assertThrows<IllegalStateException> {
             TransactionHelper(sqlSession).doInTransaction {
-                userMapper.updatePasswordById(1, "password_temp")
+                userMapper.updatePasswordById(1L, "password_temp")
                 throw IllegalStateException("throws exception.")
             }
         }
         assertEquals("throws exception.", exception.message)
-        assertEquals(userMapper.getById(1).password, "password_1")
+        assertEquals(userMapper.getById(1L).password, "password_1")
     }
 }

@@ -2,6 +2,8 @@
 * [2.XML配置](#2)
 * [3.XML映射文件](#3)
 * [4.动态SQL](#4)
+* [5.事务](#5)
+* [6.缓存机制及问题](#6)
 
 <h2 id="1">1.概述</h2>
 ### SqlSessionFactoryBuilder
@@ -428,3 +430,111 @@ POOLED、JNDI。UNPOOLED：每次请求时都打开和关闭连接。POOLED: 使
 ### 多数据库支持与脚本语言
 &emsp;&emsp; 如果配置了databaseIdProvider，那么可以在动态代码中使用名为"_databaseId"的变量为不同的数据库构建特定的语句。
 MyBatis支持插入脚本语言，可以使用lang属性为特定的语句指定语言，也可以在mapper接口上使用@Lang注解。
+
+<h2 id="5">5.事务</h2>
+&emsp;&emsp; JdbcTransaction 通过设置autocommit的值来显式的开启和结束事务。因为MySQL InnoDB中使用了Start transaction和commit语句，
+但是在MySQL MyISAM中，这些命令无效，因此需要使用set autocommit = 0 来替代Start Transaction，使用set autocommit = 1来替代commit。
+
+    在MySQL中，如果设置autocommit = 1，意味着所有的语句都执行在事务中，如果从autocommit = 1 更改成 autocommit = 0，那么所有之前的事务都会
+    被提交，之后的操作将在一个事务中执行，需要显式的commit来提交事务。
+    
+<br>
+&emsp;&emsp; MyBatis执行Mapper时，首先会创建对应Mapper的动态代理对象(MapperProxy)。一个MapperProxy需要一个SqlSession构造参数。
+MapperProxy代理对象实际会使用SqlSession对象来执行对应的方法。如果不是SELECT，会使用Transaction创建Connection，并判断是否需要开启事务。
+由这个Connection来执行具体的SQL，并且事务实际也是在这个Connection中执行。
+以DefaultSqlSession为例，有三个构造参数：Configuration、Executor、autocommit。
+
+                            
+            MapperProxy.invoke -----> SqlSession.exec------------------>BaseExecutor.update
+                    | has a             | is select     else                    |
+                    V                   |                                       |
+                SqlSession              V                                       V
+                                SqlSession.select                       Executor.doUpdate
+                                        |                                       |
+                                        |                                       |
+                                        V                                       V
+                                CachingExecutor.query               Transaction.getConnection
+                                        |                                       |
+                                        |                                       |
+                                        V                                       V
+                                    Cache.get-------------------      DataSource.getConnection
+                                    else|   has cache           |               |
+                                        |                       |               |
+                                        V                       |               V
+                                  LocalCache.get--------------->|      Transaction.startTransaction
+                                    else|   has cache           |               |
+                                        |                       |               |
+                                        V                       V               V
+                                 BaseExecutor.query---------> result<----StateMentHandler.query
+        
+    
+
+<h2 id="6">6.缓存及问题</h2>
+&emsp;&emsp; 在MyBatis查询时，缓存分为两级：全局缓存和SqlSession内部缓存。在分布式部署时，可能同一个Mapper类，会有不同的SqlSession，
+此时如果一个SqlSession中更新了数据，那么另一个SqlSession中的缓存还是旧的，会导致脏读。可以设置configuration.localCacheScope
+为LocalCacheScope.STATEMENT来去除SqlSession的缓存。如果需要缓存，可以在外层method层面设置缓存。
+
+    // 1，执行查询时，首先根据查询，生成对应的cacheKey。
+    public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
+        BoundSql boundSql = ms.getBoundSql(parameterObject);
+        CacheKey key = createCacheKey(ms, parameterObject, rowBounds, boundSql);
+        return query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
+    }
+    
+    // 2，接下来先先获取全局的缓存，根据cacheKey来获取缓存，如果有缓存，那么直接返回结果。
+    public <E> List<E> query(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql)
+          throws SQLException {
+        Cache cache = ms.getCache();
+        if (cache != null) {
+          flushCacheIfRequired(ms);
+          if (ms.isUseCache() && resultHandler == null) {
+            ensureNoOutParams(ms, boundSql);
+            @SuppressWarnings("unchecked")
+            List<E> list = (List<E>) tcm.getObject(cache, key);
+            if (list == null) {
+              list = delegate.query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
+              tcm.putObject(cache, key, list); // issue #578 and #116
+            }
+            return list;
+          }
+        }
+        return delegate.query(ms, parameterObject, rowBounds, resultHandler, key, boundSql);
+    }
+    
+    // 3，如果全局缓存中没有数据，那么从SqlSession缓存 localCache 中查找，如果找到返回结果，找不到才会执行具体的查询。
+    // 每次执行完，都会在 localCache中设置值，如果 configuration.localCacheScope == LocalCacheScope.STATEMENT，
+    // 那么会在查询执行完毕后清除localCache。
+    public <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, CacheKey key, BoundSql boundSql) throws SQLException {
+        ErrorContext.instance().resource(ms.getResource()).activity("executing a query").object(ms.getId());
+        if (closed) {
+          throw new ExecutorException("Executor was closed.");
+        }
+        if (queryStack == 0 && ms.isFlushCacheRequired()) {
+          clearLocalCache();
+        }
+        List<E> list;
+        try {
+          queryStack++;
+          list = resultHandler == null ? (List<E>) localCache.getObject(key) : null;
+          if (list != null) {
+            handleLocallyCachedOutputParameters(ms, key, parameter, boundSql);
+          } else {
+            list = queryFromDatabase(ms, parameter, rowBounds, resultHandler, key, boundSql);
+          }
+        } finally {
+          queryStack--;
+        }
+        if (queryStack == 0) {
+          for (DeferredLoad deferredLoad : deferredLoads) {
+            deferredLoad.load();
+          }
+          // issue #601
+          deferredLoads.clear();
+          if (configuration.getLocalCacheScope() == LocalCacheScope.STATEMENT) {
+            // issue #482
+            clearLocalCache();
+          }
+        }
+        return list;
+      }
+        

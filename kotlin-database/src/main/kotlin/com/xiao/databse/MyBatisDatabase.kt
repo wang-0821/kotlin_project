@@ -2,14 +2,15 @@ package com.xiao.databse
 
 import com.xiao.base.resource.PathResourceScanner
 import com.xiao.base.resource.ResourceMatcher
+import com.xiao.databse.annotation.KtDatabase
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.apache.ibatis.builder.xml.XMLMapperBuilder
 import org.apache.ibatis.mapping.Environment
 import org.apache.ibatis.session.Configuration
+import org.apache.ibatis.session.LocalCacheScope
 import org.apache.ibatis.session.SqlSessionFactory
 import org.apache.ibatis.session.SqlSessionFactoryBuilder
-import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory
 import java.io.File
 import java.nio.file.Files
 
@@ -57,13 +58,10 @@ abstract class MyBatisDatabase(
     }
 
     private fun createSqlSessionFactory(): SqlSessionFactory {
-        val configuration = Configuration()
-        configuration.isMapUnderscoreToCamelCase = true
-        configuration.isLazyLoadingEnabled = true
-
+        val configuration = createConfiguration()
         // scan mappers
         scanXmlMappers(configuration, config.mapperXmlPath)
-        scanMappers(configuration, config.mapperPath)
+        scanInterfaceMappers(configuration, config.mapperPath)
 
         setEnvironment(config.name + ENVIRONMENT_NAME_SUFFIX, configuration, url, username, password)
         return SqlSessionFactoryBuilder().build(configuration)
@@ -102,7 +100,7 @@ abstract class MyBatisDatabase(
         }
     }
 
-    private fun scanMappers(configuration: Configuration, mapperPath: String) {
+    private fun scanInterfaceMappers(configuration: Configuration, mapperPath: String) {
         if (mapperPath.isBlank()) {
             return
         }
@@ -125,9 +123,9 @@ abstract class MyBatisDatabase(
     ) {
         // get dataSource
         val config = HikariConfig().apply {
-            jdbcUrl = databaseUrl
             this.username = username
             this.password = password
+            jdbcUrl = databaseUrl
             maximumPoolSize = MAXIMUM_POOL_SIZE
             minimumIdle = MINIMUM_IDLE
             connectionTimeout = CONNECTION_TIMEOUT
@@ -137,9 +135,17 @@ abstract class MyBatisDatabase(
 
         configuration.environment = Environment(
             name,
-            JdbcTransactionFactory(),
+            KtManagedTransactionFactory(),
             HikariDataSource(config)
         )
+    }
+
+    private fun createConfiguration(): Configuration {
+        return Configuration().apply {
+            isMapUnderscoreToCamelCase = true
+            isLazyLoadingEnabled = true
+            localCacheScope = LocalCacheScope.STATEMENT
+        }
     }
 
     companion object {

@@ -1,6 +1,6 @@
 package com.xiao.demo.mybatis
 
-import com.xiao.databse.KtDatabase
+import com.xiao.databse.annotation.KtDatabase
 import com.xiao.databse.MyBatisDatabase
 
 /**

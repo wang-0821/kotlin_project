@@ -1,6 +1,5 @@
 package com.xiao.base.logging
 
-import com.xiao.base.annotation.Log
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.slf4j.helpers.NOPLogger
@@ -23,11 +22,14 @@ abstract class Logging {
     }
 
     private fun loggerName(): String {
-        val loggerAnnotation = this::class.java.getAnnotation(Log::class.java)
-        return if (loggerAnnotation != null && loggerAnnotation.value.isNotBlank()) {
-            loggerAnnotation.value
-        } else {
-            this::class.java.name
+        val annotation = this::class.java.getAnnotation(KtLogger::class.java) ?: return this::class.java.name
+        if (annotation.value != LoggerType.NULL) {
+            return annotation.value.text
         }
+        if (annotation.name.isNotBlank()) {
+            return annotation.name
+        }
+
+        return this::class.java.name
     }
 }
