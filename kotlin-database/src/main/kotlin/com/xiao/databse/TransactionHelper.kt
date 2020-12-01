@@ -1,23 +1,41 @@
 package com.xiao.databse
 
+import com.xiao.base.logging.KtLogger
+import com.xiao.base.logging.LoggerType
 import com.xiao.base.logging.Logging
-import org.apache.ibatis.session.SqlSession
+import com.xiao.databse.utils.TransactionalUtils
 
 /**
  *
  * @author lix wang
  */
-class TransactionHelper(val sqlSession: SqlSession) {
-    inline fun doInTransaction(block: () -> Unit) {
+@KtLogger(LoggerType.MAPPER)
+object TransactionHelper : Logging() {
+    fun doInTransaction(block: () -> Unit, wrapper: TransactionalWrapper? = null) {
         try {
+            TransactionalUtils.setTransactionalWrapper(wrapper ?: TransactionalWrapper())
             block()
-        } catch (e: Throwable) {
-            sqlSession.rollback()
-            log.error("Transaction call failed. ${e.message}", e)
-            throw e
+            processCommit()
+        } catch (throwable: Throwable) {
+            for (handler in TransactionalUtils.transactionHandlers()) {
+                handler.rollback(throwable)
+            }
+            log.error("Transaction call failed. ${throwable.message}", throwable)
+            throw throwable
+        } finally {
+            TransactionalUtils.releaseTransaction()
         }
-        sqlSession.commit()
     }
 
-    companion object : Logging()
+    private fun processCommit() {
+        for (handler in TransactionalUtils.transactionHandlers()) {
+            handler.beforeCommit()
+        }
+        for (handler in TransactionalUtils.transactionHandlers()) {
+            handler.commit()
+        }
+        for (handler in TransactionalUtils.transactionHandlers()) {
+            handler.afterCommit()
+        }
+    }
 }

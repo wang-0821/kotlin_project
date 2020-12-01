@@ -1,4 +1,4 @@
-import com.xiao.databse.DataSourceHelper
+import com.xiao.databse.utils.MapperProxyUtils
 import com.xiao.databse.TransactionHelper
 import com.xiao.databse.testing.KtDataSourceTestBase
 import com.xiao.databse.testing.KtTestDatabase
@@ -40,8 +40,8 @@ class MyBatisUsageTest : KtDataSourceTestBase() {
 
     @Test
     fun `test mapper query repeatable read isolation with different sqlSession`() {
-        val userMapper = DataSourceHelper.getMapper(sqlSessionFactory, UserMapper::class.java)
-        val userMapperV2 = DataSourceHelper.getMapper(sqlSessionFactory, UserMapperV2::class.java)
+        val userMapper = MapperProxyUtils.getMapper(sqlSessionFactory, UserMapper::class.java)
+        val userMapperV2 = MapperProxyUtils.getMapper(sqlSessionFactory, UserMapperV2::class.java)
 
         assertEquals(userMapper.getById(1L).username, "user_1")
         userMapper.updatePasswordById(1L, "password_temp")

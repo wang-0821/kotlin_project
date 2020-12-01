@@ -11,37 +11,26 @@ import java.lang.reflect.Method
  *
  * @author lix wang
  */
-class KtMapperProxy<T>(private val mapper: T) : InvocationHandler {
+class KtMapperProxy<T>(private val clazz: Class<T>, private val mapper: T) : InvocationHandler {
     override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any {
-        return method.invoke(mapper, args)
+        val mapperRetry = method.getAnnotation(KtMapperRetry::class.java)
+            ?: clazz.getAnnotation(KtMapperRetry::class.java)
+        val executeTimes = mapperRetry?.times ?: 0 + 1
+        return execute(method, args, executeTimes)
     }
 
-    private val clazz = KtMapperProxy::class.java
-
-//    private fun execute(method: Method, args: Array<Any?>?): Any {
-//        try {
-//            val startTime = System.currentTimeMillis()
-//            val result = method.invoke(mapper, args)
-//            log.info("Mapper ${clazz.simpleName}.${method.name} consume ${System.currentTimeMillis() - startTime} ms.")
-//            return result
-//        } catch (e: Exception) {
-//            throw e
-//        }
-//    }
-
-    private fun execute(method: Method, args: Array<Any?>?, retryTimes: Int): Any {
+    private fun execute(method: Method, args: Array<Any?>?, times: Int): Any {
         var exception: Exception? = null
-        for (i in 0..retryTimes) {
+        for (i in 1..times) {
             try {
                 val startTime = System.currentTimeMillis()
                 val result = method.invoke(mapper, args)
-                log.info("Mapper ${clazz.simpleName}.${method.name} consume ${System.currentTimeMillis() - startTime} ms, " +
-                        "total times: ${i + 1}, retry rimes $i.")
+                log.info("Mapper ${clazz.simpleName}.${method.name} "
+                    + "consume ${System.currentTimeMillis() - startTime} ms, "
+                    + "total times: $i, retry rimes ${i - 1}.")
                 return result
             } catch (e : Exception) {
-                if (i <= retryTimes) {
-                    exception = e
-                }
+                exception = e
             }
         }
         log.error("Mapper ${clazz.simpleName}.${method.name} failed.", exception)

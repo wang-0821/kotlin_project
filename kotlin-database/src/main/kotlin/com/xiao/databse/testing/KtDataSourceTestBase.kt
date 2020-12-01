@@ -1,6 +1,6 @@
 package com.xiao.databse.testing
 
-import com.xiao.databse.MyBatisDatabase
+import com.xiao.databse.BaseDatabase
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
@@ -14,8 +14,8 @@ import kotlin.reflect.KClass
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 abstract class KtDataSourceTestBase  {
-    private var databases: Map<KClass<out MyBatisDatabase>, MyBatisDatabase> = mapOf()
-    private var databaseAnnotations: Map<KClass<out MyBatisDatabase>, KtTestDatabase> = mapOf()
+    private var databases: Map<KClass<out BaseDatabase>, BaseDatabase> = mapOf()
+    private var databaseAnnotations: Map<KClass<out BaseDatabase>, KtTestDatabase> = mapOf()
 
     @Order(0)
     @BeforeAll
@@ -31,7 +31,7 @@ abstract class KtDataSourceTestBase  {
         databases = annotations.associate { it.database to it.database.java.newInstance() }
     }
 
-    fun database(kClass: KClass<out MyBatisDatabase>): MyBatisDatabase {
+    fun database(kClass: KClass<out BaseDatabase>): BaseDatabase {
         return databases[kClass] ?: throw IllegalArgumentException("Database ${kClass.simpleName} not registered.")
     }
 

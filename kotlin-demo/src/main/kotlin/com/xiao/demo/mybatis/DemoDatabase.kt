@@ -1,7 +1,7 @@
 package com.xiao.demo.mybatis
 
 import com.xiao.databse.annotation.KtDatabase
-import com.xiao.databse.MyBatisDatabase
+import com.xiao.databse.BaseDatabase
 
 /**
  *
@@ -13,7 +13,7 @@ import com.xiao.databse.MyBatisDatabase
     mapperXmlPath = DemoDatabase.MAPPER_XML_PATH,
     dataSetPath = DemoDatabase.DATASET_PATH
 )
-class DemoDatabase : MyBatisDatabase(URL, USERNAME, PASSWORD) {
+class DemoDatabase : BaseDatabase(URL, USERNAME, PASSWORD) {
     companion object {
         const val NAME = "demo"
         const val MAPPER_PATH = "com.xiao.demo.mybatis.mapper"

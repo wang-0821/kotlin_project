@@ -1,6 +1,7 @@
 package com.xiao.databse
 
-import org.apache.ibatis.session.TransactionIsolationLevel
+import com.xiao.databse.utils.DataSourceUtils
+import com.xiao.databse.utils.TransactionalUtils
 import org.apache.ibatis.transaction.Transaction
 import java.sql.Connection
 import javax.sql.DataSource
@@ -11,31 +12,44 @@ import javax.sql.DataSource
  */
 class KtManagedTransaction(private val dataSource: DataSource) : Transaction {
     private var connection: Connection? = null
-    private var level: TransactionIsolationLevel? = null
-
+    private var autoCommit: Boolean = false
+    private var isTransactional: Boolean = false
+    
     override fun getConnection(): Connection {
-        TODO("Not yet implemented")
+        if (connection != null) {
+            openConnection()
+        }
+        return connection!!
     }
 
     override fun commit() {
-        TODO("Not yet implemented")
+        if (connection != null && !isTransactional && !autoCommit) {
+            connection!!.commit()
+        }
     }
 
     override fun rollback() {
-        TODO("Not yet implemented")
+        if (connection != null && !isTransactional && !autoCommit) {
+            connection!!.rollback()
+        }
     }
 
     override fun close() {
-        TODO("Not yet implemented")
+        if (connection != null) {
+            DataSourceUtils.releaseConnection(dataSource, connection!!)
+        }
     }
 
     override fun getTimeout(): Int {
-        TODO("Not yet implemented")
+        val connectionWrapper = TransactionalUtils.getResource<ConnectionWrapper>(dataSource)
+        return connectionWrapper?.timeUnit?.toSeconds(connectionWrapper.timeout)?.toInt() ?: -1
     }
 
-    private fun openConnection(): Connection {
+    private fun openConnection() {
         try {
-            return dataSource.connection
+            connection = DataSourceUtils.getConnection(dataSource)
+            autoCommit = connection!!.autoCommit
+            isTransactional = DataSourceUtils.isTransactional(dataSource, connection!!)
         } catch (e: Exception) {
             throw IllegalStateException("${this.javaClass.simpleName} get connection failed.", e)
         }

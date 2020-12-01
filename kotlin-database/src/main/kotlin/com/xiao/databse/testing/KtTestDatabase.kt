@@ -1,6 +1,6 @@
 package com.xiao.databse.testing
 
-import com.xiao.databse.MyBatisDatabase
+import com.xiao.databse.BaseDatabase
 import kotlin.reflect.KClass
 
 /**
@@ -11,6 +11,6 @@ import kotlin.reflect.KClass
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
 annotation class KtTestDatabase(
-    val database: KClass<out MyBatisDatabase>,
+    val database: KClass<out BaseDatabase>,
     val tables: Array<String>
 )

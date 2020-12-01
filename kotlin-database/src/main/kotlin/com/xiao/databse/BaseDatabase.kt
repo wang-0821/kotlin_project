@@ -10,20 +10,20 @@ import org.apache.ibatis.mapping.Environment
 import org.apache.ibatis.session.Configuration
 import org.apache.ibatis.session.LocalCacheScope
 import org.apache.ibatis.session.SqlSessionFactory
-import org.apache.ibatis.session.SqlSessionFactoryBuilder
 import java.io.File
 import java.nio.file.Files
+import javax.sql.DataSource
 
 /**
  *
  * @author lix wang
  */
-abstract class MyBatisDatabase(
+abstract class BaseDatabase(
     val url: String,
     val username: String,
     val password: String
 ) {
-    @Volatile private var sqlSessionFactory: SqlSessionFactory? = null
+    private var sqlSessionFactory: SqlSessionFactory? = null
     private val config: KtDatabase
 
     init {
@@ -46,15 +46,17 @@ abstract class MyBatisDatabase(
     }
 
     fun sqlSessionFactory(): SqlSessionFactory {
+        if (sqlSessionFactory == null) {
+            sqlSessionFactory = createSqlSessionFactory()
+        }
         if (sqlSessionFactory != null) {
             return sqlSessionFactory!!
         }
-        synchronized(this) {
-            if (sqlSessionFactory == null) {
-                sqlSessionFactory = createSqlSessionFactory()
-            }
-            return sqlSessionFactory!!
-        }
+        return sqlSessionFactory!!
+    }
+
+    fun dataSource(): DataSource {
+        return sqlSessionFactory().configuration.environment.dataSource
     }
 
     private fun createSqlSessionFactory(): SqlSessionFactory {
@@ -64,7 +66,7 @@ abstract class MyBatisDatabase(
         scanInterfaceMappers(configuration, config.mapperPath)
 
         setEnvironment(config.name + ENVIRONMENT_NAME_SUFFIX, configuration, url, username, password)
-        return SqlSessionFactoryBuilder().build(configuration)
+        return KtSqlSessionFactory(configuration)
     }
 
     private fun scanXmlMappers(configuration: Configuration, mapperXmlPath: String) {

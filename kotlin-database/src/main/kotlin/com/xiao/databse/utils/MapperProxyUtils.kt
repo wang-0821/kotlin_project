@@ -1,5 +1,6 @@
-package com.xiao.databse
+package com.xiao.databse.utils
 
+import com.xiao.databse.KtMapperProxy
 import org.apache.ibatis.session.SqlSessionFactory
 import java.lang.reflect.Proxy
 import java.util.concurrent.ConcurrentHashMap
@@ -8,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * @author lix wang
  */
-object DataSourceHelper {
+object MapperProxyUtils {
     private val mappers = ConcurrentHashMap<Class<*>, Any?>()
 
     @Suppress("UNCHECKED_CAST")
@@ -33,6 +34,7 @@ object DataSourceHelper {
             clazz.classLoader,
             arrayOf(clazz),
             KtMapperProxy(
+                clazz,
                 sqlSessionFactory.configuration.getMapper(
                     clazz,
                     sqlSessionFactory.openSession()
