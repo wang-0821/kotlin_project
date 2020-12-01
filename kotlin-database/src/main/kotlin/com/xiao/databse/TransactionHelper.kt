@@ -11,7 +11,7 @@ import com.xiao.databse.utils.TransactionalUtils
  */
 @KtLogger(LoggerType.MAPPER)
 object TransactionHelper : Logging() {
-    fun doInTransaction(block: () -> Unit, wrapper: TransactionalWrapper? = null) {
+    fun doInTransaction(wrapper: TransactionalWrapper? = null, block: () -> Unit) {
         try {
             TransactionalUtils.setTransactionalWrapper(wrapper ?: TransactionalWrapper())
             block()

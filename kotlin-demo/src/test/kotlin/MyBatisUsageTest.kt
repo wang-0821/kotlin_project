@@ -1,7 +1,7 @@
-import com.xiao.databse.utils.MapperProxyUtils
 import com.xiao.databse.TransactionHelper
 import com.xiao.databse.testing.KtDataSourceTestBase
 import com.xiao.databse.testing.KtTestDatabase
+import com.xiao.databse.utils.MapperProxyUtils
 import com.xiao.demo.mybatis.DemoDatabase
 import com.xiao.demo.mybatis.mapper.UserMapper
 import com.xiao.demo.mybatis.mapper.UserMapperV2
@@ -55,7 +55,7 @@ class MyBatisUsageTest : KtDataSourceTestBase() {
 
         assertEquals(userMapper.getById(1L).password, "password_1")
         val exception = assertThrows<IllegalStateException> {
-            TransactionHelper(sqlSession).doInTransaction {
+            TransactionHelper.doInTransaction {
                 userMapper.updatePasswordById(1L, "password_temp")
                 throw IllegalStateException("throws exception.")
             }
