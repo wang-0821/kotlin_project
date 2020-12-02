@@ -3,41 +3,43 @@ package com.xiao.databse.utils
 import com.xiao.databse.TransactionHandler
 import com.xiao.databse.TransactionalWrapper
 import javax.sql.DataSource
+import kotlin.reflect.KClass
 
 /**
  *
  * @author lix wang
  */
 object TransactionalUtils {
-    private val resources = ThreadLocal<MutableMap<Any, Any>>()
-    private val transactionalWrapper = ThreadLocal<TransactionalWrapper>()
-    private val transactionHandlers = ThreadLocal<MutableList<TransactionHandler>>()
+    private val resources = ThreadLocal<MutableMap<TransactionalWrapper, MutableMap<Any, Any>>>()
+    private val transactionalWrappers = ThreadLocal<MutableList<TransactionalWrapper>>()
+    private val transactionHandlers = ThreadLocal<MutableMap<TransactionalWrapper, MutableList<TransactionHandler>>>()
 
     @Suppress("UNCHECKED_CAST")
     fun <T> getResource(key: Any): T? {
-        return resources.get()?.get(key) as? T
+        return resources.get()?.get(checkAndGetTransactionWrapper())?.get(key) as? T
     }
 
     fun setResource(key: Any, resource: Any) {
+        val transactionalWrapper = checkAndGetTransactionWrapper()
         val map = resources.get()
         if (map == null) {
-            resources.set(mutableMapOf(key to resource))
+            resources.set(mutableMapOf(transactionalWrapper to mutableMapOf(key to resource)))
         } else {
-            map[key] = resource
+            val transactionalResourceMap = map[transactionalWrapper]
+            if (transactionalResourceMap == null) {
+                map[transactionalWrapper] = mutableMapOf(key to resource)
+            } else {
+                transactionalResourceMap[key] = resource
+            }
         }
     }
 
     fun removeResource(key: Any) {
-        val map = resources.get()
-        if (map == null) {
-            return
-        } else {
-            map.remove(key)
-        }
+        resources.get()?.get(checkAndGetTransactionWrapper())?.remove(key)
     }
 
     fun isTransactional(dataSource: DataSource): Boolean {
-        val transactionalWrapper = transactionalWrapper.get()
+        val transactionalWrapper = transactionalWrappers.get()?.firstOrNull()
         return if (transactionalWrapper?.dataSources.isNullOrEmpty()) {
             true
         } else {
@@ -46,29 +48,51 @@ object TransactionalUtils {
     }
 
     fun setTransactionalWrapper(wrapper: TransactionalWrapper) {
-        transactionalWrapper.set(wrapper)
+        val wrappers = transactionalWrappers.get()
+        if (wrappers == null) {
+            transactionalWrappers.set(mutableListOf(wrapper))
+        } else {
+            wrappers.add(0, wrapper)
+        }
     }
 
-    fun getTransactionalWrapper(): TransactionalWrapper? {
-        return transactionalWrapper.get()
+    fun checkAndGetTransactionWrapper(): TransactionalWrapper {
+        return transactionalWrappers.get()?.firstOrNull() ?: throw IllegalStateException("Not in transaction.")
     }
 
     fun registerTransactionHandler(handler: TransactionHandler) {
-        val handlers = transactionHandlers.get()
-        if (handlers == null) {
-            transactionHandlers.set(mutableListOf(handler))
+        val transactionalWrapper = checkAndGetTransactionWrapper()
+        val handlerMap = transactionHandlers.get()
+        if (handlerMap == null) {
+            transactionHandlers.set(mutableMapOf(transactionalWrapper to mutableListOf(handler)))
         } else {
-            handlers.add(handler)
+            val transactionalHandlers = handlerMap[transactionalWrapper]
+            if (transactionalHandlers == null) {
+                handlerMap[transactionalWrapper] = mutableListOf(handler)
+            } else {
+                transactionalHandlers.add(handler)
+            }
         }
     }
 
     fun transactionHandlers(): List<TransactionHandler> {
-        return transactionHandlers.get() ?: listOf()
+        return transactionHandlers.get()?.get(checkAndGetTransactionWrapper()) ?: listOf()
     }
 
     fun releaseTransaction() {
-        transactionHandlers.remove()
-        resources.remove()
-        transactionalWrapper.remove()
+        transactionalWrappers.get()?.removeAt(0)
+    }
+
+    fun needRollback(throwable: Throwable, rollbackFor: List<KClass<*>>, noRollbackFor: List<KClass<*>>): Boolean {
+        val noRollbackResult = noRollbackFor.filter { throwable::class.java.isAssignableFrom(it::class.java) }
+        val rollbackFor = rollbackFor
+            .filter { rollbackEx ->
+                throwable::class.java.isAssignableFrom(rollbackEx::class.java) &&
+                    noRollbackResult.none {
+                        rollbackEx::class.java != it::class.java
+                            && rollbackEx::class.java.isAssignableFrom(it::class.java)
+                    }
+            }
+        return (noRollbackResult.isEmpty() && rollbackFor.isEmpty()) || rollbackFor.isNotEmpty()
     }
 }

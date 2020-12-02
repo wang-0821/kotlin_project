@@ -58,9 +58,8 @@ object SqlSessionUtils {
         }
 
         override fun rollback(throwable: Throwable) {
-            val wrapper = TransactionalUtils.getTransactionalWrapper()
-            if (wrapper!!.rollbackFor.contains(throwable::class)
-                || (wrapper.rollbackFor.isNullOrEmpty() && !wrapper.noRollbackFor.contains(throwable::class))) {
+            val wrapper = TransactionalUtils.checkAndGetTransactionWrapper()
+            if (TransactionalUtils.needRollback(throwable, wrapper.rollbackFor, wrapper.noRollbackFor)) {
                 sqlSession.rollback(true)
             }
         }

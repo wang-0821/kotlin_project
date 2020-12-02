@@ -37,19 +37,19 @@ object DataSourceUtils {
         if (connection != null) {
             return connection
         }
-        val wrapper = TransactionalUtils.getTransactionalWrapper()
+        val wrapper = TransactionalUtils.checkAndGetTransactionWrapper()
         connection = dataSource.connection
         TransactionalUtils.setResource(
             dataSource,
             ConnectionWrapper(connection).apply {
-                timeout = wrapper!!.timeout
+                timeout = wrapper.timeout
                 timeUnit = wrapper.timeUnit
             }
         )
         if (connection.autoCommit) {
             connection.autoCommit = false
         }
-        if (connection.transactionIsolation != wrapper!!.isolation.level) {
+        if (connection.transactionIsolation != wrapper.isolation.level) {
             connection.transactionIsolation = wrapper.isolation.level
         }
         return connection
