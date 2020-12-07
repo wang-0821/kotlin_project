@@ -203,7 +203,7 @@ io字节数组及字符数组复用。该客户端可以使用 chunked transfer-
     class DemoDatabase : MyBatisDatabase(URL, USERNAME, PASSWORD) {
         companion object {
             const val NAME = "demo"
-            const val MAPPER_PATH = "com.xiao.demo.mybatis.mapper"
+            const val MAPPER_PATH = "com.xiao.database.mybatis.mapper"
             const val MAPPER_XML_PATH = "classpath*:mybatis/mapper/"
             const val DATASET_PATH = "db/demo"
             const val URL = "jdbc:mysql://localhost:3306/lix_database_demo"

@@ -55,6 +55,12 @@ object SqlSessionUtils {
         override fun afterCommit() {
             releaseSqlSession(sqlSessionFactory, sqlSession)
             sqlSession.close()
+            val dataSource = sqlSession.configuration.environment.dataSource
+            val connection = DataSourceUtils.findTransactionalConnection(dataSource)
+            if (connection != null) {
+                DataSourceUtils.releaseConnection(dataSource, connection)
+                connection.close()
+            }
         }
 
         override fun rollback(throwable: Throwable) {

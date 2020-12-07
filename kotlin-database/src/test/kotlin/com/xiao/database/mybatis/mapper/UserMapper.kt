@@ -1,6 +1,6 @@
-package com.xiao.demo.mybatis.mapper
+package com.xiao.database.mybatis.mapper
 
-import com.xiao.demo.model.User
+import com.xiao.database.model.User
 import org.apache.ibatis.annotations.Param
 
 /**

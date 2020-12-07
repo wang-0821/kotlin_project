@@ -1,10 +1,11 @@
+package com.xiao.database
+
+import com.xiao.database.mybatis.mapper.UserMapper
+import com.xiao.database.mybatis.mapper.UserMapperV2
 import com.xiao.databse.TransactionHelper
 import com.xiao.databse.testing.KtDataSourceTestBase
 import com.xiao.databse.testing.KtTestDatabase
 import com.xiao.databse.utils.MapperProxyUtils
-import com.xiao.demo.mybatis.DemoDatabase
-import com.xiao.demo.mybatis.mapper.UserMapper
-import com.xiao.demo.mybatis.mapper.UserMapperV2
 import org.apache.ibatis.session.SqlSessionFactory
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll

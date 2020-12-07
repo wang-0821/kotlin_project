@@ -66,7 +66,7 @@ abstract class BaseDatabase(
         scanInterfaceMappers(configuration, config.mapperPath)
 
         setEnvironment(config.name + ENVIRONMENT_NAME_SUFFIX, configuration, url, username, password)
-        return KtSqlSessionFactory(configuration)
+        return KtManagedSqlSessionFactory(configuration)
     }
 
     private fun scanXmlMappers(configuration: Configuration, mapperXmlPath: String) {

@@ -1,3 +1,15 @@
+plugins {
+    id "org.flywaydb.flyway" version "$flywayVersion"
+}
+
+flyway {
+    url = "jdbc:mysql://localhost:3306?characterEncoding=UTF8"
+    user = "root"
+    password = "123456"
+    schemas = ["lix_database_demo"]
+    sqlMigrationSuffixes = [".sql"]
+}
+
 dependencies {
     compile libs['mybatis']
     compile libs['HikariCP']

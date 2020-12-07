@@ -15,7 +15,7 @@ object PathResourceScanner : Logging() {
     fun scanClassResourcesByPackage(
         basePackage: String
     ): List<KtClassResource> {
-        if (basePackage.isNullOrBlank()) {
+        if (basePackage.isBlank()) {
             return emptyList()
         }
         val classLoader = defaultClassLoader
@@ -30,16 +30,20 @@ object PathResourceScanner : Logging() {
         matcher: ResourceMatcher,
         classLoader: ClassLoader = defaultClassLoader
     ): List<KtFileResource> {
-        val result = mutableListOf<KtFileResource>()
-        val realBasePackage = basePackage.replace(".", "/")
-        val resourceUrls: Enumeration<URL> = classLoader.getResources(realBasePackage)
-            ?: ClassLoader.getSystemResources(realBasePackage)
-        while (resourceUrls.hasMoreElements()) {
-            val rootFile = File(resourceUrls.nextElement().toURI().schemeSpecificPart)
-            val targetFiles = findResourceFiles(rootFile, matcher)
-            result.addAll(targetFiles.map { KtFileResource(it, it.absolutePath) })
+        try {
+            val result = mutableListOf<KtFileResource>()
+            val realBasePackage = basePackage.replace(".", "/")
+            val resourceUrls: Enumeration<URL> = classLoader.getResources(realBasePackage)
+                ?: ClassLoader.getSystemResources(realBasePackage)
+            while (resourceUrls.hasMoreElements()) {
+                val rootFile = File(resourceUrls.nextElement().toURI().schemeSpecificPart)
+                val targetFiles = findResourceFiles(rootFile, matcher)
+                result.addAll(targetFiles.map { KtFileResource(it, it.absolutePath) })
+            }
+            return result
+        } catch (e: Exception) {
+            throw e
         }
-        return result
     }
 
     private fun findResourceFiles(rootDir: File, matcher: ResourceMatcher?): Set<File> {
@@ -96,8 +100,11 @@ object PathResourceScanner : Logging() {
             if (classNameSplitArray.isEmpty() || !classNameSplitArray.last().endsWith(".class")) {
                 return null
             }
-            val mainDirIndex = classNameSplitArray.indexOf("main")
-            val className = classNameSplitArray.subList(mainDirIndex + 1, classNameSplitArray.size)
+            var dirIndex = classNameSplitArray.indexOf("main")
+            if (dirIndex < 0) {
+                dirIndex = classNameSplitArray.indexOf("test")
+            }
+            val className = classNameSplitArray.subList(dirIndex + 1, classNameSplitArray.size)
                 .joinToString(".")
                 .removeSuffix(".class")
             val kClass = Class.forName(className, true, classLoader).kotlin

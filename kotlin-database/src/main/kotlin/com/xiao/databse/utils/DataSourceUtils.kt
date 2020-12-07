@@ -22,10 +22,14 @@ object DataSourceUtils {
 
     fun getConnection(dataSource: DataSource): Connection {
         return if (TransactionalUtils.isTransactional(dataSource)) {
-            dataSource.connection
-        } else {
             prepareTransactionConnection(dataSource)
+        } else {
+            dataSource.connection
         } ?: throw IllegalStateException("DataSource $dataSource get connection failed.")
+    }
+
+    fun findTransactionalConnection(dataSource: DataSource): Connection? {
+        return TransactionalUtils.getResource<ConnectionWrapper>(dataSource)?.connection
     }
 
     fun isTransactional(dataSource: DataSource, connection: Connection): Boolean {

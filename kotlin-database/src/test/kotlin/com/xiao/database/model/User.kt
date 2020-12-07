@@ -1,4 +1,4 @@
-package com.xiao.demo.model
+package com.xiao.database.model
 
 /**
  *

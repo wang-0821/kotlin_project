@@ -41,7 +41,7 @@ object TransactionalUtils {
     fun isTransactional(dataSource: DataSource): Boolean {
         val transactionalWrapper = transactionalWrappers.get()?.firstOrNull()
         return if (transactionalWrapper?.dataSources.isNullOrEmpty()) {
-            true
+            false
         } else {
             transactionalWrapper!!.dataSources.contains(dataSource)
         }
@@ -80,12 +80,14 @@ object TransactionalUtils {
     }
 
     fun releaseTransaction() {
-        transactionalWrappers.get()?.removeAt(0)
+        val transactionalWrapper = transactionalWrappers.get()?.removeAt(0)
+        resources.get()?.remove(transactionalWrapper)
+        transactionHandlers.get()?.remove(transactionalWrapper)
     }
 
     fun needRollback(throwable: Throwable, rollbackFor: List<KClass<*>>, noRollbackFor: List<KClass<*>>): Boolean {
         val noRollbackResult = noRollbackFor.filter { throwable::class.java.isAssignableFrom(it::class.java) }
-        val rollbackFor = rollbackFor
+        val rollbackResult = rollbackFor
             .filter { rollbackEx ->
                 throwable::class.java.isAssignableFrom(rollbackEx::class.java) &&
                     noRollbackResult.none {
@@ -93,6 +95,6 @@ object TransactionalUtils {
                             && rollbackEx::class.java.isAssignableFrom(it::class.java)
                     }
             }
-        return (noRollbackResult.isEmpty() && rollbackFor.isEmpty()) || rollbackFor.isNotEmpty()
+        return (noRollbackResult.isEmpty() && rollbackResult.isEmpty()) || rollbackResult.isNotEmpty()
     }
 }

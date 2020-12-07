@@ -6,14 +6,15 @@ import org.apache.ibatis.session.SqlSession
 import org.apache.ibatis.session.SqlSessionFactory
 import org.apache.ibatis.session.TransactionIsolationLevel
 import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory
-import java.lang.reflect.Proxy
 import java.sql.Connection
 
 /**
  *
  * @author lix wang
  */
-class KtSqlSessionFactory(private val configuration: Configuration) : SqlSessionFactory {
+class KtManagedSqlSessionFactory(private val configuration: Configuration) : SqlSessionFactory {
+    private val delegate = DefaultSqlSessionFactory(configuration)
+
     override fun openSession(): SqlSession {
         return openSqlSession(null, null, false)
     }
@@ -55,10 +56,6 @@ class KtSqlSessionFactory(private val configuration: Configuration) : SqlSession
         transactionIsolationLevel: TransactionIsolationLevel?,
         autoCommit: Boolean
     ): SqlSession {
-        return Proxy.newProxyInstance(
-            javaClass.classLoader,
-            arrayOf(SqlSession::class.java),
-            KtSqlSession(DefaultSqlSessionFactory(configuration))
-        ) as SqlSession
+        return KtManagedSqlSession(configuration, delegate)
     }
 }

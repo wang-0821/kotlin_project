@@ -16,7 +16,7 @@ class KtManagedTransaction(private val dataSource: DataSource) : Transaction {
     private var isTransactional: Boolean = false
     
     override fun getConnection(): Connection {
-        if (connection != null) {
+        if (connection == null) {
             openConnection()
         }
         return connection!!
@@ -40,9 +40,14 @@ class KtManagedTransaction(private val dataSource: DataSource) : Transaction {
         }
     }
 
-    override fun getTimeout(): Int {
+    override fun getTimeout(): Int? {
         val connectionWrapper = TransactionalUtils.getResource<ConnectionWrapper>(dataSource)
-        return connectionWrapper?.timeUnit?.toSeconds(connectionWrapper.timeout)?.toInt() ?: -1
+        val timeout = connectionWrapper?.timeUnit?.toSeconds(connectionWrapper.timeout ?: 0)?.toInt()
+        return if (timeout != null && timeout > 0) {
+            timeout
+        } else {
+            null
+        }
     }
 
     private fun openConnection() {

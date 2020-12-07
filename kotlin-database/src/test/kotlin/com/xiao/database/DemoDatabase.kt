@@ -1,4 +1,4 @@
-package com.xiao.demo.mybatis
+package com.xiao.database
 
 import com.xiao.databse.annotation.KtDatabase
 import com.xiao.databse.BaseDatabase
@@ -16,7 +16,7 @@ import com.xiao.databse.BaseDatabase
 class DemoDatabase : BaseDatabase(URL, USERNAME, PASSWORD) {
     companion object {
         const val NAME = "demo"
-        const val MAPPER_PATH = "com.xiao.demo.mybatis.mapper"
+        const val MAPPER_PATH = "com.xiao.database.mybatis.mapper"
         const val MAPPER_XML_PATH = "classpath*:mybatis/mapper/"
         const val DATASET_PATH = "db/demo"
         const val URL = "jdbc:mysql://localhost:3306/lix_database_demo"

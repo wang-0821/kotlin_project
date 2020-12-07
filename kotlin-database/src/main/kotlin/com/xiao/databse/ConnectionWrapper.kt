@@ -8,6 +8,6 @@ import java.util.concurrent.TimeUnit
  * @author lix wang
  */
 class ConnectionWrapper(val connection: Connection) {
-    var timeout: Long = -1
-    var timeUnit: TimeUnit = TimeUnit.MILLISECONDS
+    var timeout: Long? = null
+    var timeUnit: TimeUnit? = null
 }
