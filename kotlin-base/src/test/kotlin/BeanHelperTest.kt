@@ -14,7 +14,7 @@ import org.junit.jupiter.api.TestInstance
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BeanHelperTest {
-    class BeanComponentTest()
+    class BeanComponentTest
     class BeanClass(val beanComponentTest: BeanComponentTest)
     private lateinit var beanRegistry: BeanRegistry
 

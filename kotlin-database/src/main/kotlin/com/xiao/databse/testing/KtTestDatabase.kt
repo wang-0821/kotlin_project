@@ -12,5 +12,6 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.CLASS)
 annotation class KtTestDatabase(
     val database: KClass<out BaseDatabase>,
-    val tables: Array<String>
+    val tables: Array<String> = [],
+    val mappers: Array<KClass<*>> = []
 )

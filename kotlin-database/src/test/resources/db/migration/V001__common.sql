@@ -1,4 +1,4 @@
-USE `lix_database_demo`;
+USE `lix_database_common`;
 
 CREATE TABLE `users` (
     `id`        BIGINT(20)      NOT NULL PRIMARY KEY AUTO_INCREMENT,

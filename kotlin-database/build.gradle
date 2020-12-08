@@ -6,8 +6,9 @@ flyway {
     url = "jdbc:mysql://localhost:3306?characterEncoding=UTF8"
     user = "root"
     password = "123456"
-    schemas = ["lix_database_demo"]
+    schemas = ["lix_database_common"]
     sqlMigrationSuffixes = [".sql"]
+    locations = ["classpath:db/migration"]
 }
 
 dependencies {

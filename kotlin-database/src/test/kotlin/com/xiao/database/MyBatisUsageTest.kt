@@ -3,9 +3,9 @@ package com.xiao.database
 import com.xiao.database.mybatis.mapper.UserMapper
 import com.xiao.database.mybatis.mapper.UserMapperV2
 import com.xiao.databse.TransactionHelper
-import com.xiao.databse.testing.KtDataSourceTestBase
+import com.xiao.databse.testing.KtTestDataSourceBase
 import com.xiao.databse.testing.KtTestDatabase
-import com.xiao.databse.utils.MapperProxyUtils
+import com.xiao.databse.utils.MapperUtils
 import org.apache.ibatis.session.SqlSessionFactory
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
@@ -20,7 +20,7 @@ import org.junit.jupiter.api.assertThrows
     database = DemoDatabase::class,
     tables = ["users"]
 )
-class MyBatisUsageTest : KtDataSourceTestBase() {
+class MyBatisUsageTest : KtTestDataSourceBase() {
     private lateinit var sqlSessionFactory: SqlSessionFactory
 
     @BeforeAll
@@ -29,7 +29,7 @@ class MyBatisUsageTest : KtDataSourceTestBase() {
     }
 
     @Test
-    fun `test mapper query with same sqlSession`() {
+    fun `test mapper query with same sqlSession without cache`() {
         val sqlSession = sqlSessionFactory.openSession()
         val userMapper = sqlSessionFactory.configuration.getMapper(UserMapper::class.java, sqlSession)
         val userMapperV2 = sqlSessionFactory.configuration.getMapper(UserMapperV2::class.java, sqlSession)
@@ -40,9 +40,9 @@ class MyBatisUsageTest : KtDataSourceTestBase() {
     }
 
     @Test
-    fun `test mapper query repeatable read isolation with different sqlSession`() {
-        val userMapper = MapperProxyUtils.getMapper(sqlSessionFactory, UserMapper::class.java)
-        val userMapperV2 = MapperProxyUtils.getMapper(sqlSessionFactory, UserMapperV2::class.java)
+    fun `test query using custom mapperProxy with different sqlSessions`() {
+        val userMapper = MapperUtils.getMapper(sqlSessionFactory, UserMapper::class.java)
+        val userMapperV2 = MapperUtils.getMapper(sqlSessionFactory, UserMapperV2::class.java)
 
         assertEquals(userMapper.getById(1L).username, "user_1")
         userMapper.updatePasswordById(1L, "password_temp")
@@ -50,7 +50,7 @@ class MyBatisUsageTest : KtDataSourceTestBase() {
     }
 
     @Test
-    fun `test transaction fallback`() {
+    fun `test fallback with custom transaction`() {
         val sqlSession = sqlSessionFactory.openSession()
         val userMapper = sqlSessionFactory.configuration.getMapper(UserMapper::class.java, sqlSession)
 

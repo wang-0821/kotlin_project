@@ -12,15 +12,15 @@ import java.lang.reflect.Method
  *
  * @author lix wang
  */
-class KtMapperProxy<T>(private val clazz: Class<T>, private val mapper: T) : InvocationHandler {
-    override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any {
+open class KtMapperProxy<T>(val clazz: Class<T>, private val mapper: T) : InvocationHandler {
+    override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
         val mapperRetry = method.getAnnotation(KtMapperRetry::class.java)
             ?: clazz.getAnnotation(KtMapperRetry::class.java)
         val executeTimes = mapperRetry?.times ?: 0 + 1
         return execute(mapper as Any, method, args, executeTimes)
     }
 
-    private fun execute(proxy: Any, method: Method, args: Array<Any?>?, times: Int): Any {
+    private fun execute(proxy: Any, method: Method, args: Array<Any?>?, times: Int): Any? {
         var exception: Exception? = null
         for (i in 1..times) {
             try {

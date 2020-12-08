@@ -18,8 +18,8 @@ class DemoDatabase : BaseDatabase(URL, USERNAME, PASSWORD) {
         const val NAME = "demo"
         const val MAPPER_PATH = "com.xiao.database.mybatis.mapper"
         const val MAPPER_XML_PATH = "classpath*:mybatis/mapper/"
-        const val DATASET_PATH = "db/demo"
-        const val URL = "jdbc:mysql://localhost:3306/lix_database_demo"
+        const val DATASET_PATH = "db/common"
+        const val URL = "jdbc:mysql://localhost:3306/lix_database_common"
         const val USERNAME = "root"
         const val PASSWORD = "123456"
     }

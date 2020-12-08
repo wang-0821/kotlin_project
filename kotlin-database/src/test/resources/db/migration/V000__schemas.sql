@@ -1,1 +1,1 @@
-CREATE SCHEMA IF NOT EXISTS `lix_database_demo`;
+CREATE SCHEMA IF NOT EXISTS `lix_database_common`;

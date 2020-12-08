@@ -159,7 +159,7 @@ class KtManagedSqlSession(
     }
 
     private class KtSqlSessionInvoker(private val sqlSessionFactory: SqlSessionFactory) : InvocationHandler {
-        override fun invoke(proxy: Any?, method: Method, args: Array<Any?>?): Any {
+        override fun invoke(proxy: Any?, method: Method, args: Array<Any?>?): Any? {
             val sqlSession = SqlSessionUtils.getSqlSession(sqlSessionFactory)
             try {
                 val result = ProxyUtils.invoke(sqlSession, method, args)
