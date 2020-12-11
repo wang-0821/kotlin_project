@@ -25,6 +25,10 @@ object SqlSessionUtils {
         }
     }
 
+    fun isTransactional(sqlSessionFactory: SqlSessionFactory, sqlSession: SqlSession): Boolean {
+        return TransactionalUtils.getResource<SqlSession>(sqlSessionFactory) == sqlSession
+    }
+
     private fun prepareTransactionalSqlSession(sqlSessionFactory: SqlSessionFactory): SqlSession {
         var sqlSession = TransactionalUtils.getResource<SqlSession>(sqlSessionFactory)
         if (sqlSession != null) {
@@ -32,41 +36,39 @@ object SqlSessionUtils {
         }
         sqlSession = sqlSessionFactory.openSession()
         TransactionalUtils.setResource(sqlSessionFactory, sqlSession)
-        TransactionalUtils.registerTransactionHandler(SqlSessionTransactionHandler(sqlSessionFactory, sqlSession))
+        TransactionalUtils.registerTransactionHandler(
+            SqlSessionTransactionHandler(sqlSessionFactory, sqlSession)
+        )
         return sqlSession
-    }
-
-    private fun isTransactional(sqlSessionFactory: SqlSessionFactory, sqlSession: SqlSession): Boolean {
-        return TransactionalUtils.getResource<SqlSession>(sqlSessionFactory) == sqlSession
     }
 
     class SqlSessionTransactionHandler(
         private val sqlSessionFactory: SqlSessionFactory,
         private val sqlSession: SqlSession
     ) : TransactionHandler {
-        override fun beforeCommit() {
+        override fun beforeTransaction() {
             sqlSession.commit()
         }
 
         override fun commit() {
-            sqlSession.commit(true)
-        }
-
-        override fun afterCommit() {
-            releaseSqlSession(sqlSessionFactory, sqlSession)
-            sqlSession.close()
-            val dataSource = sqlSession.configuration.environment.dataSource
-            val connection = DataSourceUtils.findTransactionalConnection(dataSource)
-            if (connection != null) {
-                DataSourceUtils.releaseConnection(dataSource, connection)
-                connection.close()
-            }
+            DataSourceUtils.findTransactionalConnection(sqlSession.configuration.environment.dataSource)?.commit()
+                ?: throw IllegalStateException("SqlSession $sqlSession can't find transaction connection.")
         }
 
         override fun rollback(throwable: Throwable) {
             val wrapper = TransactionalUtils.checkAndGetTransactionWrapper()
             if (TransactionalUtils.needRollback(throwable, wrapper.rollbackFor, wrapper.noRollbackFor)) {
-                sqlSession.rollback(true)
+                DataSourceUtils.findTransactionalConnection(sqlSession.configuration.environment.dataSource)?.rollback()
+            }
+        }
+
+        override fun afterTransaction() {
+            releaseSqlSession(sqlSessionFactory, sqlSession)
+            sqlSession.close()
+            val dataSource = sqlSession.configuration.environment.dataSource
+            DataSourceUtils.findTransactionalConnection(dataSource)?.let {
+                DataSourceUtils.releaseConnection(dataSource, it)
+                it.close()
             }
         }
     }

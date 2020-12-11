@@ -50,10 +50,22 @@ class MyBatisUsageTest : KtTestDataSourceBase() {
     }
 
     @Test
-    fun `test fallback with custom transaction`() {
+    fun `test mapper query exception without transaction`() {
         val sqlSession = sqlSessionFactory.openSession()
         val userMapper = sqlSessionFactory.configuration.getMapper(UserMapper::class.java, sqlSession)
 
+        assertEquals(userMapper.getById(1L).password, "password_1")
+        val exception = assertThrows<IllegalStateException> {
+            userMapper.updatePasswordById(1L, "password_temp")
+            throw IllegalStateException("throws exception.")
+        }
+        assertEquals("throws exception.", exception.message)
+        assertEquals(userMapper.getById(1L).password, "password_temp")
+    }
+
+    @Test
+    fun `test mapper query follback with transaction`() {
+        val userMapper = MapperUtils.getMapper(sqlSessionFactory, UserMapper::class.java)
         assertEquals(userMapper.getById(1L).password, "password_1")
         val exception = assertThrows<IllegalStateException> {
             TransactionHelper.doInTransaction {

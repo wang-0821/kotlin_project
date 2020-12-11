@@ -40,10 +40,10 @@ object TransactionalUtils {
 
     fun isTransactional(dataSource: DataSource): Boolean {
         val transactionalWrapper = transactionalWrappers.get()?.firstOrNull()
-        return if (transactionalWrapper?.dataSources.isNullOrEmpty()) {
+        return if (transactionalWrapper == null) {
             false
         } else {
-            transactionalWrapper!!.dataSources.contains(dataSource)
+            transactionalWrapper.dataSources.isNullOrEmpty() || transactionalWrapper.dataSources.contains(dataSource)
         }
     }
 

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
  *
  * @author lix wang
  */
-object JacksonUtils {
+object JsonUtils {
     private val objectMapper = ObjectMapper()
 
     fun serialize(obj: Any): String {

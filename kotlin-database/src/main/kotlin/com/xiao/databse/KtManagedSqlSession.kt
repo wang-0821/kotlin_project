@@ -163,13 +163,17 @@ class KtManagedSqlSession(
             val sqlSession = SqlSessionUtils.getSqlSession(sqlSessionFactory)
             try {
                 val result = ProxyUtils.invoke(sqlSession, method, args)
-                sqlSession.commit()
+                if (!SqlSessionUtils.isTransactional(sqlSessionFactory, sqlSession)) {
+                    sqlSession.commit(true)
+                }
                 return result
             } catch (throwable: Throwable) {
-                sqlSession.rollback()
                  throw ExceptionUtil.unwrapThrowable(throwable)
             } finally {
-                sqlSession.close()
+                if (sqlSession != null
+                    && !SqlSessionUtils.isTransactional(sqlSessionFactory, sqlSession)) {
+                    sqlSession.close()
+                }
             }
         }
     }

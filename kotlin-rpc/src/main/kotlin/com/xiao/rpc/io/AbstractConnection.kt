@@ -1,6 +1,6 @@
 package com.xiao.rpc.io
 
-import com.xiao.base.util.JacksonUtils
+import com.xiao.base.util.JsonUtils
 import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.ResponseListener
 import com.xiao.rpc.Route
@@ -47,7 +47,7 @@ abstract class AbstractConnection : Connection {
 
     override fun writeBody(request: Request) {
         val body = if (request.params().isNotEmpty()) {
-            JacksonUtils.serialize(request.params()) + CRLF
+            JsonUtils.serialize(request.params()) + CRLF
         } else {
             CRLF
         }

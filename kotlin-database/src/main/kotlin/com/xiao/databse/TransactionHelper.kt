@@ -23,19 +23,19 @@ object TransactionHelper : Logging() {
             log.error("Transaction call failed. ${throwable.message}", throwable)
             throw throwable
         } finally {
+            for (handler in TransactionalUtils.transactionHandlers()) {
+                handler.afterTransaction()
+            }
             TransactionalUtils.releaseTransaction()
         }
     }
 
     private fun processCommit() {
         for (handler in TransactionalUtils.transactionHandlers()) {
-            handler.beforeCommit()
+            handler.beforeTransaction()
         }
         for (handler in TransactionalUtils.transactionHandlers()) {
             handler.commit()
-        }
-        for (handler in TransactionalUtils.transactionHandlers()) {
-            handler.afterCommit()
         }
     }
 }

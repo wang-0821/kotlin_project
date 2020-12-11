@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.TestInstance
 import java.util.regex.Pattern
-import javax.sql.DataSource
 import kotlin.reflect.KClass
 
 /**
@@ -30,7 +29,7 @@ abstract class KtTestDataSourceBase  {
             annotations.addAll(it.value)
         }
         databaseAnnotations = annotations.associateBy { it.database }
-        databases = annotations.associate { it.database to it.database.java.newInstance() }
+        databases = annotations.associate { it.database to getDatabase(it.database) }
     }
 
     fun database(kClass: KClass<out BaseDatabase>): BaseDatabase {
@@ -41,46 +40,55 @@ abstract class KtTestDataSourceBase  {
     fun migration() {
         val params = buildMigrationParams(databases.values)
             params.forEach { param ->
-                Flyway
+                val flyway = Flyway
                     .configure()
-                    .dataSource(param.dataSource)
+                    .dataSource(param.url, param.username, param.password)
                     .locations(*(param.locations + "db/migration").toTypedArray())
                     .sqlMigrationSuffixes(".sql")
                     .schemas(*param.schemas.toTypedArray())
                     .load()
-                    .migrate()
+                flyway.clean()
+                flyway.migrate()
             }
+    }
+
+    protected fun getDatabase(database: KClass<out BaseDatabase>): BaseDatabase {
+        return database.java.newInstance()
     }
 
     private fun buildMigrationParams(databases: Collection<BaseDatabase>): List<MigrationParams> {
         val regex = Pattern.compile("(.*://.*)/(.*)")
         return databases
-            .groupBy {
-                it.dataSource()
+            .map {
+                val matcher = regex.matcher(it.url)
+                if (matcher.find() && matcher.groupCount() > 1) {
+                    return@map MigrationParams(
+                        matcher.group(1),
+                        it.username,
+                        it.password,
+                        setOf(it.datasetPath()),
+                        setOf(matcher.group(2))
+                    )
+                } else {
+                    throw IllegalArgumentException("Database $it url doesn't match pattern.")
+                }
             }
-            .map { (dataSource, databases) ->
-                val locations = databases
-                    .map {
-                        it.datasetPath()
-                    }
-                    .toSet()
-                val schemas = databases
-                    .map {
-                        val matcher = regex.matcher(it.url)
-                        if (matcher.find() && matcher.groupCount() > 1) {
-                            return@map matcher.group(2).substringBefore("?")
-                        } else {
-                            throw IllegalArgumentException("Migrate database ${it.name()} failed.")
-                        }
-                    }
-                    .toSet()
-                MigrationParams(dataSource, locations, schemas)
+            .groupBy {
+                it.url
+            }
+            .map {
+                val locations = it.value.flatMap { it.locations }.toSet()
+                val schemas = it.value.flatMap { it.schemas }.toSet()
+                val database = it.value.first()
+                MigrationParams(database.url, database.username, database.password, locations, schemas)
             }
     }
 
     @Suppress("ArrayInDataClass")
     private data class MigrationParams(
-        val dataSource: DataSource,
+        val url: String,
+        val username: String,
+        val password: String,
         val locations: Set<String>,
         val schemas: Set<String>
     )
