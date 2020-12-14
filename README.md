@@ -5,8 +5,9 @@
 * [2.对象容器](#2)
 * [3.资源扫描与处理](#3)
 * [4.Http](#4)
-* [5.Database](#5)
-* [6.flyway与测试](#6)
+* [5.数据源](#5)
+* [6.事务](#6)
+* [7.测试](#7)
 
 <h2 id="1">1.日志</h2>
 &emsp;&emsp; 本项目使用Slf4j门面模式来使用日志。使用slf4j，可以根据具体的需求，自主选择具体的日志框架。本项目中使用log4j2，也可以exclude掉，
@@ -190,9 +191,9 @@ io字节数组及字符数组复用。该客户端可以使用 chunked transfer-
     }
     response!!.asString()
 
-<h2 id="5">5.Database</h2>
-&emsp;&emsp; 使用KtDatabase注解配置数据源。在获取SqlSessionFactory时，会扫描对应的xml mappers和class mappers。
-可以使用TransactionHelper进行事务操作。
+<h2 id="5">5.数据源</h2>
+&emsp;&emsp; 使用@KtDatabase注解配置数据源。在获取SqlSessionFactory时，会扫描对应的xml mappers和class mappers。
+可以使用TransactionHelper进行事务操作。使用@KtTestDatabase配置测试类的数据源。
 
     @KtDatabase(
         name = DemoDatabase.NAME,
@@ -212,31 +213,96 @@ io字节数组及字符数组复用。该客户端可以使用 chunked transfer-
         }
     }
     
-<h2 id="6">6.flyway与测试</h2>
+    // 测试类数据源配置
+    @KtTestDatabase(
+        database = DemoDatabase::class,
+        tables = ["users"]
+    )
+    
+<h2 id="6">6.事务</h2>
+&emsp;&emsp; 利用TransactionHelper，可以很容易使用事务。使用BaseDatabase配置数据源，使用KtMapperProxy作为MyBatis mapper代理类，
+就可以直接在TransactionHelper中执行事务。
+    
+    @Test
+    fun `test mapper rollback with transaction`() {
+        val userMapper = MapperUtils.getMapper(sqlSessionFactory, UserMapper::class.java)
+        assertEquals(userMapper.getById(1L).password, "password_1")
+        val exception = assertThrows<IllegalStateException> {
+            TransactionHelper.doInTransaction {
+                assertEquals(userMapper.getById(1L).password, "password_1")
+                userMapper.updatePasswordById(1L, "password_temp")
+                assertEquals(userMapper.getById(1L).password, "password_temp")
+                throw IllegalStateException("throws exception.")
+            }
+        }
+        assertEquals("throws exception.", exception.message)
+        assertEquals(userMapper.getById(1L).password, "password_1")
+    }
+
+    
+    
+<h2 id="7">7.测试</h2>
 &emsp;&emsp; 使用@KtTestDatabase注解，可以声明测试类使用的数据源。KtDataSourceTestBase利用@BeforeAll和@BeforeEach，
 可以在每个@Test执行前使用flyway进行迁移。
 
-    class MyBatisUsageTest : KtDataSourceTestBase() {
+    @Order(0)
+    @BeforeAll
+    fun registerDatabase() {
+        val annotations = mutableListOf<KtTestDatabase>()
+        javaClass.getAnnotation(KtTestDatabase::class.java)?.let {
+            annotations.add(it)
+        }
+        javaClass.getAnnotation(KtTestDatabases::class.java)?.let {
+            annotations.addAll(it.value)
+        }
+        databaseAnnotations = annotations.associateBy { it.database }
+        databases = annotations.associate { it.database to databaseInstance(it.database) }
+    }
+    
+    @BeforeEach
+    fun migration() {
+        val params = buildMigrationParams(databases.values)
+            params.forEach { param ->
+                val flyway = Flyway
+                    .configure()
+                    .dataSource(param.url, param.username, param.password)
+                    .locations(*(param.locations + "db/migration").toTypedArray())
+                    .sqlMigrationSuffixes(".sql")
+                    .schemas(*param.schemas.toTypedArray())
+                    .load()
+                flyway.clean()
+                flyway.migrate()
+            }
+    }
+    
+&emsp;&emsp; 利用自定义注解实现数据库有关测试，在执行每个方法前会使用flyway来进行数据迁移。而且可以使用TransactionHelper，很方便的实现
+事务。
+    
+    @KtTestDatabase(
+        database = DemoDatabase::class,
+        tables = ["users"]
+    )
+    class MyBatisUsageTest : KtTestDataSourceBase() {
         private lateinit var sqlSessionFactory: SqlSessionFactory
     
         @BeforeAll
         fun init() {
-            sqlSessionFactory = database(DemoDatabase::class).sqlSessionFactory()
+            sqlSessionFactory = getDatabase(DemoDatabase::class).sqlSessionFactory()
         }
         
         @Test
-        fun `test transaction fallback`() {
-            val sqlSession = sqlSessionFactory.openSession()
-            val userMapper = sqlSessionFactory.configuration.getMapper(UserMapper::class.java, sqlSession)
-    
-            assertEquals(userMapper.getById(1).password, "password_1")
+        fun `test mapper rollback with transaction`() {
+            val userMapper = MapperUtils.getMapper(sqlSessionFactory, UserMapper::class.java)
+            assertEquals(userMapper.getById(1L).password, "password_1")
             val exception = assertThrows<IllegalStateException> {
-                TransactionHelper(sqlSession).doInTransaction {
-                    userMapper.updatePasswordById(1, "password_temp")
+                TransactionHelper.doInTransaction {
+                    assertEquals(userMapper.getById(1L).password, "password_1")
+                    userMapper.updatePasswordById(1L, "password_temp")
+                    assertEquals(userMapper.getById(1L).password, "password_temp")
                     throw IllegalStateException("throws exception.")
                 }
             }
             assertEquals("throws exception.", exception.message)
-            assertEquals(userMapper.getById(1).password, "password_1")
+            assertEquals(userMapper.getById(1L).password, "password_1")
         }
     }

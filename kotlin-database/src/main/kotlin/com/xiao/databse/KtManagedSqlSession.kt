@@ -170,8 +170,7 @@ class KtManagedSqlSession(
             } catch (throwable: Throwable) {
                  throw ExceptionUtil.unwrapThrowable(throwable)
             } finally {
-                if (sqlSession != null
-                    && !SqlSessionUtils.isTransactional(sqlSessionFactory, sqlSession)) {
+                if (!SqlSessionUtils.isTransactional(sqlSessionFactory, sqlSession)) {
                     sqlSession.close()
                 }
             }

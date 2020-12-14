@@ -25,7 +25,7 @@ class MyBatisUsageTest : KtTestDataSourceBase() {
 
     @BeforeAll
     fun init() {
-        sqlSessionFactory = database(DemoDatabase::class).sqlSessionFactory()
+        sqlSessionFactory = getDatabase(DemoDatabase::class).sqlSessionFactory()
     }
 
     @Test
@@ -64,16 +64,30 @@ class MyBatisUsageTest : KtTestDataSourceBase() {
     }
 
     @Test
-    fun `test mapper query follback with transaction`() {
+    fun `test mapper rollback with transaction`() {
         val userMapper = MapperUtils.getMapper(sqlSessionFactory, UserMapper::class.java)
         assertEquals(userMapper.getById(1L).password, "password_1")
         val exception = assertThrows<IllegalStateException> {
             TransactionHelper.doInTransaction {
+                assertEquals(userMapper.getById(1L).password, "password_1")
                 userMapper.updatePasswordById(1L, "password_temp")
+                assertEquals(userMapper.getById(1L).password, "password_temp")
                 throw IllegalStateException("throws exception.")
             }
         }
         assertEquals("throws exception.", exception.message)
         assertEquals(userMapper.getById(1L).password, "password_1")
+    }
+
+    @Test
+    fun `test mapper commit with transaction`() {
+        val userMapper = MapperUtils.getMapper(sqlSessionFactory, UserMapper::class.java)
+        assertEquals(userMapper.getById(1L).password, "password_1")
+        TransactionHelper.doInTransaction {
+            assertEquals(userMapper.getById(1L).password, "password_1")
+            userMapper.updatePasswordById(1L, "password_temp")
+            assertEquals(userMapper.getById(1L).password, "password_temp")
+        }
+        assertEquals(userMapper.getById(1L).password, "password_temp")
     }
 }

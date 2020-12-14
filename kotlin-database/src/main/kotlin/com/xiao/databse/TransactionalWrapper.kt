@@ -10,10 +10,10 @@ import kotlin.reflect.KClass
  * @author lix wang
  */
 class TransactionalWrapper (
-    val dataSources: List<DataSource> = listOf(),
-    val isolation: TransactionIsolationLevel = TransactionIsolationLevel.REPEATABLE_READ,
-    val timeout: Long? = null,
-    val timeUnit: TimeUnit? = null,
-    val rollbackFor: List<KClass<out Throwable>> = listOf(Exception::class),
-    val noRollbackFor: List<KClass<out Throwable>> = listOf()
+    var dataSources: List<DataSource> = listOf(),
+    var isolation: TransactionIsolationLevel = TransactionIsolationLevel.REPEATABLE_READ,
+    var timeout: Long? = null,
+    var timeUnit: TimeUnit? = null,
+    var rollbackFor: List<KClass<out Throwable>> = listOf(Exception::class),
+    var noRollbackFor: List<KClass<out Throwable>> = listOf()
 )

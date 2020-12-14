@@ -29,11 +29,7 @@ abstract class KtTestDataSourceBase  {
             annotations.addAll(it.value)
         }
         databaseAnnotations = annotations.associateBy { it.database }
-        databases = annotations.associate { it.database to getDatabase(it.database) }
-    }
-
-    fun database(kClass: KClass<out BaseDatabase>): BaseDatabase {
-        return databases[kClass] ?: throw IllegalArgumentException("Database ${kClass.simpleName} not registered.")
+        databases = annotations.associate { it.database to databaseInstance(it.database) }
     }
 
     @BeforeEach
@@ -52,7 +48,11 @@ abstract class KtTestDataSourceBase  {
             }
     }
 
-    protected fun getDatabase(database: KClass<out BaseDatabase>): BaseDatabase {
+    fun getDatabase(kClass: KClass<out BaseDatabase>): BaseDatabase {
+        return databases[kClass] ?: throw IllegalArgumentException("Database ${kClass.simpleName} not registered.")
+    }
+
+    private fun databaseInstance(database: KClass<out BaseDatabase>): BaseDatabase {
         return database.java.newInstance()
     }
 
