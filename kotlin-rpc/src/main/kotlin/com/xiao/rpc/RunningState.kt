@@ -24,9 +24,9 @@ class RunningState {
     fun state() = state
 
     companion object {
-        val INITIAL = -1
-        val READY = 0
-        val RUNNING = 1
-        val TERMINATE = 2
+        const val INITIAL = -1
+        const val READY = 0
+        const val RUNNING = 1
+        const val TERMINATE = 2
     }
 }

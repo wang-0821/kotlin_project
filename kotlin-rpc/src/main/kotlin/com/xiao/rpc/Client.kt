@@ -84,6 +84,8 @@ class Client {
         const val DEFAULT_TIMEOUT = 5000
         val BASE_SCAN_PACKAGE = this::class.packageName()
         var annotatedResources: List<AnnotatedKtResource> = listOf()
-        @Volatile var refreshed = false
+        @Volatile
+        @JvmField
+        var refreshed = false
     }
 }

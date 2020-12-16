@@ -2,6 +2,7 @@ package com.xiao.databse.utils
 
 import com.xiao.databse.KtMapperProxy
 import com.xiao.databse.testing.KtTestMapperProxy
+import com.xiao.databse.testing.TestResourceHolder
 import org.apache.ibatis.session.SqlSessionFactory
 import java.lang.reflect.Proxy
 import java.util.concurrent.ConcurrentHashMap
@@ -14,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
 object MapperUtils {
     private val mappers = ConcurrentHashMap<Class<*>, Any?>()
 
-    fun <T> getTestMapper(sqlSessionFactory: SqlSessionFactory, clazz: Class<T>): T {
+    fun <T> getTestMapper(clazz: Class<T>): T {
         if (mappers[clazz] != null) {
             return mappers[clazz] as T
         }
@@ -23,7 +24,7 @@ object MapperUtils {
             if (mappers[clazz] != null) {
                 return mappers[clazz] as T
             }
-            val mapper = createTestMapper(sqlSessionFactory, clazz)
+            val mapper = createTestMapper(clazz)
             mappers[clazz] = mapper
             return mapper
         }
@@ -58,7 +59,20 @@ object MapperUtils {
         ) as T
     }
 
-    private fun <T> createTestMapper(sqlSessionFactory: SqlSessionFactory, clazz: Class<T>): T {
+    private fun <T> createTestMapper(clazz: Class<T>): T {
+        val database = TestResourceHolder.databaseAnnotations
+            .firstOrNull {
+                it.mappers
+                    .any {
+                        it.java == clazz
+                    }
+            }?.database
+            ?.let {
+                TestResourceHolder.getDatabase(it)
+            }
+            ?: throw IllegalStateException("Can't find database for mapper: ${clazz.simpleName}.")
+
+        val sqlSessionFactory = database.sqlSessionFactory()
         return Proxy.newProxyInstance(
             clazz.classLoader,
             arrayOf(clazz),
@@ -68,8 +82,7 @@ object MapperUtils {
                     clazz,
                     sqlSessionFactory.openSession()
                 ),
-                sqlSessionFactory.configuration.databaseId,
-                sqlSessionFactory.configuration.environment.dataSource
+                database.name()
             )
         ) as T
     }

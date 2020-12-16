@@ -30,6 +30,7 @@ interface RouteContextAware : ClientContextPoolAware {
     }
 
     companion object {
+        @JvmField
         val KEY = RouteContext.Key
     }
 }

@@ -9,7 +9,7 @@ import com.xiao.databse.utils.TransactionalUtils
  *
  * @author lix wang
  */
-@KtLogger(LoggerType.MAPPER)
+@KtLogger(LoggerType.DATA_SOURCE)
 object TransactionHelper : Logging() {
     fun doInTransaction(wrapper: TransactionalWrapper? = null, action: () -> Unit) {
         try {

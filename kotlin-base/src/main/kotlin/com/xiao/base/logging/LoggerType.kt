@@ -7,5 +7,6 @@ package com.xiao.base.logging
 enum class LoggerType(val text: String) {
     NULL(""),
     RPC("rpc"),
-    MAPPER("mapper")
+    DATA_SOURCE("dataSource"),
+    TEST_DATA_SOURCE("testDataSource")
 }

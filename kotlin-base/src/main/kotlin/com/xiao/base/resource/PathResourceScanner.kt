@@ -12,7 +12,7 @@ import java.util.Enumeration
 object PathResourceScanner : Logging() {
     private val defaultClassLoader = Thread.currentThread().contextClassLoader ?: ClassLoader.getSystemClassLoader()
 
-    fun scanClassResourcesByPackage(
+    fun scanClassResources(
         basePackage: String
     ): List<KtClassResource> {
         if (basePackage.isBlank()) {
@@ -20,12 +20,12 @@ object PathResourceScanner : Logging() {
         }
         val classLoader = defaultClassLoader
         return retrieveClassResources(
-            scanFileResourcesByPackage(basePackage, ClassResourceMatcher, classLoader),
+            scanFileResources(basePackage, ClassResourceMatcher, classLoader),
             classLoader
         )
     }
 
-    fun scanFileResourcesByPackage(
+    fun scanFileResources(
         basePackage: String,
         matcher: ResourceMatcher,
         classLoader: ClassLoader = defaultClassLoader
@@ -44,6 +44,21 @@ object PathResourceScanner : Logging() {
         } catch (e: Exception) {
             throw e
         }
+    }
+
+    fun scanFileResourcesWithSuffix(basePackage: String, suffix: String): List<KtFileResource> {
+        return scanFileResources(
+            basePackage,
+            object : ResourceMatcher {
+                override fun matchingDirectory(file: File): Boolean {
+                    return true
+                }
+
+                override fun matchingFile(file: File): Boolean {
+                    return file.name.endsWith(suffix)
+                }
+            }
+        )
     }
 
     private fun findResourceFiles(rootDir: File, matcher: ResourceMatcher?): Set<File> {

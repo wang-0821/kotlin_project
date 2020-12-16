@@ -31,7 +31,7 @@ object ContextScanner : BeanRegistryAware {
     }
 
     private fun scanResources(basePackage: String): List<KtClassResource> {
-        return PathResourceScanner.scanClassResourcesByPackage(basePackage)
+        return PathResourceScanner.scanClassResources(basePackage)
     }
 
     private fun handleContextInject(annotatedKtResources: List<AnnotatedKtResource>): List<AnnotatedKtResource>? {

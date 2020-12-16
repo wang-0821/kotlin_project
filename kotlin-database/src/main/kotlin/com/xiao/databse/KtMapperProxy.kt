@@ -38,6 +38,6 @@ open class KtMapperProxy<T>(val clazz: Class<T>, private val mapper: T) : Invoca
         throw exception!!
     }
 
-    @KtLogger(LoggerType.MAPPER)
+    @KtLogger(LoggerType.DATA_SOURCE)
     companion object : Logging()
 }

@@ -1,4 +1,4 @@
-package com.xiao.databse.testing
+package com.xiao.databse.annotation
 
 /**
  *
@@ -6,6 +6,6 @@ package com.xiao.databse.testing
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class KtSqlTables(
+annotation class KtMapperTables(
     val value: Array<String> = []
 )

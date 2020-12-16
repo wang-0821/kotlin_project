@@ -1,7 +1,6 @@
 package com.xiao.databse
 
 import com.xiao.base.resource.PathResourceScanner
-import com.xiao.base.resource.ResourceMatcher
 import com.xiao.databse.annotation.KtDatabase
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -10,7 +9,6 @@ import org.apache.ibatis.mapping.Environment
 import org.apache.ibatis.session.Configuration
 import org.apache.ibatis.session.LocalCacheScope
 import org.apache.ibatis.session.SqlSessionFactory
-import java.io.File
 import java.nio.file.Files
 import javax.sql.DataSource
 
@@ -23,6 +21,7 @@ abstract class BaseDatabase(
     val username: String,
     val password: String
 ) {
+    @Volatile
     private var sqlSessionFactory: SqlSessionFactory? = null
     private val config: KtDatabase
 
@@ -46,11 +45,14 @@ abstract class BaseDatabase(
     }
 
     fun sqlSessionFactory(): SqlSessionFactory {
-        if (sqlSessionFactory == null) {
-            sqlSessionFactory = createSqlSessionFactory()
-        }
         if (sqlSessionFactory != null) {
             return sqlSessionFactory!!
+        } else {
+            synchronized(this) {
+                if (sqlSessionFactory == null) {
+                    sqlSessionFactory = createSqlSessionFactory()
+                }
+            }
         }
         return sqlSessionFactory!!
     }
@@ -79,18 +81,7 @@ abstract class BaseDatabase(
         } else {
             mapperXmlPath
         }
-        val fileResources = PathResourceScanner.scanFileResourcesByPackage(
-            path,
-            object : ResourceMatcher {
-                override fun matchingDirectory(file: File): Boolean {
-                    return true
-                }
-
-                override fun matchingFile(file: File): Boolean {
-                    return file.name.endsWith(".xml")
-                }
-            }
-        )
+        val fileResources = PathResourceScanner.scanFileResourcesWithSuffix(path, ".xml")
 
         fileResources.forEach {
             XMLMapperBuilder(
@@ -107,7 +98,7 @@ abstract class BaseDatabase(
             return
         }
 
-        val resources = PathResourceScanner.scanClassResourcesByPackage(mapperPath)
+        val resources = PathResourceScanner.scanClassResources(mapperPath)
         val mapperInterfaces = resources.map { it.clazz.java }.filter { it.isInterface }
         mapperInterfaces.forEach {
             if (!configuration.hasMapper(it)) {

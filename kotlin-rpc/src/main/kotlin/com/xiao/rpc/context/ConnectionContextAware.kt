@@ -22,6 +22,7 @@ interface ConnectionContextAware : ClientContextPoolAware {
     }
 
     companion object {
+        @JvmField
         val KEY = ConnectionContext.Key
     }
 }
