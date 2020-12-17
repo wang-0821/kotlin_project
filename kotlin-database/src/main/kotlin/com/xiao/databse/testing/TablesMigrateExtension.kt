@@ -39,23 +39,29 @@ class TablesMigrateExtension : BeforeEachCallback {
         try {
             val sqlFiles = PathResourceScanner.scanFileResourcesWithSuffix(dataSetPath, ".sql")
                 .filter {
-                    tables.contains(it.file.name)
+                    tables.contains(it.file.nameWithoutExtension)
                 }
             if (sqlFiles.size != tables.size) {
                 val lackSqlFileNames = tables.toMutableSet()
-                lackSqlFileNames.removeAll(sqlFiles.map { it.file.name })
+                lackSqlFileNames.removeAll(sqlFiles.map { it.file.nameWithoutExtension })
                 throw IllegalStateException(
-                    "Lack of migrate sql files of ${lackSqlFileNames.joinToString(", ")}."
+                    "Lack of migrate sql files of [${lackSqlFileNames.joinToString(", ")}]."
                 )
             }
 
             val scriptRunner = ScriptRunner(connection)
+            scriptRunner.setLogWriter(null)
             sqlFiles
                 .forEach { ktFileResource ->
+                    val fileName = ktFileResource.file.nameWithoutExtension
+                    // clear data grip of the table
+                    connection
+                        .createStatement()
+                        .executeUpdate("DELETE FROM $fileName;")
                     scriptRunner.runScript(InputStreamReader(FileInputStream(ktFileResource.file)))
-                    TestResourceHolder.addMigratedTable(database.name(), ktFileResource.file.name)
+                    TestResourceHolder.addMigratedTable(database.name(), fileName)
                 }
-            log.info("Migrate database: ${database.name()}, sql files: ${tables.joinToString(", ")} succeed.")
+            log.info("Migrate database: ${database.name()}, sql files: [${tables.joinToString(", ")}] succeed.")
         } finally {
             connection?.close()
         }

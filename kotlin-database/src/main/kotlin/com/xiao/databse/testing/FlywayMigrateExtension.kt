@@ -17,7 +17,7 @@ import kotlin.reflect.KClass
  * @author lix wang
  */
 class FlywayMigrateExtension : BeforeAllCallback {
-    override fun beforeAll(context: ExtensionContext?) {
+    override fun beforeAll(context: ExtensionContext) {
         if (migrated) {
             return
         }
@@ -26,17 +26,21 @@ class FlywayMigrateExtension : BeforeAllCallback {
                 return
             }
             migrated = true
-            migrateDatabase()
+            migrateDatabase(context)
         }
     }
 
-    private fun migrateDatabase() {
+    private fun migrateDatabase(context: ExtensionContext) {
+        val element = context.element.get()
         val annotations = mutableListOf<KtTestDatabase>()
-        javaClass.getAnnotation(KtTestDatabase::class.java)?.let {
+        element.getAnnotation(KtTestDatabase::class.java)?.let {
             annotations.add(it)
         }
-        javaClass.getAnnotation(KtTestDatabases::class.java)?.let {
+        element.getAnnotation(KtTestDatabases::class.java)?.let {
             annotations.addAll(it.value)
+        }
+        if (annotations.isEmpty()) {
+            throw IllegalStateException("Can't find any ${KtTestDatabase::class.java.simpleName} configuration.")
         }
         TestResourceHolder.addDatabaseAnnotations(annotations)
         migrateDatabase(annotations.map { resolveDatabase(it.database) })
@@ -55,7 +59,7 @@ class FlywayMigrateExtension : BeforeAllCallback {
                     .load()
                     .migrate()
                 TestResourceHolder.addMigratedDatabase(database.name())
-                log.info("Migrate database: ${database.name()} succeed.")
+                log.info("Migrate database: [${database.name()}] succeed.")
             } else {
                 throw IllegalArgumentException("Database ${database.name()} url doesn't match pattern.")
             }
