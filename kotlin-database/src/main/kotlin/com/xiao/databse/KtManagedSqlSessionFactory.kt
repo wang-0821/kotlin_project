@@ -16,11 +16,11 @@ class KtManagedSqlSessionFactory(private val configuration: Configuration) : Sql
     private val delegate = DefaultSqlSessionFactory(configuration)
 
     override fun openSession(): SqlSession {
-        return openSqlSession(null, null, false)
+        return openSqlSession()
     }
 
     override fun openSession(autoCommit: Boolean): SqlSession {
-        return openSqlSession(null, null, autoCommit)
+        return openSqlSession()
     }
 
     override fun openSession(connection: Connection?): SqlSession {
@@ -28,19 +28,19 @@ class KtManagedSqlSessionFactory(private val configuration: Configuration) : Sql
     }
 
     override fun openSession(level: TransactionIsolationLevel?): SqlSession {
-        return openSqlSession(null, level, false)
+        return openSqlSession()
     }
 
     override fun openSession(execType: ExecutorType?): SqlSession {
-        return openSqlSession(execType, null, false)
+        return openSqlSession()
     }
 
     override fun openSession(execType: ExecutorType?, autoCommit: Boolean): SqlSession {
-        return openSqlSession(execType, null, autoCommit)
+        return openSqlSession()
     }
 
     override fun openSession(execType: ExecutorType?, level: TransactionIsolationLevel?): SqlSession {
-        return openSqlSession(execType, level, false)
+        return openSqlSession()
     }
 
     override fun openSession(execType: ExecutorType?, connection: Connection?): SqlSession {
@@ -51,11 +51,7 @@ class KtManagedSqlSessionFactory(private val configuration: Configuration) : Sql
         return configuration
     }
 
-    private fun openSqlSession(
-        executorType: ExecutorType?,
-        transactionIsolationLevel: TransactionIsolationLevel?,
-        autoCommit: Boolean
-    ): SqlSession {
+    private fun openSqlSession(): SqlSession {
         return KtManagedSqlSession(configuration, delegate)
     }
 }
