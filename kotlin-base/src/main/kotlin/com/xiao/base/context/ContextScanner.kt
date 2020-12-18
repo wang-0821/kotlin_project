@@ -4,9 +4,9 @@ import com.xiao.base.annotation.AnnotatedKtResource
 import com.xiao.base.annotation.AnnotationScan
 import com.xiao.base.annotation.Component
 import com.xiao.base.annotation.ContextInject
-import com.xiao.base.annotation.extractAnnotations
 import com.xiao.base.resource.KtClassResource
 import com.xiao.base.resource.PathResourceScanner
+import com.xiao.base.util.extractAnnotations
 
 /**
  *

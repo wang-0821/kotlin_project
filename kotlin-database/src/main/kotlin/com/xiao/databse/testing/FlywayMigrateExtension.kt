@@ -25,8 +25,8 @@ class FlywayMigrateExtension : BeforeAllCallback {
             if (migrated) {
                 return
             }
-            migrated = true
             migrateDatabase(context)
+            migrated = true
         }
     }
 
