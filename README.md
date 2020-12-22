@@ -8,6 +8,7 @@
 * [5.数据源](#5)
 * [6.事务](#6)
 * [7.测试](#7)
+* [8.代码规范](#8)
 
 <h2 id="1">1.日志</h2>
 &emsp;&emsp; 本项目使用Slf4j门面模式来使用日志。使用slf4j，可以根据具体的需求，自主选择具体的日志框架。本项目中使用log4j2，也可以exclude掉，
@@ -344,3 +345,8 @@ io字节数组及字符数组复用。该客户端可以使用 chunked transfer-
             Assertions.assertEquals(userMapper.getById(1L).password, "password_temp")
         }
     }
+    
+<h2 id="8">8.代码规范</h2>
+&emsp;&emsp; 本项目使用ktlint来进行代码格式校验及自动纠正。定义gradle ktlintCheck 任务来校验kotlin代码格式，并将ktlintCheck任务放置在
+verification check任务之前，那么在执行gradle build之前就会先执行ktlintCheck。还定义了一个 gradle ktlintFormat 任务，这个任务是单独的，
+执行这个任务可以根据代码规范，自动进行格式纠正。
