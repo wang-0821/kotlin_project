@@ -43,14 +43,14 @@ class ExecutionQueue {
     }
 
     fun submit(taskName: String, runnable: Runnable) {
-        val name = if (taskName.isBlank()){
+        val name = if (taskName.isBlank()) {
             "Queue-Runnable"
         } else {
             taskName
         }
-        val queueItem = object : QueueItem<Void>(name) {
-            override fun execute(): Void {
-                return runnable.run() as Void
+        val queueItem = object : QueueItem<Unit>(name) {
+            override fun execute() {
+                runnable.run()
             }
         }
         submitRunnable(queueItem)
@@ -68,19 +68,21 @@ class ExecutionQueue {
             return future
         } catch (e: Exception) {
             throw IllegalStateException(
-                "Submit task ${queueItem.name} to $executionQueueName ExecutionQueue failed. ${e.message}")
+                "Submit task ${queueItem.name} to $executionQueueName ExecutionQueue failed. ${e.message}"
+            )
         } finally {
             lock.unlock()
         }
     }
 
-    private fun submitRunnable(queueItem: QueueItem<Void>) {
+    private fun submitRunnable(queueItem: QueueItem<Unit>) {
         lock.lock()
         try {
             executorService.execute { queueItem.execute() }
         } catch (e: Exception) {
             throw IllegalStateException(
-                "Submit task ${queueItem.name} to $executionQueueName ExecutionQueue failed. ${e.message}")
+                "Submit task ${queueItem.name} to $executionQueueName ExecutionQueue failed. ${e.message}"
+            )
         } finally {
             lock.unlock()
         }

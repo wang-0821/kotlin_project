@@ -16,15 +16,17 @@ import org.junit.jupiter.api.assertThrows
  *
  * @author lix wang
  */
-@KtTestDatabases([
-    KtTestDatabase(
-        database = DemoDatabase::class,
-        mappers = [
-            UserMapper::class,
-            UserMapperV2::class
-        ]
-    )
-])
+@KtTestDatabases(
+    [
+        KtTestDatabase(
+            database = DemoDatabase::class,
+            mappers = [
+                UserMapper::class,
+                UserMapperV2::class
+            ]
+        )
+    ]
+)
 class MyBatisTestMapperTest : KtTestDataSourceBase() {
     @Test
     fun `test query using custom testMapperProxy with different sqlSessions`() {

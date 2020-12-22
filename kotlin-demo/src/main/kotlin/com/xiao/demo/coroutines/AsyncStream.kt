@@ -77,7 +77,7 @@ fun main() {
 
     runBlocking {
         withTimeoutOrNull(250) {
-            obj.timeoutFlowFoo().collect{ value -> println(value) }
+            obj.timeoutFlowFoo().collect { value -> println(value) }
         }
         println("Done")
     }
@@ -125,7 +125,7 @@ fun main() {
                 println("Emitting $i")
                 emit(i)
             }
-        }.flowOn(Dispatchers.Default).collect {value ->
+        }.flowOn(Dispatchers.Default).collect { value ->
             println("Collected $value")
         }
     }
@@ -137,7 +137,7 @@ fun main() {
                     delay(100)
                     emit(i)
                 }
-            }.buffer().collectLatest {value ->
+            }.buffer().collectLatest { value ->
                 delay(300)
                 println(value)
             }
@@ -146,8 +146,14 @@ fun main() {
     }
 
     runBlocking {
-        (1..3).asFlow().onEach { delay(300) }
-                .zip(flowOf("one", "two", "three").onEach { delay(400) }) { a, b -> "$a -> $b" }
-                .collect{ println(it) }
+        (1..3)
+            .asFlow()
+            .onEach { delay(300) }
+            .zip(
+                flowOf("one", "two", "three")
+                    .onEach { delay(400) }
+            ) { a, b ->
+                "$a -> $b"
+            }.collect { println(it) }
     }
 }

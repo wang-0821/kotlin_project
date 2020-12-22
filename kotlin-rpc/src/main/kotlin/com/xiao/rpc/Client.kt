@@ -80,7 +80,7 @@ class Client {
         }
     }
 
-    companion object  {
+    companion object {
         const val DEFAULT_TIMEOUT = 5000
         val BASE_SCAN_PACKAGE = this::class.packageName()
         var annotatedResources: List<AnnotatedKtResource> = listOf()

@@ -14,22 +14,22 @@
 用其他日志框架替换掉。并且可以根据@Log注解，来选择使用具体的Logger，避免无意义的多个相似Logger对象的创建。
     
     private fun logger(): Logger {
-            val loggerName = loggerName()
-            val logger = LoggerFactory.getLogger(loggerName)
-            if (logger == NOPLogger.NOP_LOGGER) {
-                Util.report("There is no available logger named {$loggerName}, please implement it.")
-            }
-            return logger
+        val loggerName = loggerName()
+        val logger = LoggerFactory.getLogger(loggerName)
+        if (logger == NOPLogger.NOP_LOGGER) {
+            Util.report("There is no available logger named {$loggerName}, please implement it.")
         }
+        return logger
+    }
     
-        private fun loggerName(): String {
-            val loggerAnnotation = this::class.java.getAnnotation(Log::class.java)
-            return if (loggerAnnotation != null && loggerAnnotation.value.isNotBlank()) {
-                loggerAnnotation.value
-            } else {
-                this::class.java.name
-            }
+    private fun loggerName(): String {
+        val loggerAnnotation = this::class.java.getAnnotation(Log::class.java)
+        return if (loggerAnnotation != null && loggerAnnotation.value.isNotBlank()) {
+            loggerAnnotation.value
+        } else {
+            this::class.java.name
         }
+    }
 
 <h2 id="2">2.对象容器</h2>
 &emsp;&emsp; 实现了一个简易的对象容器，用于管理运行时对象，类似Spring。与Spring不同的是，本项目中对象容器使用Key来进行隔离，
@@ -71,22 +71,22 @@
     
     // 根据Class，即可通过构造器的解析，进行对象的创建和构造函数的填充。构造参数来自于BeanRegistry子容器。
     @Suppress("UNCHECKED_CAST")
-        fun <E> newInstance(clazz: Class<*>): E {
-            val constructors = clazz.constructors
-            check(constructors.size == 1) {
-                "${clazz.simpleName} should have only one constructor."
-            }
-            val constructor = constructors[0]
-            val parameterTypes = constructor.parameterTypes
-            val parameters = arrayOfNulls<Any>(parameterTypes.size)
-            for (i in parameterTypes.indices) {
-                parameters[i] = getByType(parameterTypes[i])
-                check(parameters[i] != null) {
-                    "${clazz.simpleName} constructor parameterType ${parameterTypes[i].simpleName} can't find value."
-                }
-            }
-            return constructor.newInstance(*parameters) as E
+    fun <E> newInstance(clazz: Class<*>): E {
+        val constructors = clazz.constructors
+        check(constructors.size == 1) {
+            "${clazz.simpleName} should have only one constructor."
         }
+        val constructor = constructors[0]
+        val parameterTypes = constructor.parameterTypes
+        val parameters = arrayOfNulls<Any>(parameterTypes.size)
+        for (i in parameterTypes.indices) {
+            parameters[i] = getByType(parameterTypes[i])
+            check(parameters[i] != null) {
+                "${clazz.simpleName} constructor parameterType ${parameterTypes[i].simpleName} can't find value."
+            }
+        }
+        return constructor.newInstance(*parameters) as E
+    }
         
 <h2 id="3">3.资源扫描与处理</h2>
 &emsp;&emsp; 可以通过指定包名，ClassLoader，ResourceMatcher的方式来扫描资源。
@@ -112,10 +112,10 @@ ContextScanner.processAnnotatedResources(annotatedKtResources: List<AnnotatedKtR
     @AnnotationScan     被其注解的类，会被扫描出来。
     @Component          被其注解的类，会生成实例对象，并以单例的方式注入到BeanRegistry
     @ContextInject      被其注解的类，会生成Context上下文实例对象，并注册到Context.container中。
-    @Log                被其注解的Logging对象，会根据注解获取对应名称的Logger对象。
+    @KtLogger           被其注解的Logging对象，会根据注解获取对应名称的Logger对象。
     
 <h2 id="4">4.Http</h2>
-&emsp;&emsp; kotlin-rpc模块实现了简易的Http客户端，支持http、https、多路复用http、http dns缓存、http connection缓存、
+&emsp;&emsp; 本项目kotlin-rpc模块实现了简易的Http客户端。支持http、https、多路复用http、http dns缓存、http connection缓存、
 io字节数组及字符数组复用。该客户端可以使用 chunked transfer-encoding方式，可以使用 gzip content-encoding方式。
 而且提供了基于线程的异步请求方式和基于kotlin协程的异步请求方式。
 
@@ -191,10 +191,50 @@ io字节数组及字符数组复用。该客户端可以使用 chunked transfer-
     }
     response!!.asString()
 
-<h2 id="5">5.数据源</h2>
-&emsp;&emsp; 使用@KtDatabase注解配置数据源。在获取SqlSessionFactory时，会扫描对应的xml mappers和class mappers。
-可以使用TransactionHelper进行事务操作。使用@KtTestDatabase配置测试类的数据源。
+### 自定义Http-client测试
+&emsp;&emsp; 对于本项目中自己编写的简易Http-client，分别使用同步、线程异步、协程异步的方式进行了测试。测试用例如下。
+    
+    @Test
+    fun `test rpc sync`() {
+        val response = Rpc.sync("GetBaiduSync", request)
+        assertEquals(response.status, 200)
+        assertFalse(response.asString().isNullOrBlank())
+    }
 
+    @Test
+    fun `test rpc future`() {
+        val future = Rpc.future("GetBaiduAsync", request)
+        val response = future.get(timeout, TimeUnit.MILLISECONDS)
+        assertEquals(response.status, 200)
+        assertFalse(response.asString().isNullOrBlank())
+    }
+
+    @Test
+    fun `test rpc coroutine`() {
+        var response: Response? = null
+        val job = AsyncUtil.coroutineScope.launch {
+            response = Rpc.deferred("GetBaiduDeferred", request).result(timeout, TimeUnit.MILLISECONDS)
+        }
+        while (true) {
+            if (job.isCompleted) {
+                break
+            }
+        }
+        assertEquals(response!!.status, 200)
+        assertFalse(response!!.asString().isNullOrBlank())
+    }
+
+<h2 id="5">5.数据源</h2>
+&emsp;&emsp; 利用了Mybatis + HikariCP框架，自定义@KtDatabase注解用来配置数据源。自定义了Transaction及SqlSessionFactory，
+实现了数据库查询的重试，并实现测试时，使用flyway只进行一次数据库DDL迁移，每个测试用例执行前利用MyBatis ScriptRunner进行一次表级的DML迁移。
+本项目自定义了一个TransactionHelper，可以很简易的使用数据库事务。
+
+### 数据库配置
+&emsp;&emsp; 使用自定义的@KtDatabase注解，即可快捷的配置数据源。如果单纯使用flyway来进行数据迁移，那么每次先执行clean再执行migrate，
+会将所有的数据都迁移一遍，即使很多表并没有使用到，但是也会进行迁移。在测试类上使用自定义的@KtTestDatabase注解，即可配置测试类使用到的数据库和表。
+这样在所有测试进行前会进行一次DDL整体迁移，然后在每个测试用例执行前，只会执行特定表的DML，这样可以缩短测试时间，提高测试性能。
+    
+    // 数据库配置
     @KtDatabase(
         name = DemoDatabase.NAME,
         mapperPath = DemoDatabase.MAPPER_PATH,
@@ -214,95 +254,93 @@ io字节数组及字符数组复用。该客户端可以使用 chunked transfer-
     }
     
     // 测试类数据源配置
-    @KtTestDatabase(
-        database = DemoDatabase::class,
-        tables = ["users"]
-    )
+    @KtTestDatabases([
+        KtTestDatabase(
+            database = DemoDatabase::class,
+            mappers = [
+                UserMapper::class,
+                UserMapperV2::class
+            ]
+        )
+    ])
+    
+    // MyBatis mapper注解，可以使用@KtMapperRetry实现方法重试。
+    @KtMapperTables(["users"])
+    interface UserMapperV2 {
+        @KtMapperRetry
+        @Select("SELECT * FROM users WHERE id = #{id}")
+        fun getById(@Param("id") id: Long): User
+    }
     
 <h2 id="6">6.事务</h2>
-&emsp;&emsp; 利用TransactionHelper，可以很容易使用事务。使用BaseDatabase配置数据源，使用KtMapperProxy作为MyBatis mapper代理类，
+&emsp;&emsp; 本项目中自定义了TransactionHelper，可以很容易使用事务。使用BaseDatabase配置数据源，使用KtMapperProxy作为MyBatis mapper代理类，
 就可以直接在TransactionHelper中执行事务。
     
+    // 不使用事务
     @Test
-    fun `test mapper rollback with transaction`() {
-        val userMapper = MapperUtils.getMapper(sqlSessionFactory, UserMapper::class.java)
+    fun `test mapper query exception without transaction`() {
+        val sqlSession = sqlSessionFactory.openSession()
+        val userMapper = sqlSessionFactory.configuration.getMapper(UserMapper::class.java, sqlSession)
+
         assertEquals(userMapper.getById(1L).password, "password_1")
         val exception = assertThrows<IllegalStateException> {
+            userMapper.updatePasswordById(1L, "password_temp")
+            throw IllegalStateException("throws exception.")
+        }
+        assertEquals("throws exception.", exception.message)
+        assertEquals(userMapper.getById(1L).password, "password_temp")
+    }
+    
+    // 利用TransactionHelper实现事务
+    @Test
+    fun `test rollback with transaction`() {
+        val userMapper = MapperUtils.getTestMapper(UserMapper::class.java)
+        Assertions.assertEquals(userMapper.getById(1L).password, "password_1")
+        val exception = assertThrows<IllegalStateException> {
             TransactionHelper.doInTransaction {
-                assertEquals(userMapper.getById(1L).password, "password_1")
+                Assertions.assertEquals(userMapper.getById(1L).password, "password_1")
                 userMapper.updatePasswordById(1L, "password_temp")
-                assertEquals(userMapper.getById(1L).password, "password_temp")
+                Assertions.assertEquals(userMapper.getById(1L).password, "password_temp")
                 throw IllegalStateException("throws exception.")
             }
         }
-        assertEquals("throws exception.", exception.message)
-        assertEquals(userMapper.getById(1L).password, "password_1")
+        Assertions.assertEquals("throws exception.", exception.message)
+        Assertions.assertEquals(userMapper.getById(1L).password, "password_1")
     }
-
-    
     
 <h2 id="7">7.测试</h2>
-&emsp;&emsp; 使用@KtTestDatabase注解，可以声明测试类使用的数据源。KtDataSourceTestBase利用@BeforeAll和@BeforeEach，
-可以在每个@Test执行前使用flyway进行迁移。
+&emsp;&emsp; 使用KtTestDataSourceBase抽象类，实现在所有测试类执行前，利用flyway执行一次DDL迁移，在每个测试方法执行前，
+利用MyBatis ScriptRunner执行表数据的迁移。这里用到了Junit5的BeforeAllCallback Extension及BeforeEachCallback Extension。
 
-    @Order(0)
-    @BeforeAll
-    fun registerDatabase() {
-        val annotations = mutableListOf<KtTestDatabase>()
-        javaClass.getAnnotation(KtTestDatabase::class.java)?.let {
-            annotations.add(it)
-        }
-        javaClass.getAnnotation(KtTestDatabases::class.java)?.let {
-            annotations.addAll(it.value)
-        }
-        databaseAnnotations = annotations.associateBy { it.database }
-        databases = annotations.associate { it.database to databaseInstance(it.database) }
-    }
-    
-    @BeforeEach
-    fun migration() {
-        val params = buildMigrationParams(databases.values)
-            params.forEach { param ->
-                val flyway = Flyway
-                    .configure()
-                    .dataSource(param.url, param.username, param.password)
-                    .locations(*(param.locations + "db/migration").toTypedArray())
-                    .sqlMigrationSuffixes(".sql")
-                    .schemas(*param.schemas.toTypedArray())
-                    .load()
-                flyway.clean()
-                flyway.migrate()
-            }
-    }
+    @ExtendWith(
+        FlywayMigrateExtension::class,
+        TablesMigrateExtension::class
+    )
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    abstract class KtTestDataSourceBase
     
 &emsp;&emsp; 利用自定义注解实现数据库有关测试，在执行每个方法前会使用flyway来进行数据迁移。而且可以使用TransactionHelper，很方便的实现
-事务。
+事务。在测试环境中，我们可以直接使用MapperUtils.getTestMapper(clazz: Class<T>) 来获取MyBatis mapper的测试代理对象。
     
-    @KtTestDatabase(
-        database = DemoDatabase::class,
-        tables = ["users"]
-    )
+    @KtTestDatabases([
+        KtTestDatabase(
+            database = DemoDatabase::class,
+            mappers = [
+                UserMapper::class,
+                UserMapperV2::class
+            ]
+        )
+    ])
     class MyBatisUsageTest : KtTestDataSourceBase() {
-        private lateinit var sqlSessionFactory: SqlSessionFactory
-    
-        @BeforeAll
-        fun init() {
-            sqlSessionFactory = getDatabase(DemoDatabase::class).sqlSessionFactory()
-        }
-        
         @Test
-        fun `test mapper rollback with transaction`() {
-            val userMapper = MapperUtils.getMapper(sqlSessionFactory, UserMapper::class.java)
-            assertEquals(userMapper.getById(1L).password, "password_1")
-            val exception = assertThrows<IllegalStateException> {
-                TransactionHelper.doInTransaction {
-                    assertEquals(userMapper.getById(1L).password, "password_1")
-                    userMapper.updatePasswordById(1L, "password_temp")
-                    assertEquals(userMapper.getById(1L).password, "password_temp")
-                    throw IllegalStateException("throws exception.")
-                }
+        fun `test commit with transaction`() {
+            val userMapper = MapperUtils.getTestMapper(UserMapper::class.java)
+            Assertions.assertEquals(userMapper.getById(1L).password, "password_1")
+            TransactionHelper.doInTransaction {
+                Assertions.assertEquals(userMapper.getById(1L).password, "password_1")
+                userMapper.updatePasswordById(1L, "password_temp")
+                Assertions.assertEquals(userMapper.getById(1L).password, "password_temp")
             }
-            assertEquals("throws exception.", exception.message)
-            assertEquals(userMapper.getById(1L).password, "password_1")
+            Assertions.assertEquals(userMapper.getById(1L).password, "password_temp")
         }
     }

@@ -70,7 +70,7 @@ class Request {
         requestBuilder.headers.add(header)
     }
 
-    fun  header(name: String): Header? {
+    fun header(name: String): Header? {
         return requestBuilder.headers.lastOrNull { it.name == name }
     }
 

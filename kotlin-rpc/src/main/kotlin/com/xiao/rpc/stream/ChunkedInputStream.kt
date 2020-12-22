@@ -35,7 +35,7 @@ class ChunkedInputStream : InputStream {
         if (pos >= chunkSize) {
             state = ChunkState.CHUNK_LINE_FEED
         }
-        return byte.toInt() and  0xff
+        return byte.toInt() and 0xff
     }
 
     override fun read(b: ByteArray, off: Int, len: Int): Int {

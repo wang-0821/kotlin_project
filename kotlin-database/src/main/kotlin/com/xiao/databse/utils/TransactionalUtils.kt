@@ -64,7 +64,7 @@ object TransactionalUtils {
         checkAndGetTransactionWrapper()
         val handlers = transactionHandlers.get()
         if (handlers == null) {
-            transactionHandlers.set( mutableListOf(handler))
+            transactionHandlers.set(mutableListOf(handler))
         } else {
             handlers.add(handler)
         }
@@ -86,8 +86,8 @@ object TransactionalUtils {
             .filter { rollbackEx ->
                 throwable::class.java.isAssignableFrom(rollbackEx::class.java) &&
                     noRollbackResult.none {
-                        rollbackEx::class.java != it::class.java
-                            && rollbackEx::class.java.isAssignableFrom(it::class.java)
+                        rollbackEx::class.java != it::class.java &&
+                            rollbackEx::class.java.isAssignableFrom(it::class.java)
                     }
             }
         return (noRollbackResult.isEmpty() && rollbackResult.isEmpty()) || rollbackResult.isNotEmpty()

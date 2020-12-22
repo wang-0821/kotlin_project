@@ -26,11 +26,13 @@ open class KtMapperProxy<T>(val clazz: Class<T>, private val mapper: T) : Invoca
             try {
                 val startTime = System.currentTimeMillis()
                 val result = ProxyUtils.invoke(proxy, method, args)
-                log.info("Mapper ${clazz.simpleName}.${method.name} "
-                    + "consume ${System.currentTimeMillis() - startTime} ms, "
-                    + "total times: $i, retry rimes ${i - 1}.")
+                log.info(
+                    "Mapper ${clazz.simpleName}.${method.name} " +
+                        "consume ${System.currentTimeMillis() - startTime} ms, " +
+                        "total times: $i, retry rimes ${i - 1}."
+                )
                 return result
-            } catch (e : Exception) {
+            } catch (e: Exception) {
                 exception = e
             }
         }

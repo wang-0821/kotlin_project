@@ -49,7 +49,6 @@ class HttpConnection(
         outputStream?.write(message)
     }
 
-
     override fun finishRequest() {
         outputStream?.flush()
     }

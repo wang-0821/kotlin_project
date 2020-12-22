@@ -23,7 +23,7 @@ object Rpc {
     val client = Client()
     var started = AtomicInteger(0)
 
-    fun  future(name: String, request: Request): Future<Response> {
+    fun future(name: String, request: Request): Future<Response> {
         return AsyncUtil.executor.submit(queueItem(name, request))
     }
 

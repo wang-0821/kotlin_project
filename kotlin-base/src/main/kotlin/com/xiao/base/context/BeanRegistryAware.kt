@@ -9,7 +9,7 @@ interface BeanRegistryAware : ContextAware {
         return get(BeanRegistry.Key)?.getByName(beanName)
     }
 
-    fun <T : Any> getByType(clazz : Class<T>): T? {
+    fun <T : Any> getByType(clazz: Class<T>): T? {
         return get(BeanRegistry.Key)?.getByType(clazz)
     }
 

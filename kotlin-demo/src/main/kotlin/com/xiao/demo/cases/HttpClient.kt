@@ -6,12 +6,11 @@ import java.io.PrintWriter
 import java.net.InetAddress
 import java.net.Socket
 
-
 /**
  *
  * @author lix wang
  */
-object Main {
+object HttpClient {
     @Throws(Exception::class)
     @JvmStatic
     fun main(args: Array<String>) {

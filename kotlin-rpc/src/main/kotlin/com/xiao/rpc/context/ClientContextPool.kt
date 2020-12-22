@@ -1,11 +1,11 @@
 package com.xiao.rpc.context
 
 import com.xiao.base.annotation.AnnotatedKtResource
-import com.xiao.base.logging.KtLogger
 import com.xiao.base.context.BeanHelper
 import com.xiao.base.context.BeanRegistry
 import com.xiao.base.context.Context
 import com.xiao.base.context.ContextAware
+import com.xiao.base.logging.KtLogger
 import com.xiao.base.logging.LoggerType
 import com.xiao.base.logging.Logging
 import com.xiao.rpc.Cleaner
@@ -48,9 +48,9 @@ abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAwar
             registerClientContexts(clientContextClasses)
             val cleaners = clientContextContainer.values
                 .filter {
-                    it is Cleaner
-                            && it::class.java.isAnnotationPresent(AutoClean::class.java)
-                            && !cleanerContainer.contains(it)
+                    it is Cleaner &&
+                        it::class.java.isAnnotationPresent(AutoClean::class.java) &&
+                        !cleanerContainer.contains(it)
                 }.map {
                     it as Cleaner
                 }
@@ -85,9 +85,12 @@ abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAwar
 
     private fun startClean() {
         synchronized(state) {
-            val thread = Thread(Runnable {
-                cleanupRunnable()
-            }, "RpcCleanerThread")
+            val thread = Thread(
+                Runnable {
+                    cleanupRunnable()
+                },
+                "RpcCleanerThread"
+            )
             thread.isDaemon = true
             thread.start()
             state.updateState(RunningState.RUNNING)
@@ -129,7 +132,7 @@ abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAwar
         }
     }
 
-    private fun registerCleaners(cleaners : List<AnnotatedKtResource>) {
+    private fun registerCleaners(cleaners: List<AnnotatedKtResource>) {
         for (cleaner in cleaners) {
             if (cleanerContainer.any { it::class.java == cleaner.classResource.clazz.java }) {
                 continue

@@ -14,7 +14,6 @@ class KtManagedTransaction(private val dataSource: DataSource) : Transaction {
     private var connection: Connection? = null
     private var autoCommit: Boolean = false
     private var isTransactional: Boolean = false
-    
     override fun getConnection(): Connection {
         if (connection == null) {
             openConnection()

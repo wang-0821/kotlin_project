@@ -1,7 +1,7 @@
 package com.xiao.database.database
 
-import com.xiao.databse.annotation.KtDatabase
 import com.xiao.databse.BaseDatabase
+import com.xiao.databse.annotation.KtDatabase
 
 /**
  *

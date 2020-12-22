@@ -1,0 +1,23 @@
+configurations {
+    ktlint
+}
+
+dependencies {
+    ktlint libs['ktlint']
+}
+
+task ktlintCheck(type: JavaExec, group: "verification") {
+    description = "Gradle check kotlin verification."
+    classpath = configurations.ktlint
+    main = "com.pinterest.ktlint.Main"
+    args "src/**/*.kt"
+}
+
+check.dependsOn ktlintCheck
+
+task ktlintFormat(type: JavaExec, group: "formatting") {
+    description = "Gradle check kotlin formatting."
+    classpath = configurations.ktlint
+    main = "com.pinterest.ktlint.Main"
+    args "-F", "src/**/*.kt"
+}

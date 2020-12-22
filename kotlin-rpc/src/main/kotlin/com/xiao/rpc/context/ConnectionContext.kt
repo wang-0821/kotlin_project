@@ -69,7 +69,7 @@ class ConnectionContext(private val contextConfig: ClientContextConfig) : Cleane
                 }
             }
         }
-        if (emptyRoutes.isNotEmpty())  {
+        if (emptyRoutes.isNotEmpty()) {
             removeEntries(emptyRoutes)
         }
         log.debug("Cleaned $cleaned connections.")

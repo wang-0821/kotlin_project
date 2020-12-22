@@ -30,4 +30,3 @@ object ComponentResourceHandler : AnnotationHandler, BeanRegistryAware {
         }
     }
 }
-

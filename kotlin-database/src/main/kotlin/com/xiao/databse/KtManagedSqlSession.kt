@@ -23,7 +23,7 @@ class KtManagedSqlSession(
     private val configuration: Configuration,
     sqlSessionFactory: SqlSessionFactory
 ) : SqlSession {
-    private val proxy : SqlSession = Proxy.newProxyInstance(
+    private val proxy: SqlSession = Proxy.newProxyInstance(
         KtManagedSqlSession::class.java.classLoader,
         arrayOf(SqlSession::class.java),
         KtSqlSessionInvoker(sqlSessionFactory)
@@ -168,7 +168,7 @@ class KtManagedSqlSession(
                 }
                 return result
             } catch (throwable: Throwable) {
-                 throw ExceptionUtil.unwrapThrowable(throwable)
+                throw ExceptionUtil.unwrapThrowable(throwable)
             } finally {
                 if (!SqlSessionUtils.isTransactional(sqlSessionFactory, sqlSession)) {
                     sqlSession.close()

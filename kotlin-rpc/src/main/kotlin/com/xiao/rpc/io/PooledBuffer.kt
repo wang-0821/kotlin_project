@@ -95,7 +95,7 @@ class PooledBuffer {
         }
     }
 
-    private fun getPooledCharArrayBuffer() : PooledCharArrayBuffer {
+    private fun getPooledCharArrayBuffer(): PooledCharArrayBuffer {
         val pooledCharArrayBuffers = RpcHelper.fetch(pooledCharArrayBuffer) {
             mutableListOf<PooledCharArrayBuffer>()
         }

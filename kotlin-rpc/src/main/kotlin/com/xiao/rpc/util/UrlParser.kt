@@ -24,8 +24,9 @@ object UrlParser {
         while (index < url.length) {
             // get scheme
             if (url[index] == ':') {
-                if (index > 0 && index < url.length - 2 && url[index + 1] == url[index + 2]
-                    && url[index + 1] == '/') {
+                if (index > 0 && index < url.length - 2 && url[index + 1] == url[index + 2] &&
+                    url[index + 1] == '/'
+                ) {
                     scheme = url.substring(start until index)
                     start = index + 3
                     index = start
@@ -66,7 +67,6 @@ object UrlParser {
                 }
             }
         }
-
 
         scheme?.let {
             realRequest.scheme(it)

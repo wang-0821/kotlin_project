@@ -9,7 +9,7 @@ import kotlinx.coroutines.runBlocking
  *
  * @author lix wang
  */
-class DotCoroutines  {
+class DotCoroutines {
     fun testPrint() = runBlocking {
         GlobalScope.launch {
             repeat(1000) { i ->
@@ -25,12 +25,11 @@ class DotCoroutines  {
     }
 }
 
-
 fun main() {
     val obj = DotCoroutines()
     // 启动了10万个协程
 //    testPrint()
-        obj.testGlobalScope()
+    obj.testGlobalScope()
 
 //    repeat(100_000) {
 //        launch {

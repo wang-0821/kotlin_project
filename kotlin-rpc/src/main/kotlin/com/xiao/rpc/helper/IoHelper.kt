@@ -39,8 +39,7 @@ object IoHelper {
     ): String {
         val byteArray = getByteArray()
         val charArray = getCharArray()
-        val result = asString(inputStream, byteArray, charArray, charset, length)
-        { input, bytes, offset, len ->
+        val result = asString(inputStream, byteArray, charArray, charset, length) { input, bytes, offset, len ->
             input.read(bytes, offset, len)
         }
         cacheByteArray(byteArray)
@@ -168,7 +167,7 @@ object IoHelper {
     }
 
     private fun getCharArray(): CharArray {
-        val charArrayList =  RpcHelper.fetch(RPC_IO_CHAR_ARRAY) {
+        val charArrayList = RpcHelper.fetch(RPC_IO_CHAR_ARRAY) {
             mutableListOf<CharArray>()
         }
 
@@ -180,7 +179,7 @@ object IoHelper {
     }
 
     private fun getByteArray(): ByteArray {
-        val byteArrayList =  RpcHelper.fetch(RPC_IO_BYTE_ARRAY) {
+        val byteArrayList = RpcHelper.fetch(RPC_IO_BYTE_ARRAY) {
             mutableListOf<ByteArray>()
         }
 

@@ -27,7 +27,7 @@ object StreamUtils {
                 calculateByTransfer(inputStream, contentLength, transferEncoding)
             )
             else -> throw UnsupportedOperationException(
-                "Unrecognized response streaming content with encoding ${contentEncoding}."
+                "Unrecognized response streaming content with encoding $contentEncoding."
             )
         }
     }

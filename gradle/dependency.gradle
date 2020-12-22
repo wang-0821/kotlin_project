@@ -11,7 +11,8 @@ ext {
             mybatis: '3.5.5',
             flyway: '7.0.2',
             mysqlConnectorJava: '8.0.21',
-            hikariCP: '3.4.5'
+            hikariCP: '3.4.5',
+            ktlint: '0.40.0'
     ]
 
     libs = [
@@ -42,6 +43,9 @@ ext {
             // mysql
             "mysql-connector-java": "mysql:mysql-connector-java:$version.mysqlConnectorJava",
             // datasource
-            "HikariCP": "com.zaxxer:HikariCP:$version.hikariCP"
+            "HikariCP": "com.zaxxer:HikariCP:$version.hikariCP",
+
+            // kotlin format
+            "ktlint": "com.pinterest:ktlint:$version.ktlint"
     ]
 }

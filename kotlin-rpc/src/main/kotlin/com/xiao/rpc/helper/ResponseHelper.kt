@@ -73,7 +73,8 @@ object ResponseHelper {
             contentLength,
             charset,
             StreamUtils.calculateRealInputStream(
-                inputStream, contentLength, contentEncoding, transferEncoding)
+                inputStream, contentLength, contentEncoding, transferEncoding
+            )
         )
     }
 

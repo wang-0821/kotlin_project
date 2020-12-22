@@ -36,7 +36,7 @@ class SuspendCall {
 
     fun asyncSuspendCall() = GlobalScope.launch {
         val time = measureTimeMillis {
-            val one  = async { doSomething1() }
+            val one = async { doSomething1() }
             val two = async { doSomething2() }
             println("The answer is ${one.await() + two.await()}")
             printSuspend()

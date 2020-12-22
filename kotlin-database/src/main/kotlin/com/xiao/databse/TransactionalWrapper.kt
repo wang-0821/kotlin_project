@@ -9,7 +9,7 @@ import kotlin.reflect.KClass
  *
  * @author lix wang
  */
-class TransactionalWrapper (
+class TransactionalWrapper(
     var dataSources: List<DataSource> = listOf(),
     var isolation: TransactionIsolationLevel = TransactionIsolationLevel.REPEATABLE_READ,
     var timeout: Long? = null,

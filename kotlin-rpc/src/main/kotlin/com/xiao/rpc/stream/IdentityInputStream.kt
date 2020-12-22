@@ -6,7 +6,7 @@ import java.io.InputStream
  *
  * @author lix wang
  */
-class IdentityInputStream(private val inputStream: InputStream): InputStream() {
+class IdentityInputStream(private val inputStream: InputStream) : InputStream() {
     private var closed = false
 
     override fun available(): Int {

@@ -25,7 +25,6 @@ class CoroutineThreadLocal {
     }
 }
 
-
 fun main() {
     val obj = CoroutineThreadLocal()
     obj.testThreadLocal()

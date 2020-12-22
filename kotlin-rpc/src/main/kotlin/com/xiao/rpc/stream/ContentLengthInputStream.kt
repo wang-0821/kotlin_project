@@ -9,7 +9,7 @@ import java.io.InputStream
 class ContentLengthInputStream(
     private val inputStream: InputStream,
     private val contentLength: Int
-): InputStream() {
+) : InputStream() {
     private var pos = 0
     private var eof = false
     private var closed = false

@@ -9,7 +9,7 @@ import com.xiao.base.resource.KtClassResource
 
 typealias TypeFilter = (KtClassResource) -> Boolean
 
-object DefaultIncludeTypeFilter: TypeFilter {
+object DefaultIncludeTypeFilter : TypeFilter {
     override fun invoke(p1: KtClassResource): Boolean {
         return true
     }

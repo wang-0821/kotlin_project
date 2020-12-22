@@ -27,7 +27,7 @@ abstract class BaseDatabase(
 
     init {
         val annotationName = KtDatabase::class.simpleName
-       val config = javaClass.getAnnotation(KtDatabase::class.java)
+        val config = javaClass.getAnnotation(KtDatabase::class.java)
             ?: throw IllegalArgumentException("${javaClass.simpleName} must annotated by $annotationName")
 
         if (config.mapperPath.isEmpty() && config.mapperXmlPath.isEmpty()) {

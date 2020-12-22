@@ -6,6 +6,6 @@ package com.xiao.databse.annotation
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.ANNOTATION_CLASS)
-annotation class KtMapperRetry (
+annotation class KtMapperRetry(
     val times: Int = 2
 )
