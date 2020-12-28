@@ -4,6 +4,7 @@ import com.xiao.databse.BaseDatabase
 import kotlin.reflect.KClass
 
 /**
+ *  用以配置测试类使用到的数据源。
  *
  * @author lix wang
  */

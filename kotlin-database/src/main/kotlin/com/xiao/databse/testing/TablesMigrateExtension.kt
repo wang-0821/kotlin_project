@@ -14,6 +14,7 @@ import java.io.InputStreamReader
 import kotlin.reflect.KClass
 
 /**
+ * 在每个测试方法执行前，先对要用到的表进行数据迁移。
  *
  * @author lix wang
  */

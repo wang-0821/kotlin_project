@@ -12,8 +12,8 @@ import kotlin.reflect.KClass
 class TransactionalWrapper(
     var dataSources: List<DataSource> = listOf(),
     var isolation: TransactionIsolationLevel = TransactionIsolationLevel.REPEATABLE_READ,
-    var timeout: Long? = null,
-    var timeUnit: TimeUnit? = null,
+    var timeout: Long? = 30,
+    var timeUnit: TimeUnit? = TimeUnit.SECONDS,
     var rollbackFor: List<KClass<out Throwable>> = listOf(Exception::class),
     var noRollbackFor: List<KClass<out Throwable>> = listOf()
 )

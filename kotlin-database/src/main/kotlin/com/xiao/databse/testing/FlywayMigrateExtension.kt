@@ -13,6 +13,7 @@ import java.util.regex.Pattern
 import kotlin.reflect.KClass
 
 /**
+ * 在测试过程中，执行且只执行一次数据库结构迁移。
  *
  * @author lix wang
  */

@@ -1,7 +1,7 @@
 package com.xiao.databse.annotation
 
 /**
- * 利用注解加容器的方式，可以简化多数据源配置。
+ * 利用注解简化数据源配置。
  *
  * @author lix wang
  */

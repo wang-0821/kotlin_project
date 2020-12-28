@@ -563,10 +563,54 @@ MySQL实现分区的方式--对底层表的封装，意味着索引也是按照�
 
 ### 表锁
 &emsp;&emsp; 表锁是对一整张表加锁，一般是DDL处理时使用。表锁由MySQL Server实现。表锁种类：读锁、写锁。
+表锁特点：开销小、加锁快、无死锁、锁粒度大，发生锁冲突的概率高，并发性低。
 
 ### 表锁上锁/解锁
-&emsp;&emsp; 1，隐式上锁(默认，自动加锁自动释放)，读锁：select。写锁：insert、update、delete。2，显式上锁。lock table tableName read/write;
-3，解锁单表：unlock table tableName; 解锁所有表: unlock tables;
+&emsp;&emsp; 上锁方式：1，隐式上锁(默认，自动加锁自动释放)，读锁：select。写锁：insert、update、delete。2，显式上锁。lock table tableName read/write;
+解锁方式：1，解锁单表：unlock table tableName; 2，解锁所有表: unlock tables;
+
+### 表锁问题排查
+&emsp;&emsp; 查看表锁情况：SHOW OPEN TABLES; 表锁分析：SHOW STATUS LIKE 'table%'; 
+table_locks_immediate：表示可以立即获取锁的次数。table_locks_waited：表示不能立即获取锁，需要等待锁的次数。
 
 ### 行锁
 &emsp;&emsp; 行锁是对表中一行或多行进行加锁，自动加锁。一般在UPDATE、INSERT、DELETE、SELECT...FOR UPDATE时会加排他锁。行锁由存储引擎实现。
+行锁种类：共享锁(读锁)、排他锁(写锁)、意向排他锁(IX)、意向共享锁(IS)。行锁特点：开销大、加锁慢、会出现死锁、锁粒度小，发生冲突的概率低，并发度最高。
+
+### 行锁上锁/解锁
+&emsp;&emsp; 隐式上锁：select(读锁)，update、insert、delete(写锁)。显式上锁：SELECT...LOCK IN SHARE MODE(共享锁)，SELECT...FOR UPDATE(排他锁)。
+解锁：提交事务(COMMIT)、回滚事务(ROLLBACK)、kill阻塞进程。
+
+### 行锁问题排查
+&emsp;&emsp; 查询语句：SHOW STATUS LIKE 'innodb_row_lock%'; innodb_row_lock_current_waits表示当前正在等待锁定的数量。
+innodb_row_lock_time表示从系统启动到现在锁定的总时间长度。innodb_row_lock_time_avg表示每次等待锁花平均时间。
+innodb_row_lock_time_max表示从系统启动到现在等待最长的一次锁花费的时间。innodb_row_lock_waits表示从系统启动到现在总共等待的次数。
+
+### 行锁优化
+&emsp;&emsp; InnoDB支持表锁和行锁，在使用索引作为检索条件修改数据时采用行锁，否则采用表锁。有时索引并未被使用，此时会导致行锁升级为表锁，
+因此排查时需要执行计划查询索引是否被实际使用。当事务涉及多个表，可能引起死锁，造成大量的事务回滚。这种情况若能一次性锁定涉及的表，可以避免死锁、
+减少数据库因事务回滚带来的开销。当表的大部分数据都要被修改或者多表复杂关联查询时，建议使用表锁优于行锁。
+
+    优化策略：
+    1，尽可能让所有数据检索都通过索引来完成，避免无索引行锁升级为表锁。
+    2，合理设计索引，尽量缩小锁的范围。
+    3，尽可能较少检索条件，避免间隙锁。
+    4，尽量控制事务的大小，减少锁定资源量和时间长度。
+    5，尽可能低级别事务隔离。
+    
+### 行锁的实现算法
+&emsp;&emsp; Record Lock(行锁)：单个记录上的锁，Record Lock总会锁住索引记录，如果InnoDB建立的时候没有设置一个索引，
+这时InnoDB会使用隐式的主键来进行锁定。Gap Lock(间隙锁)：当我们使用范围条件而不是相等条件时检索数据，并请求共享或排他锁时，
+InnoDB会给符合条件的已有记录的索引加锁，对于键值在条件范围内，但是并不存在的记录。Gap Lock解决了事务并发的幻读问题。
+Next-Key Lock：同时锁住数据 + 间隙锁。Repeatable Read隔离级别下，Next-Key Lock算法是默认的行记录锁定算法。
+
+    
+### 死锁解决方式
+&emsp;&emsp; 两个或者个多个事务在同一资源上相互占用，并请求锁定对方占用的资源，从而导致恶性循环的现象，叫做死锁。
+避免方式：1，加锁顺序一致，尽可能一次性锁定所需的数据行。2，尽量基于主键或者唯一索引更新数据。3，单次操作数据量不宜太多，涉及表尽量少。
+4，减少表上索引，减少锁定资源。5，尽量使用较低的隔离级别。尽量使用相同条件访问数据，这样可以避免间隙锁对并发的插入影响。6，精心设计索引，
+尽量使用索引访问数据。
+
+### 共享锁、排他锁、意向共享锁、意向排他锁
+&emsp;&emsp; 共享锁(S锁)：针对同一份数据，多个读操作可以同时进行，但是不能进行写入。排他锁(X锁)：当前操作完成前，会阻塞其他读和写操作。
+意向共享锁(IS): 一个事务给一个数据行加共享锁时，必须先获得表的IS锁。意向排他锁(IX): 一个事务给一个数据行加排他锁时，必须先获得该表的IX锁。
