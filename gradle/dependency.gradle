@@ -12,7 +12,8 @@ ext {
             flyway: '7.0.2',
             mysqlConnectorJava: '8.0.21',
             hikariCP: '3.4.5',
-            ktlint: '0.40.0'
+            ktlint: '0.40.0',
+            netty: '5.0.0.Alpha2'
     ]
 
     libs = [
@@ -46,6 +47,9 @@ ext {
             "HikariCP": "com.zaxxer:HikariCP:$version.hikariCP",
 
             // kotlin format
-            "ktlint": "com.pinterest:ktlint:$version.ktlint"
+            "ktlint": "com.pinterest:ktlint:$version.ktlint",
+
+            // netty
+            "netty-handler": "io.netty:netty-handler:$version.netty"
     ]
 }

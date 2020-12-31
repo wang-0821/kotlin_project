@@ -604,6 +604,9 @@ innodb_row_lock_time_max表示从系统启动到现在等待最长的一次锁�
 InnoDB会给符合条件的已有记录的索引加锁，对于键值在条件范围内，但是并不存在的记录。Gap Lock解决了事务并发的幻读问题。
 Next-Key Lock：同时锁住数据 + 间隙锁。Repeatable Read隔离级别下，Next-Key Lock算法是默认的行记录锁定算法。
 
+    Record Lock、Gap lock、Next-key Lock都是加在索引上的，如果有记录1、3、5、7，则5上的记录锁会锁住5，5上的gap lock会锁住(3, 5)，
+    5上的next-key lock会锁住(3, 5]。
+
     
 ### 死锁解决方式
 &emsp;&emsp; 两个或者个多个事务在同一资源上相互占用，并请求锁定对方占用的资源，从而导致恶性循环的现象，叫做死锁。

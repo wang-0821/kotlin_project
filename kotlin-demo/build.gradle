@@ -1,4 +1,5 @@
 dependencies {
     compile project(":kotlin-database")
     compile project(":kotlin-rpc")
+    compile libs["netty-handler"]
 }
