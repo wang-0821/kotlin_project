@@ -11,7 +11,11 @@ import kotlin.coroutines.CoroutineContext
 object AsyncUtil {
     private val executorService = ExecutorServiceFactory.newDefaultThreadPoolExecutor(8)
     private val dispatcher = executorService.asCoroutineDispatcher()
+
+    @JvmField
     val executor = ExecutionQueue("AsyncExecutionQueue", executorService)
+
+    @JvmField
     val coroutineScope: CoroutineScope = object : CoroutineScope {
         override val coroutineContext: CoroutineContext
             get() = dispatcher
