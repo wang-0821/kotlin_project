@@ -45,10 +45,10 @@ class FileClient {
                     object : ChannelInitializer <NioSocketChannel>() {
                         override fun initChannel(ch: NioSocketChannel) {
                             val pipeline = ch.pipeline()
-                                if (sslContext != null) {
-                                    pipeline.addLast(sslContext.newHandler(ch.alloc()))
-                                }
-                                pipeline.addLast(FileClientHandler())
+                            if (sslContext != null) {
+                                pipeline.addLast(sslContext.newHandler(ch.alloc()))
+                            }
+                            pipeline.addLast(FileClientHandler())
                         }
                     }
                 )

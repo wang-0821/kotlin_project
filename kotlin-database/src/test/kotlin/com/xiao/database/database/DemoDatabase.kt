@@ -16,8 +16,8 @@ import com.xiao.databse.annotation.KtDatabase
 class DemoDatabase : BaseDatabase(URL, USERNAME, PASSWORD) {
     companion object {
         const val NAME = "demo"
-        const val MAPPER_PATH = "com.xiao.database.mybatis.mapper"
-        const val MAPPER_XML_PATH = "classpath*:mybatis/mapper/"
+        const val MAPPER_PATH = "com.xiao.database.mybatis.mapper.common"
+        const val MAPPER_XML_PATH = "classpath*:mybatis/mapper/common/"
         const val DATASET_PATH = "db/common"
         const val URL = "jdbc:mysql://localhost:3306/lix_database_common"
         const val USERNAME = "root"

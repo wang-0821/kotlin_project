@@ -1,8 +1,8 @@
 package com.xiao.database
 
 import com.xiao.database.database.DemoDatabase
-import com.xiao.database.mybatis.mapper.UserMapper
-import com.xiao.database.mybatis.mapper.UserMapperV2
+import com.xiao.database.mybatis.mapper.common.UserMapper
+import com.xiao.database.mybatis.mapper.common.UserMapperV2
 import com.xiao.databse.TransactionHelper
 import com.xiao.databse.annotation.KtTestDatabase
 import com.xiao.databse.annotation.KtTestDatabases

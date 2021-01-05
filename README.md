@@ -350,3 +350,19 @@ io字节数组及字符数组复用。该客户端可以使用 chunked transfer-
 &emsp;&emsp; 本项目使用ktlint来进行代码格式校验及自动纠正。定义gradle ktlintCheck 任务来校验kotlin代码格式，并将ktlintCheck任务放置在
 verification check任务之前，那么在执行gradle build之前就会先执行ktlintCheck。还定义了一个 gradle ktlintFormat 任务，这个任务是单独的，
 执行这个任务可以根据代码规范，自动进行格式纠正。
+
+    task ktlintCheck(type: JavaExec, group: "verification") {
+        description = "Gradle check kotlin verification."
+        classpath = configurations.ktlint
+        main = "com.pinterest.ktlint.Main"
+        args "src/**/*.kt"
+    }
+    
+    check.dependsOn ktlintCheck
+    
+    task ktlintFormat(type: JavaExec, group: "formatting") {
+        description = "Gradle check kotlin formatting."
+        classpath = configurations.ktlint
+        main = "com.pinterest.ktlint.Main"
+        args "-F", "src/**/*.kt"
+    }
