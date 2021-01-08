@@ -34,6 +34,8 @@ ext {
             "log4j-core": "org.apache.logging.log4j:log4j-core:$version.log4j2",
             "log4j-slf4j-impl": "org.apache.logging.log4j:log4j-slf4j-impl:$version.log4j2",
             "disruptor": "com.lmax:disruptor:$version.disruptor",
+
+            // junit
             "junit-jupiter": "org.junit.jupiter:junit-jupiter:$version.junit",
 
             // database
