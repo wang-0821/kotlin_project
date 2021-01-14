@@ -1,5 +1,6 @@
 package com.xiao.base.resource
 
+import com.xiao.base.CommonConstants
 import java.io.File
 
 /**
@@ -12,6 +13,6 @@ object ClassResourceMatcher : ResourceMatcher {
     }
 
     override fun matchingFile(file: File): Boolean {
-        return file.name.endsWith(".class")
+        return file.name.endsWith(CommonConstants.CLASS_SUFFIX)
     }
 }

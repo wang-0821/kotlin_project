@@ -1,5 +1,6 @@
 package com.xiao.base.resource
 
+import com.xiao.base.CommonConstants
 import com.xiao.base.logging.Logging
 import java.io.File
 import java.net.URL
@@ -32,7 +33,7 @@ object PathResourceScanner : Logging() {
     ): List<KtFileResource> {
         try {
             val result = mutableListOf<KtFileResource>()
-            val realBasePackage = basePackage.replace(".", "/")
+            val realBasePackage = basePackage.replace(".", File.separator)
             val resourceUrls: Enumeration<URL> = classLoader.getResources(realBasePackage)
                 ?: ClassLoader.getSystemResources(realBasePackage)
             while (resourceUrls.hasMoreElements()) {
@@ -111,8 +112,9 @@ object PathResourceScanner : Logging() {
         classLoader: ClassLoader
     ): KtClassResource? {
         return try {
-            val classNameSplitArray = ktFileResource.file.path.split("/")
-            if (classNameSplitArray.isEmpty() || !classNameSplitArray.last().endsWith(".class")) {
+            val classNameSplitArray = ktFileResource.file.path.split(File.separator)
+            if (classNameSplitArray.isEmpty()
+                || !classNameSplitArray.last().endsWith(CommonConstants.CLASS_SUFFIX)) {
                 return null
             }
             var dirIndex = classNameSplitArray.indexOf("main")
@@ -121,7 +123,7 @@ object PathResourceScanner : Logging() {
             }
             val className = classNameSplitArray.subList(dirIndex + 1, classNameSplitArray.size)
                 .joinToString(".")
-                .removeSuffix(".class")
+                .removeSuffix(CommonConstants.CLASS_SUFFIX)
             val kClass = Class.forName(className, true, classLoader).kotlin
             KtClassResource(ktFileResource.file, ktFileResource.file.path, kClass)
         } catch (e: Exception) {
