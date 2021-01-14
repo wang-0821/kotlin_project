@@ -1,4 +1,6 @@
 * [1.对象创建方式](#1)
+* [2.线程池](#2)
+* [3.类加载](#3)
 
 <h2 id="1">1.对象创建方式</h2>
 ### 使用new创建对象
@@ -30,3 +32,15 @@
             this.val = val;
         }
     }
+    
+<h2 id="2">2.线程池</h2>
+### 为什么使用线程池
+&emsp;&emsp; 如果单个任务处理时间短，需要处理的任务量很大。那么使用线程池：1，可以减少在创建和销毁线程上所花费的时间及系统资源的开销。
+2，避免系统创建大量线程而导致消耗完系统内存及过度切换。
+
+<h2 id="3">3.类加载</h2>
+&emsp;&emsp; 通常使用ClassLoader.loadClass(name)，这一步只是将类数据加载到了内存中，生成了Class对象，没有进行连接。
+使用Class.forName(name) 会加载类，并执行类对象初始化。Class.forName(String name, boolean initialize, ClassLoader loader) 如果
+initialize传true，加载类时会执行初始化。
+
+&emsp;&emsp; 
