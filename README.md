@@ -12,24 +12,46 @@
 
 <h2 id="1">1.日志</h2>
 &emsp;&emsp; 本项目使用Slf4j门面模式来使用日志。使用slf4j，可以根据具体的需求，自主选择具体的日志框架。本项目中使用log4j2，也可以exclude掉，
-用其他日志框架替换掉。并且可以根据@Log注解，来选择使用具体的Logger，避免无意义的多个相似Logger对象的创建。
+用其他日志框架替换掉。并且可以根据@KtLogger注解，来选择使用具体的Logger，避免无意义的多个相似Logger对象的创建。
     
-    private fun logger(): Logger {
-        val loggerName = loggerName()
-        val logger = LoggerFactory.getLogger(loggerName)
-        if (logger == NOPLogger.NOP_LOGGER) {
-            Util.report("There is no available logger named {$loggerName}, please implement it.")
+    // logging 抽象类
+    abstract class Logging {
+        val log = logger()
+    
+        private fun logger(): Logger {
+            val loggerName = loggerName()
+            val logger = LoggerFactory.getLogger(loggerName)
+            if (logger == NOPLogger.NOP_LOGGER) {
+                Util.report("There is no available logger named {$loggerName}, please implement it.")
+            }
+            return logger
         }
-        return logger
+    
+        private fun loggerName(): String {
+            val annotation = this::class.java.getAnnotation(KtLogger::class.java) ?: return this::class.java.name
+            if (annotation.value != LoggerType.NULL) {
+                return annotation.value.text
+            }
+            if (annotation.name.isNotBlank()) {
+                return annotation.name
+            }
+    
+            return this::class.java.name
+        }
     }
     
-    private fun loggerName(): String {
-        val loggerAnnotation = this::class.java.getAnnotation(Log::class.java)
-        return if (loggerAnnotation != null && loggerAnnotation.value.isNotBlank()) {
-            loggerAnnotation.value
-        } else {
-            this::class.java.name
-        }
+    // 用法一
+    class LoggerTest {
+        ......
+    
+        @KtLogger(LoggerType.DATA_SOURCE)
+        companion object : Logging()
+    }
+    
+    // 用法二
+    @KtLogger(LoggerType.DATA_SOURCE)
+    object LoggerTestHelper : Logging() {
+        ......
     }
 
 <h2 id="2">2.对象容器</h2>
@@ -53,9 +75,9 @@
         private var routePool = ConcurrentHashMap<Address, MutableList<Route>>()
         ......
 
-&emsp;&emsp; 可以使用BeanRegistry容器里面的对象，实现依赖注入。只需要在类上加@Component注解即可。
+&emsp;&emsp; 可以使用BeanRegistry容器里面的对象，实现依赖注入。只需要在类上加@KtComponent注解即可。
     
-    // 对@Component注解的类进行Bean的生成和注入。
+    // 对@KtComponent注解的类进行Bean的生成和注入。
     object ComponentResourceHandler : AnnotationHandler, BeanRegistryAware {
         override fun invoke(p1: AnnotatedKtResource) {
             val component = p1.annotationsByType(Component::class).first()
@@ -90,28 +112,117 @@
     }
         
 <h2 id="3">3.资源扫描与处理</h2>
-&emsp;&emsp; 可以通过指定包名，ClassLoader，ResourceMatcher的方式来扫描资源。
+### 自定义ClassLoader
+&emsp;&emsp; 类加载使用双亲委派机制，利用ClassLoader.loadClass(name)时，会先查询当前类是否被加载，如果没有的话，会先用父类来尝试加载类，
+如果父类加载失败，才会用子类加载类。而且由于ClassLoader.loadClass(name)返回值为Class<?>，由于泛型擦除，在编译后实际返回类型为Class<Object>。
+通常默认的ClassLoader为：AppClassLoader -> ExtClassLoader -> BootstrapClassLoader。
 
-    // 在扫描MyBatis xml mapper文件时，只需要指定路径和ResourceMatcher，使用默认的ClassLoader即可扫出所有的xml文件。
-    PathResourceScanner.scanFileResourcesByPackage(
-        path,
-        object : ResourceMatcher {
-            override fun matchingDirectory(file: File): Boolean {
-                return true
-            }
-
-            override fun matchingFile(file: File): Boolean {
-                return file.name.endsWith(".xml")
+    // 自定义ClassLoader。
+    class CustomClassLoader : ClassLoader() {
+        override fun loadClass(name: String): Class<*> {
+            synchronized(getClassLoadingLock(name)) {
+                var c = findLoadedClass(name)
+                if (c == null) {
+                    // 这里之所以需要进行条件判断，是由于类型擦除导致，在加载对应的类时，还会加载Object类。
+                    if (name.startsWith("com.xiao")) {
+                        c = findClass(name)
+                    }
+    
+                    if (c == null) {
+                        try {
+                            if (parent != null) {
+                                c = parent.loadClass(name)
+                            }
+                        } catch (e: ClassNotFoundException) {
+                            // ClassNotFoundException thrown if class not found
+                            // from the non-null parent class loader
+                        }
+                    }
+                }
+                return c
             }
         }
-    )
+    
+        override fun findClass(name: String): Class<*> {
+            val classInputStream = getClassfile(name) ?: throw ClassNotFoundException(name)
+            val bytes = classInputStream.readBytes()
+            return defineClass(name, bytes, 0, bytes.size) ?: throw ClassNotFoundException(name)
+        }
+    
+        private fun getClassfile(name: String): FileInputStream? {
+            var resourceName = name.replace(".", File.separator)
+            if (resourceName.endsWith(File.separator)) {
+                return null
+            }
+            resourceName = CommonConstants.absolutePath() + resourceName
+            resourceName += CommonConstants.CLASS_SUFFIX
+            val file = File(resourceName)
+            if (!file.exists()) {
+                return null
+            }
+            return FileInputStream(file)
+        }
+    }
+    
+    // 测试用例
+    @Test
+    fun `test load same class with different classLoaders`() {
+        val classLoader = Thread.currentThread().contextClassLoader ?: ClassLoader.getSystemClassLoader()
+        val customClassLoader = CustomClassLoader()
+        val ktClass1 = customClassLoader.loadClass(CLASSNAME)
+        val ktClass2 = classLoader.loadClass(CLASSNAME)
+        Assertions.assertSame(ktClass1.classLoader, customClassLoader)
+        Assertions.assertNotSame(ktClass1, ktClass2)
+    }
+
+&emsp;&emsp; 可以通过指定包名，ClassLoader，ResourceMatcher的方式来扫描资源。
+
+    // 默认的ClassLoader
+    private val defaultClassLoader = Thread.currentThread().contextClassLoader ?: ClassLoader.getSystemClassLoader()
+    
+    // 扫描class资源，并利用指定的ClassLoader加载扫描出来的类。
+    fun scanClassResources(
+        basePackage: String,
+        classLoader: ClassLoader = defaultClassLoader
+    ): List<KtClassResource> {
+        if (basePackage.isBlank()) {
+            return emptyList()
+        }
+        return retrieveClassResources(
+            scanFileResources(basePackage, ClassResourceMatcher, classLoader),
+            classLoader
+        )
+    }
+    
+    // 扫描特定后缀的文件资源。
+    fun scanFileResourcesWithSuffix(basePackage: String, suffix: String): List<KtFileResource> {
+        return scanFileResources(
+            basePackage,
+            object : ResourceMatcher {
+                override fun matchingDirectory(file: File): Boolean {
+                    return true
+                }
+
+                override fun matchingFile(file: File): Boolean {
+                    return file.name.endsWith(suffix)
+                }
+            }
+        )
+    }
+    
+    // 用法一，扫描MyBatis interface mappers。
+    PathResourceScanner.scanClassResources(mapperPath)
+    
+    // 用法二，扫描MyBatis XML mappers。
+    PathResourceScanner.scanFileResourcesWithSuffix(path, ".xml")
+    
     
 ### 注解类扫描与处理
 &emsp;&emsp; ContextScanner.scanAnnotatedResources(basePackage: String)可以通过包名，扫描出所有被@AnnotationScan注解的Class。
 ContextScanner.processAnnotatedResources(annotatedKtResources: List<AnnotatedKtResource>)会处理所有的注解类。
 
     @AnnotationScan     被其注解的类，会被扫描出来。
-    @Component          被其注解的类，会生成实例对象，并以单例的方式注入到BeanRegistry
+    @KtComponent        被其注解的类，会生成实例对象，并以单例的方式注入到BeanRegistry
     @ContextInject      被其注解的类，会生成Context上下文实例对象，并注册到Context.container中。
     @KtLogger           被其注解的Logging对象，会根据注解获取对应名称的Logger对象。
     

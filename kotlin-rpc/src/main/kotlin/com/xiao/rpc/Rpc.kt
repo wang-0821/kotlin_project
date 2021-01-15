@@ -7,6 +7,7 @@ import com.xiao.rpc.io.Response
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.apache.logging.log4j.ThreadContext
@@ -23,22 +24,33 @@ object Rpc {
     val client = Client()
     var started = AtomicInteger(0)
 
+    @JvmStatic
     fun future(name: String, request: Request): Future<Response> {
         return AsyncUtil.executor.submit(queueItem(name, request))
     }
 
+    @JvmStatic
     fun sync(name: String, request: Request): Response {
         return queueItem(name, request).call()
     }
 
+    @JvmOverloads
     suspend fun deferred(
         name: String,
         request: Request,
-        coroutineScope: CoroutineScope = AsyncUtil.coroutineScope
+        scope: CoroutineScope? = null
     ): Deferred<Response> {
-        return withContext(coroutineScope.coroutineContext) {
-            async {
-                queueItem(name, request).call()
+        return scope?.coroutineContext?.let {
+            withContext(it) {
+                async {
+                    queueItem(name, request).call()
+                }
+            }
+        } ?: kotlin.run {
+            coroutineScope {
+                async {
+                    queueItem(name, request).call()
+                }
             }
         }
     }

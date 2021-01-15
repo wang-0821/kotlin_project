@@ -5,6 +5,7 @@ package com.xiao.base.context
  * @author lix wang
  */
 object BeanHelper : BeanRegistryAware {
+    @JvmStatic
     @Suppress("UNCHECKED_CAST")
     fun <E> newInstance(clazz: Class<*>): E {
         val constructors = clazz.constructors

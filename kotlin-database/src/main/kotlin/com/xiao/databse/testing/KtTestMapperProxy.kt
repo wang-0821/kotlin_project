@@ -15,11 +15,11 @@ class KtTestMapperProxy<T>(
 ) : KtMapperProxy<T>(clazz, mapper) {
     override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
         if (!TestResourceHolder.checkDataSourceMigrated(databaseName)) {
-            throw IllegalStateException("Not migrate database: $databaseName.")
+            throw IllegalStateException("Database $databaseName not migrated.")
         }
         val sqlTables = clazz.getAnnotation(KtMapperTables::class.java)?.value?.toList() ?: listOf()
         if (!TestResourceHolder.checkTablesMigrated(databaseName, sqlTables)) {
-            throw IllegalStateException("Mapper ${clazz.simpleName} not reset.")
+            throw IllegalStateException("Database $databaseName, tables $sqlTables not migrated.")
         }
         return super.invoke(proxy, method, args)
     }

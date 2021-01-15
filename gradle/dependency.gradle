@@ -13,7 +13,9 @@ ext {
             mysqlConnectorJava: '8.0.21',
             hikariCP: '3.4.5',
             ktlint: '0.40.0',
-            netty: '5.0.0.Alpha2'
+            netty: '5.0.0.Alpha2',
+            lettuce: '6.0.2.RELEASE',
+            quartz: '2.3.2'
     ]
 
     libs = [
@@ -52,6 +54,12 @@ ext {
             "ktlint": "com.pinterest:ktlint:$version.ktlint",
 
             // netty
-            "netty-handler": "io.netty:netty-handler:$version.netty"
+            "netty-handler": "io.netty:netty-handler:$version.netty",
+
+            //redis client
+            "lettuce-core": "io.lettuce:lettuce-core:$version.lettuce",
+
+            // scheduled task executor
+            "quartz": "org.quartz-scheduler:quartz:$version.quartz"
     ]
 }
