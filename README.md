@@ -112,6 +112,7 @@
     }
         
 <h2 id="3">3.资源扫描与处理</h2>
+
 ### 自定义ClassLoader
 &emsp;&emsp; 类加载使用双亲委派机制，利用ClassLoader.loadClass(name)时，会先查询当前类是否被加载，如果没有的话，会先用父类来尝试加载类，
 如果父类加载失败，才会用子类加载类。而且由于ClassLoader.loadClass(name)返回值为Class<?>，由于泛型擦除，在编译后实际返回类型为Class<Object>。
