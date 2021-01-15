@@ -34,7 +34,7 @@ class CustomClassLoader : ClassLoader() {
         }
     }
 
-    override  fun findClass(name: String): Class<*> {
+    override fun findClass(name: String): Class<*> {
         val classInputStream = getClassfile(name) ?: throw ClassNotFoundException(name)
         val bytes = classInputStream.readBytes()
         return defineClass(name, bytes, 0, bytes.size) ?: throw ClassNotFoundException(name)

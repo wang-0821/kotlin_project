@@ -46,6 +46,15 @@ class ClassLoaderTest {
         Assertions.assertNotSame(ktClass1, ktClass2)
     }
 
+    @Test
+    fun `test load same class with same custom classLoader`() {
+        val customClassLoader = CustomClassLoader()
+        val ktClass1 = customClassLoader.loadClass(CLASSNAME)
+        val ktClass2 = customClassLoader.loadClass(CLASSNAME)
+        Assertions.assertSame(ktClass1, ktClass2)
+        Assertions.assertSame(ktClass1.classLoader, customClassLoader)
+    }
+
     companion object {
         private const val CLASSNAME = "com.xiao.model.ClassTarget"
     }
