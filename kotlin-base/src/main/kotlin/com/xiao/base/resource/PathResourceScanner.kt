@@ -113,8 +113,9 @@ object PathResourceScanner : Logging() {
     ): KtClassResource? {
         return try {
             val classNameSplitArray = ktFileResource.file.path.split(File.separator)
-            if (classNameSplitArray.isEmpty()
-                || !classNameSplitArray.last().endsWith(CommonConstants.CLASS_SUFFIX)) {
+            if (classNameSplitArray.isEmpty() ||
+                !classNameSplitArray.last().endsWith(CommonConstants.CLASS_SUFFIX)
+            ) {
                 return null
             }
             var dirIndex = classNameSplitArray.indexOf("main")
