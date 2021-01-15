@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 object JsonUtils {
     private val objectMapper = ObjectMapper()
 
+    @JvmStatic
     fun serialize(obj: Any): String {
         return objectMapper.writeValueAsString(obj)
     }

@@ -13,10 +13,8 @@ object TestResourceHolder {
         private set
     var databaseAnnotations = mutableSetOf<KtTestDatabase>()
         private set
-    var migratedDatabaseNames = mutableSetOf<String>()
-        private set
-    var migratedTables = mutableMapOf<String, MutableSet<String>>()
-        private set
+    private var migratedDatabaseNames = mutableSetOf<String>()
+    private var migratedTables = mutableMapOf<String, MutableSet<String>>()
 
     fun checkDataSourceMigrated(databaseName: String): Boolean {
         return migratedDatabaseNames.contains(databaseName)

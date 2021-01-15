@@ -7,10 +7,12 @@ import com.xiao.rpc.io.Request
  * @author lix wang
  */
 object UrlParser {
+    @JvmStatic
     fun parseUrl(url: String): Request {
         return parseUrl(url, null)
     }
 
+    @JvmStatic
     fun parseUrl(url: String, request: Request?): Request {
         var scheme: String? = null
         var hostAndPort: String? = null

@@ -9,7 +9,7 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 @AnnotationScan
-annotation class Component(
+annotation class KtComponent(
     val value: String = "",
     val handler: KClass<out AnnotationHandler> = ComponentResourceHandler::class
 )

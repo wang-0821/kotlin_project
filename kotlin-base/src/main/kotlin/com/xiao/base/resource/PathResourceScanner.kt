@@ -13,19 +13,21 @@ import java.util.Enumeration
 object PathResourceScanner : Logging() {
     private val defaultClassLoader = Thread.currentThread().contextClassLoader ?: ClassLoader.getSystemClassLoader()
 
+    @JvmStatic
     fun scanClassResources(
-        basePackage: String
+        basePackage: String,
+        classLoader: ClassLoader = defaultClassLoader
     ): List<KtClassResource> {
         if (basePackage.isBlank()) {
             return emptyList()
         }
-        val classLoader = defaultClassLoader
         return retrieveClassResources(
             scanFileResources(basePackage, ClassResourceMatcher, classLoader),
             classLoader
         )
     }
 
+    @JvmStatic
     fun scanFileResources(
         basePackage: String,
         matcher: ResourceMatcher,
@@ -47,6 +49,7 @@ object PathResourceScanner : Logging() {
         }
     }
 
+    @JvmStatic
     fun scanFileResourcesWithSuffix(basePackage: String, suffix: String): List<KtFileResource> {
         return scanFileResources(
             basePackage,

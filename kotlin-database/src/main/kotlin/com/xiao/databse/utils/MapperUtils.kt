@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
 object MapperUtils {
     private val mappers = ConcurrentHashMap<Class<*>, Any?>()
 
+    @JvmStatic
     fun <T> getTestMapper(clazz: Class<T>): T {
         if (mappers[clazz] != null) {
             return mappers[clazz] as T
@@ -30,6 +31,7 @@ object MapperUtils {
         }
     }
 
+    @JvmStatic
     fun <T> getMapper(sqlSessionFactory: SqlSessionFactory, clazz: Class<T>): T {
         if (mappers[clazz] != null) {
             return mappers[clazz] as T

@@ -2,8 +2,8 @@ package com.xiao.base.context
 
 import com.xiao.base.annotation.AnnotatedKtResource
 import com.xiao.base.annotation.AnnotationScan
-import com.xiao.base.annotation.Component
 import com.xiao.base.annotation.ContextInject
+import com.xiao.base.annotation.KtComponent
 import com.xiao.base.resource.KtClassResource
 import com.xiao.base.resource.PathResourceScanner
 import com.xiao.base.util.extractAnnotations
@@ -14,7 +14,7 @@ import com.xiao.base.util.extractAnnotations
  */
 object ContextScanner : BeanRegistryAware {
     fun scanAnnotatedResources(basePackage: String): List<AnnotatedKtResource> {
-        val resources = scanResources(basePackage)
+        val resources = PathResourceScanner.scanClassResources(basePackage)
         val annotationResources = mutableListOf<AnnotatedKtResource>()
         for (resource in resources) {
             filterResource(resource)?.let {
@@ -30,10 +30,6 @@ object ContextScanner : BeanRegistryAware {
         }
     }
 
-    private fun scanResources(basePackage: String): List<KtClassResource> {
-        return PathResourceScanner.scanClassResources(basePackage)
-    }
-
     private fun handleContextInject(annotatedKtResources: List<AnnotatedKtResource>): List<AnnotatedKtResource>? {
         val contextInjectResources = annotatedKtResources.filter { it.isAnnotated(ContextInject::class) }
         for (resource in contextInjectResources) {
@@ -47,9 +43,9 @@ object ContextScanner : BeanRegistryAware {
     }
 
     private fun handleComponentProcessor(annotatedKtResources: List<AnnotatedKtResource>) {
-        val componentResources = annotatedKtResources.filter { it.isAnnotated(Component::class) }
+        val componentResources = annotatedKtResources.filter { it.isAnnotated(KtComponent::class) }
         for (resource in componentResources) {
-            val component = resource.annotationsByType(Component::class).first()
+            val component = resource.annotationsByType(KtComponent::class).first()
             val handler = component.handler.objectInstance ?: component.handler.objectInstance
             handler?.let {
                 it(resource)

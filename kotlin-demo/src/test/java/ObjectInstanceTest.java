@@ -1,5 +1,6 @@
 import model.UnsafeInstanceObject;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import sun.misc.Unsafe;
 
@@ -21,6 +22,7 @@ public class ObjectInstanceTest implements Serializable {
         Assertions.assertEquals(copyObject.paramObject.val2, 3);
     }
 
+    @Disabled
     @Test
     void testObjectSerialize() {
         try {

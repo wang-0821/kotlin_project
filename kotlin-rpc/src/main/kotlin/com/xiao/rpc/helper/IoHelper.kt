@@ -20,6 +20,7 @@ object IoHelper {
     private val RPC_IO_BYTE_ARRAY = object : RpcContextKey<ByteArray> {}
     private val RPC_IO_CHAR_ARRAY = object : RpcContextKey<CharArray> {}
 
+    @JvmStatic
     fun readPlainTextLine(
         inputStream: InputStream,
         charset: Charset = Charsets.UTF_8
@@ -32,6 +33,7 @@ object IoHelper {
         return result
     }
 
+    @JvmStatic
     fun contentAsString(
         inputStream: InputStream,
         charset: Charset,

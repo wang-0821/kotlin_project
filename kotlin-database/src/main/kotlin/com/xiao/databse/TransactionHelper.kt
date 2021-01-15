@@ -11,6 +11,8 @@ import com.xiao.databse.utils.TransactionalUtils
  */
 @KtLogger(LoggerType.DATA_SOURCE)
 object TransactionHelper : Logging() {
+    @JvmStatic
+    @JvmOverloads
     fun doInTransaction(wrapper: TransactionalWrapper? = null, action: () -> Unit) {
         try {
             TransactionalUtils.setTransactionalWrapper(wrapper ?: TransactionalWrapper())

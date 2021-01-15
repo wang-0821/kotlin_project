@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit
  * @author lix wang
  */
 object ExecutorServiceFactory {
+    @JvmStatic
     fun newDefaultThreadPoolExecutor(threadCount: Int): ExecutorService {
         return ThreadPoolExecutor(
             threadCount,
