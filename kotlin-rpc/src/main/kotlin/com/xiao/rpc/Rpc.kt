@@ -2,17 +2,18 @@ package com.xiao.rpc
 
 import com.xiao.base.executor.AsyncUtil
 import com.xiao.base.executor.QueueItem
+import com.xiao.base.executor.deferred
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.apache.logging.log4j.ThreadContext
 import java.util.UUID
-import java.util.concurrent.Future
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -25,8 +26,8 @@ object Rpc {
     var started = AtomicInteger(0)
 
     @JvmStatic
-    fun future(name: String, request: Request): Future<Response> {
-        return AsyncUtil.executor.submit(queueItem(name, request))
+    fun async(name: String, request: Request): CompletableFuture<Response> {
+        return AsyncUtil.executor.async(queueItem(name, request))
     }
 
     @JvmStatic
@@ -39,18 +40,14 @@ object Rpc {
         name: String,
         request: Request,
         scope: CoroutineScope? = null
-    ): Deferred<Response> {
+    ): CompletableDeferred<Response> {
         return scope?.coroutineContext?.let {
             withContext(it) {
-                async {
-                    queueItem(name, request).call()
-                }
+                deferred(queueItem(name, request))
             }
         } ?: kotlin.run {
             coroutineScope {
-                async {
-                    queueItem(name, request).call()
-                }
+                deferred(queueItem(name, request))
             }
         }
     }

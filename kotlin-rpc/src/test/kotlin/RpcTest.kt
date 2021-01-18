@@ -23,7 +23,7 @@ class RpcTest {
 
     @Test
     fun `test rpc future`() {
-        val future = Rpc.future("GetBaiduAsync", request)
+        val future = Rpc.async("GetBaiduAsync", request)
         val response = future.get(timeout, TimeUnit.MILLISECONDS)
         assertEquals(response.status, 200)
         assertFalse(response.asString().isNullOrBlank())
@@ -32,11 +32,11 @@ class RpcTest {
     @Test
     fun `test rpc coroutine`() {
         var response: Response? = null
-        val job = AsyncUtil.coroutineScope.launch {
+        val completableDeferred = AsyncUtil.coroutineScope.launch {
             response = Rpc.deferred("GetBaiduDeferred", request).result(timeout, TimeUnit.MILLISECONDS)
         }
         while (true) {
-            if (job.isCompleted) {
+            if (completableDeferred.isCompleted) {
                 break
             }
         }
