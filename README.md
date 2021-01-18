@@ -281,28 +281,72 @@ io字节数组及字符数组复用。该客户端可以使用 chunked transfer-
         return String(charArray)
     }
 
-### 异步http
-&emsp;&emsp; 使用Rpc对象，可以简单的进行同步、线程异步、kotlin协程异步http请求。并且可以打印出每次请求的执行信息，包括执行次数、重试次数、
-每次执行花费的时间。
+### 自定义异步callback
+&emsp;&emsp; 在执行Callback任务时，我们需要在任务完成后，返回一个Future或者Deferred，因此本项目中使用简单的自定义CompletableCallback来对
+原始的Callback进行封装，在执行完Callback后，将结果填入Future或者Deferred中。
 
-    val request = UrlParser.parseUrl("https://www.baidu.com")
-    // 同步
-    Rpc.sync("GetBaiduSync", request).asString()
+    class CompletableCallback(
+        private val callable: Callable<Any?>,
+        private val future: CompletableFuture<Any?>?,
+        private val deferred: CompletableDeferred<Any?>?
+    ) : Runnable {
+        override fun run() {
+            if ((future == null && deferred == null) || (future != null && deferred != null)) {
+                throw IllegalArgumentException(
+                    "${this::class.java.simpleName} future and deferred must have one and only one not null.")
+            }
+            try {
+                completeResult(callable.call())
+            } catch (throwable: Throwable) {
+                completeThrowable(throwable)
+            }
+        }
     
-    // 线程异步
-    Rpc.future("GetBaiduAsync", request).get(timeout, TimeUnit.MILLISECONDS).asString()
+        private fun completeResult(result: Any?) {
+            var completed = future?.complete(result) ?: false
+            completed = completed || deferred?.complete(result) ?: false
+            if (!completed) {
+                throw IllegalStateException("Complete result failed.")
+            }
+        }
     
-    // 协程异步
-    var response: Response? = null
-    val job = AsyncUtil.coroutineScope.launch {
-        response = Rpc.deferred("GetBaiduDeferred", request).result(timeout, TimeUnit.MILLISECONDS)
-    }
-    while (true) {
-        if (job.isCompleted) {
-            break
+        private fun completeThrowable(throwable: Throwable) {
+            future?.completeExceptionally(throwable)
+            deferred?.completeExceptionally(throwable)
         }
     }
-    response!!.asString()
+
+### 异步http
+&emsp;&emsp; 使用Rpc对象，可以简单的进行同步、线程异步、kotlin协程异步http请求。并且可以打印出每次请求的执行信息，包括执行次数、重试次数、
+每次执行花费的时间。由于CompletableFuture相比传统的Future功能更丰富，因此我们在执行异步Callable任务时，返回CompletableFuture，
+在协程中返回CompletableDeferred。
+
+    @JvmStatic
+    fun async(name: String, request: Request): CompletableFuture<Response> {
+        return AsyncUtil.executor.async(queueItem(name, request))
+    }
+
+    @JvmStatic
+    fun sync(name: String, request: Request): Response {
+        return queueItem(name, request).call()
+    }
+
+    @JvmOverloads
+    suspend fun deferred(
+        name: String,
+        request: Request,
+        scope: CoroutineScope? = null
+    ): CompletableDeferred<Response> {
+        return scope?.coroutineContext?.let {
+            withContext(it) {
+                deferred(queueItem(name, request))
+            }
+        } ?: kotlin.run {
+            coroutineScope {
+                deferred(queueItem(name, request))
+            }
+        }
+    }
 
 ### 自定义Http-client测试
 &emsp;&emsp; 对于本项目中自己编写的简易Http-client，分别使用同步、线程异步、协程异步的方式进行了测试。测试用例如下。
@@ -316,7 +360,7 @@ io字节数组及字符数组复用。该客户端可以使用 chunked transfer-
 
     @Test
     fun `test rpc future`() {
-        val future = Rpc.future("GetBaiduAsync", request)
+        val future = Rpc.async("GetBaiduAsync", request)
         val response = future.get(timeout, TimeUnit.MILLISECONDS)
         assertEquals(response.status, 200)
         assertFalse(response.asString().isNullOrBlank())
@@ -325,11 +369,11 @@ io字节数组及字符数组复用。该客户端可以使用 chunked transfer-
     @Test
     fun `test rpc coroutine`() {
         var response: Response? = null
-        val job = AsyncUtil.coroutineScope.launch {
+        val completableDeferred = AsyncUtil.coroutineScope.launch {
             response = Rpc.deferred("GetBaiduDeferred", request).result(timeout, TimeUnit.MILLISECONDS)
         }
         while (true) {
-            if (job.isCompleted) {
+            if (completableDeferred.isCompleted) {
                 break
             }
         }

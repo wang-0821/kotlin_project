@@ -1,6 +1,8 @@
 package com.xiao.base.executor
 
+import com.xiao.base.executor.QueueItemHelper.getQueueItem
 import java.util.concurrent.Callable
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import java.util.concurrent.FutureTask
@@ -20,50 +22,56 @@ class ExecutionQueue {
         this.executorService = executorService
     }
 
-    fun <T> submit(taskName: String, callable: Callable<T>): Future<T> {
+    fun <T : Any?> submit(taskName: String?, callable: Callable<T>): Future<T> {
         val name = if (taskName.isNullOrBlank()) {
             "Queue-Callable"
         } else {
             taskName
         }
-        val queueItem = object : QueueItem<T>(name) {
-            override fun execute(): T {
-                return callable.call()
-            }
-        }
+        return submitCallable(getQueueItem(name, callable))
+    }
+
+    fun <T : Any?> submit(queueItem: QueueItem<T>): Future<T> {
         return submitCallable(queueItem)
     }
 
-    fun <T> submit(queueItem: QueueItem<T>): Future<T> {
-        return submitCallable(queueItem)
+    fun <T : Any?> submit(callable: Callable<T>): Future<T> {
+        return submit(null, callable)
     }
 
-    fun <T> submit(callable: Callable<T>): Future<T> {
-        return submit("", callable)
-    }
-
-    fun submit(taskName: String, runnable: Runnable) {
-        val name = if (taskName.isBlank()) {
+    fun submit(taskName: String?, runnable: Runnable) {
+        val name = if (taskName.isNullOrBlank()) {
             "Queue-Runnable"
         } else {
             taskName
         }
-        val queueItem = object : QueueItem<Unit>(name) {
-            override fun execute() {
-                runnable.run()
-            }
-        }
-        submitRunnable(queueItem)
+        submitRunnable(name) { getQueueItem(name, runnable).execute() }
     }
 
     fun submit(runnable: Runnable) {
-        submit("", runnable)
+        submit(null, runnable)
     }
 
-    private fun <T> submitCallable(queueItem: QueueItem<T>): Future<T> {
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Any?> async(taskName: String?, callable: Callable<T>): CompletableFuture<T> {
+        val name = if (taskName.isNullOrBlank()) {
+            "Queue-Async"
+        } else taskName
+        val result = CompletableFuture<Any?>()
+        val queueItem = getQueueItem(name, callable) as QueueItem<Any?>
+        submitRunnable(name, CompletableCallback(queueItem, result, null))
+        return result as CompletableFuture<T>
+    }
+
+    fun <T : Any?> async(callable: Callable<T>): CompletableFuture<T> {
+        return async(null, callable)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T : Any?> submitCallable(queueItem: QueueItem<T>): Future<T> {
         lock.lock()
         try {
-            val future = FutureTask<T>(queueItem)
+            val future = FutureTask(queueItem)
             executorService.execute(future)
             return future
         } catch (e: Exception) {
@@ -75,13 +83,13 @@ class ExecutionQueue {
         }
     }
 
-    private fun submitRunnable(queueItem: QueueItem<Unit>) {
+    private fun submitRunnable(name: String, runnable: Runnable) {
         lock.lock()
         try {
-            executorService.execute { queueItem.execute() }
+            executorService.execute(runnable)
         } catch (e: Exception) {
             throw IllegalStateException(
-                "Submit task ${queueItem.name} to $executionQueueName ExecutionQueue failed. ${e.message}"
+                "Submit task $name to $executionQueueName ExecutionQueue failed. ${e.message}"
             )
         } finally {
             lock.unlock()
