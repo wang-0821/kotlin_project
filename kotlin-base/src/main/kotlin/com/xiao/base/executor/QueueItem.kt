@@ -23,7 +23,7 @@ abstract class QueueItem<T>(val name: String) : Callable<T> {
         return result
     }
 
-    abstract fun execute(): T
+    protected abstract fun execute(): T
 
     private fun retry(): T {
         val startTime = System.currentTimeMillis()

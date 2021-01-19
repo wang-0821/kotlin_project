@@ -1,7 +1,6 @@
 import com.xiao.base.executor.AsyncUtil
+import com.xiao.base.util.awaitNanos
 import com.xiao.rpc.Rpc
-import com.xiao.rpc.io.Response
-import com.xiao.rpc.result
 import com.xiao.rpc.util.UrlParser
 import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -31,17 +30,17 @@ class RpcTest {
 
     @Test
     fun `test rpc coroutine`() {
-        var response: Response? = null
-        val completableDeferred = AsyncUtil.coroutineScope.launch {
-            response = Rpc.deferred("GetBaiduDeferred", request).result(timeout, TimeUnit.MILLISECONDS)
+        val job = AsyncUtil.coroutineScope.launch {
+            val completableDeferred = Rpc.deferred("GetBaiduDeferred", request)
+            val result = completableDeferred.awaitNanos()
+            assertEquals(result.status, 200)
+            assertFalse(result.asString().isNullOrBlank())
         }
         while (true) {
-            if (completableDeferred.isCompleted) {
+            if (job.isCompleted) {
                 break
             }
         }
-        assertEquals(response!!.status, 200)
-        assertFalse(response!!.asString().isNullOrBlank())
     }
 
     companion object {

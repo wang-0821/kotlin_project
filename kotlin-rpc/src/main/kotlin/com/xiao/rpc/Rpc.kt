@@ -2,19 +2,16 @@ package com.xiao.rpc
 
 import com.xiao.base.executor.AsyncUtil
 import com.xiao.base.executor.QueueItem
-import com.xiao.base.executor.deferred
+import com.xiao.base.util.deferred
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import org.apache.logging.log4j.ThreadContext
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -67,12 +64,5 @@ object Rpc {
                 return result
             }
         }
-    }
-}
-
-suspend fun <T> Deferred<T>.result(timeout: Long = 60000, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): T {
-    val deferred = this
-    return withTimeout(timeUnit.toMillis(timeout)) {
-        deferred.await()
     }
 }

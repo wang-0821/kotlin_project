@@ -1,4 +1,4 @@
-package com.xiao.databse.annotation
+package com.xiao.base.annotation
 
 /**
  * 可以添加在Mapper method上，用以处理SQL执行重试。
@@ -7,6 +7,6 @@ package com.xiao.databse.annotation
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.ANNOTATION_CLASS)
-annotation class KtMapperRetry(
+annotation class KtRetry(
     val times: Int = 2
 )

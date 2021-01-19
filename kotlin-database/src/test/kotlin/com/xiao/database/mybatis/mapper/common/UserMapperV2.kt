@@ -1,7 +1,7 @@
 package com.xiao.database.mybatis.mapper.common
 
+import com.xiao.base.annotation.KtRetry
 import com.xiao.database.model.User
-import com.xiao.databse.annotation.KtMapperRetry
 import com.xiao.databse.annotation.KtMapperTables
 import org.apache.ibatis.annotations.Param
 import org.apache.ibatis.annotations.Select
@@ -12,7 +12,7 @@ import org.apache.ibatis.annotations.Select
  */
 @KtMapperTables(["users"])
 interface UserMapperV2 {
-    @KtMapperRetry
+    @KtRetry
     @Select("SELECT * FROM users WHERE id = #{id}")
     fun getById(@Param("id") id: Long): User
 }
