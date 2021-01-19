@@ -1,5 +1,7 @@
 package com.xiao.base.util
 
+import com.xiao.base.annotation.KtRetry
+import java.lang.reflect.Method
 import kotlin.reflect.KClass
 
 /**
@@ -15,6 +17,12 @@ fun KClass<*>.packageName(): String {
 fun <T : Class<out Any>> T.extractAnnotations(): List<Annotation> {
     val result = mutableListOf<Annotation>()
     return this.extractAnnotations(result)
+}
+
+fun Method.extractRetryTimes(): Int {
+    val retryAnnotation = this.getAnnotation(KtRetry::class.java)
+        ?: this::class.java.getAnnotation(KtRetry::class.java)
+    return retryAnnotation?.times ?: 0
 }
 
 private fun <T : Class<out Any>> T.extractAnnotations(result: MutableList<Annotation>): List<Annotation> {

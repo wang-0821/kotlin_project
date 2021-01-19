@@ -1,7 +1,7 @@
 package com.xiao.database.mybatis.mapper.common
 
+import com.xiao.base.annotation.KtRetry
 import com.xiao.database.model.User
-import com.xiao.databse.annotation.KtMapperRetry
 import com.xiao.databse.annotation.KtMapperTables
 import org.apache.ibatis.annotations.Param
 
@@ -11,9 +11,9 @@ import org.apache.ibatis.annotations.Param
  */
 @KtMapperTables(["users"])
 interface UserMapper {
-    @KtMapperRetry
+    @KtRetry
     fun getById(@Param("id") id: Long): User
 
-    @KtMapperRetry
+    @KtRetry
     fun updatePasswordById(@Param("id") id: Long, @Param("password") password: String)
 }

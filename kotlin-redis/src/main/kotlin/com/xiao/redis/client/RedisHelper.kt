@@ -1,11 +1,12 @@
 package com.xiao.redis.client
 
+import com.xiao.redis.client.proxy.RedisAsyncServiceProxy
+import com.xiao.redis.client.proxy.RedisServiceProxy
+import com.xiao.redis.client.service.RedisAsyncService
+import com.xiao.redis.client.service.RedisService
 import io.lettuce.core.RedisClient
 import io.lettuce.core.RedisURI
-import io.lettuce.core.api.StatefulRedisConnection
-import io.lettuce.core.api.async.RedisAsyncCommands
-import io.lettuce.core.api.sync.RedisCommands
-import java.time.Duration
+import java.lang.reflect.Proxy
 
 /**
  *
@@ -13,20 +14,20 @@ import java.time.Duration
  */
 object RedisHelper {
     @JvmStatic
-    fun getRedisService(url: String): RedisCommands<String, String> {
-        return fetchConnection(url).sync()
+    fun getRedisService(url: String): RedisService {
+        return Proxy.newProxyInstance(
+            RedisService::class.java.classLoader,
+            arrayOf(RedisService::class.java),
+            RedisServiceProxy(RedisClient.create(RedisURI.create(url)))
+        ) as RedisService
     }
 
     @JvmStatic
-    fun getRedisAsyncService(url: String): RedisAsyncCommands<String, String> {
-        return fetchConnection(url).async()
+    fun getRedisAsyncService(url: String): RedisAsyncService {
+        return Proxy.newProxyInstance(
+            RedisAsyncService::class.java.classLoader,
+            arrayOf(RedisAsyncService::class.java),
+            RedisAsyncServiceProxy(RedisClient.create(RedisURI.create(url)))
+        ) as RedisAsyncService
     }
-
-    private fun fetchConnection(url: String): StatefulRedisConnection<String, String> {
-        val redisClient = RedisClient.create(RedisURI.create(url))
-        redisClient.defaultTimeout = Duration.ofSeconds(REDIS_TIMEOUT_SECONDS)
-        return redisClient.connect()
-    }
-
-    private const val REDIS_TIMEOUT_SECONDS = 30L
 }

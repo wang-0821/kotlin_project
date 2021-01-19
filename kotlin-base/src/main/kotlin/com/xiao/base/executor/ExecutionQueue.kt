@@ -45,7 +45,7 @@ class ExecutionQueue {
         } else {
             taskName
         }
-        submitRunnable(name) { getQueueItem(name, runnable).execute() }
+        submitRunnable(name) { getQueueItem(name, runnable).call() }
     }
 
     fun submit(runnable: Runnable) {
@@ -59,7 +59,7 @@ class ExecutionQueue {
         } else taskName
         val result = CompletableFuture<Any?>()
         val queueItem = getQueueItem(name, callable) as QueueItem<Any?>
-        submitRunnable(name, CompletableCallback(queueItem, result, null))
+        submitRunnable(name, CompletableCallback({ queueItem.call() }, result, null))
         return result as CompletableFuture<T>
     }
 
