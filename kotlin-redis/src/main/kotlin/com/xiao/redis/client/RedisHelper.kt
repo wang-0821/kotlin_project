@@ -6,7 +6,9 @@ import com.xiao.redis.client.service.RedisAsyncService
 import com.xiao.redis.client.service.RedisService
 import io.lettuce.core.RedisClient
 import io.lettuce.core.RedisURI
+import io.lettuce.core.resource.DefaultClientResources
 import java.lang.reflect.Proxy
+import kotlin.math.max
 
 /**
  *
@@ -18,7 +20,7 @@ object RedisHelper {
         return Proxy.newProxyInstance(
             RedisService::class.java.classLoader,
             arrayOf(RedisService::class.java),
-            RedisServiceProxy(RedisClient.create(RedisURI.create(url)))
+            RedisServiceProxy(RedisClient.create(clientResources, RedisURI.create(url)))
         ) as RedisService
     }
 
@@ -27,7 +29,12 @@ object RedisHelper {
         return Proxy.newProxyInstance(
             RedisAsyncService::class.java.classLoader,
             arrayOf(RedisAsyncService::class.java),
-            RedisAsyncServiceProxy(RedisClient.create(RedisURI.create(url)))
+            RedisAsyncServiceProxy(RedisClient.create(clientResources, RedisURI.create(url)))
         ) as RedisAsyncService
     }
+
+    private val clientResources = DefaultClientResources
+        .builder()
+        .ioThreadPoolSize(max(3, Runtime.getRuntime().availableProcessors()))
+        .build()
 }

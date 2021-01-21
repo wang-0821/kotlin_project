@@ -6,9 +6,5 @@ package com.xiao.base
  */
 object CommonConstants {
     const val CLASS_SUFFIX = ".class"
-
-    @JvmStatic
-    fun absolutePath(): String {
-        return Thread.currentThread().contextClassLoader.getResource("")?.path ?: ""
-    }
+    const val STATUS_OK = "OK"
 }

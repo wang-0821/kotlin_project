@@ -155,7 +155,7 @@
             if (resourceName.endsWith(File.separator)) {
                 return null
             }
-            resourceName = CommonConstants.absolutePath() + resourceName
+            resourceName = ThreadUtils.rootPath() + resourceName
             resourceName += CommonConstants.CLASS_SUFFIX
             val file = File(resourceName)
             if (!file.exists()) {
