@@ -1,6 +1,7 @@
 package com.xiao.model
 
 import com.xiao.base.CommonConstants
+import com.xiao.base.util.ThreadUtils
 import java.io.File
 import java.io.FileInputStream
 
@@ -45,7 +46,7 @@ class CustomClassLoader : ClassLoader() {
         if (resourceName.endsWith(File.separator)) {
             return null
         }
-        resourceName = CommonConstants.absolutePath() + resourceName
+        resourceName = ThreadUtils.rootPath() + resourceName
         resourceName += CommonConstants.CLASS_SUFFIX
         val file = File(resourceName)
         if (!file.exists()) {
