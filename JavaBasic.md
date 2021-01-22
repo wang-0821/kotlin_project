@@ -42,5 +42,3 @@
 &emsp;&emsp; 通常使用ClassLoader.loadClass(name)，这一步只是将类数据加载到了内存中，生成了Class对象，没有进行连接。
 使用Class.forName(name) 会加载类，并执行类对象初始化。Class.forName(String name, boolean initialize, ClassLoader loader) 如果
 initialize传true，加载类时会执行初始化。
-
-&emsp;&emsp; 

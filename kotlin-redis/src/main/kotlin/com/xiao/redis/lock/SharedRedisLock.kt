@@ -4,6 +4,7 @@ import com.xiao.base.CommonConstants
 import com.xiao.base.logging.Logging
 import com.xiao.base.util.ThreadUtils
 import com.xiao.redis.client.service.RedisService
+import kotlinx.coroutines.delay
 import java.time.Duration
 
 /**
@@ -49,6 +50,18 @@ class SharedRedisLock(
             }
             if (i <= retryTimes) {
                 ThreadUtils.safeSleep(retryDuration.toMillis())
+            }
+        }
+        return false
+    }
+
+    suspend fun tryLockWithRetrySuspend(expireDuration: Duration, retryTimes: Int, retryDuration: Duration): Boolean {
+        for (i in 1..retryTimes + 1) {
+            if (tryLock(expireDuration)) {
+                return true
+            }
+            if (i <= retryTimes) {
+                delay(retryDuration.toMillis())
             }
         }
         return false
