@@ -2,6 +2,7 @@ package com.xiao.redis.lock
 
 import com.xiao.redis.client.RedisHelper
 import com.xiao.redis.client.service.RedisService
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -103,6 +104,27 @@ class RedisLockTest {
             redisLock2.tryLockWithRetry(Duration.ofSeconds(2), 2, Duration.ofSeconds(2))
             Assertions.assertTrue(redisLock1.isLocked)
             Assertions.assertFalse(redisLock2.isLocked)
+        } finally {
+            redisLock1.unlock()
+            redisLock2.unlock()
+        }
+    }
+
+    @Test
+    fun `test try redis lock with retry use coroutine`() {
+        val redisLock1 = SharedRedisLock(KEY, "lockValue1", redisService)
+        val redisLock2 = SharedRedisLock(KEY, "lockValue2", redisService)
+
+        try {
+            redisLock1.tryLock(Duration.ofSeconds(3))
+            Assertions.assertTrue(redisLock1.isLocked)
+            Assertions.assertFalse(redisLock2.isLocked)
+
+            runBlocking {
+                redisLock2.tryLockWithRetrySuspend(Duration.ofSeconds(2), 2, Duration.ofSeconds(2))
+            }
+            Assertions.assertTrue(redisLock2.isLocked)
+            Assertions.assertFalse(redisLock1.isLocked)
         } finally {
             redisLock1.unlock()
             redisLock2.unlock()

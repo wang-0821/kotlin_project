@@ -317,6 +317,29 @@ MySQL服务器才能应用WHERE子句，这时已经无法避免锁定行，Inno
 那么就浪费了很多工作。2，按顺序访问范围数据是很快的，有两个原因，第一，顺序I／O不需要多次磁盘寻道，所以比随机I／O快很多；第二，如果服务器能按照需要
 顺序读取数据，那么就不用额外的排序操作，并且GROUP BY查询也无须再做排序和将行按组进行聚合计算。3，索引覆盖查询是很快的。
 
+### 索引失效的情况
+
+    1，查询条件使用不等式。
+        SELECT * FROM table_a WHERE key_a <> '1';
+    2，查询条件类型不一致。
+        SELECT * FROM table_a WHERE key_a = 1;  // 此时key_a 类型为字符串，传入的条件值为数字类型。
+    3，查询条件使用函数计算。
+        SELECT * FROM table_a WHERE key_a + 1 = 1;
+        SELECT * FROM table_a WHERE CHAR_LENGTH(key_a) = 1; // 函数计算会导致索引失效。
+    4，模糊查询
+        SELECT * FROM table_a WHERE key_a LIKE '3';
+    
+    // 对于复合索引 idx_keys(`key_a`, `key_b`, `key_c`)
+    5，复合索引使用不等式。
+        SELECT * FROM table_a WHERE key_a = '1' AND key_b = '2' AND key_c <> '3';  // 此时从key_c失效。
+    6，复合索引查询条件类型不同，从不同的列开始索引失效。
+        SELECT * FROM table_a WHERE key_a = '1' AND key_b = 2 AND key_c = '3';  // 此时从key_b开始，索引失效。
+    
+    7，单列索引不存储NULL值，复合索引不存储全为NULL的值。
+        SELECT * FROM table_a WHERE key_a IS NULL; // 使用IS NULL时，不会使用索引。
+    8，条件中有OR。
+        SELECT * FROM table_a WHERE key_a = '1' OR key_b = '2'; // 此时想索引生效需要OR条件中，每个列都加上索引。
+
 <h2 id="4">4.查询性能优化</h2>
 &emsp;&emsp; 通常查询的生命周期大致可以按照顺序来看：从客户端，到服务器，然后在服务器上进行解析，生成执行计划，执行，并返回结果给客户端。
 其中执行是整个生命周期中最重要的阶段，这其中包含了大量为了检索数据到存储引擎的调用，以及调用后的数据处理，包括排序、分组等。
