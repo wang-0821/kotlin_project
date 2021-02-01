@@ -8,6 +8,9 @@ ChannelHandler(childHandler、handler)。
 &emsp;&emsp; ServerBootstrap需要设置group，通常使用NioEventLoopGroup。在创建NioEventLoopGroup时，会创建一个EventExecutor数组(children)，
 数组大小默认为处理器的两倍。在使用NioEventLoopGroup时，EventExecutor数组中的元素都是NioEventLoop。
 
+### Server端流程
+&emsp;&emsp; Server端流程，涉及到：EventLoopGroup、Channel、EventLoop、ChannelHandler、ChannelFuture等。
+
 ### 1，创建并初始化Channel
 &emsp;&emsp; 先根据ServerBootstrap中配置的Channel，newInstance实例化一个Channel对象。然后初始化Channel对象，
 这一步会向Channel中设置options、attrs，向channelPipeline中添加handler。最后向channelPipeline中添加一个ChannelHandler(ServerBootstrapAcceptor)。
@@ -59,6 +62,31 @@ children数组的某个元素EventLoop(NioEventLoop)中注册该Channel。在注
                 }
             });
         ......
+
+&emsp;&emsp; 在注册Channel时，使用eventLoop.execute(Runnable)方法，如果是首次使用这个方法，那么在添加注册Channel任务之前会调用
+startExecution()方法，这个方法会异步执行NioEventLoop Runnable对象。最后在NioEventLoop run方法中执行了注册Channel的任务。
+
+    public void execute(Runnable task) {
+        if (task == null) {
+            throw new NullPointerException("task");
+        }
+
+        boolean inEventLoop = inEventLoop();
+        if (inEventLoop) {
+            addTask(task);
+        } else {
+            startExecution();
+            addTask(task);
+            if (isShutdown() && removeTask(task)) {
+                reject();
+            }
+        }
+
+        if (!addTaskWakesUp && wakesUpForTask(task)) {
+            wakeup(inEventLoop);
+        }
+    }
+
         
 &emsp;&emsp; register0(promise)，会使用channel中的SelectableChannel来注册当前NioEventLoop的Selector。并将NioServerSocketChannel
 作为attachment参数。注册完成后会产生一个SelectionKey作为当前NioServerSocketChannel.selectionKey的值。
@@ -133,6 +161,84 @@ fireChannelActive会最终调用Channel.doBeginRead()来处理SelectionKey。
     // 这里用Channel的closeFuture来阻塞线程。
     channelFuture.channel().closeFuture().sync()
     
+### 5，EventLoop Socket事件监听
+&emsp;&emsp; 在Netty中，使用EventLoop异步循环执行任务，对于EventLoop，在启动过程中，先后执行了：注册Channel、绑定端口。在完成启动后，
+会无限循环，监听SelectionKey事件。在NioEventLoop Runnable中，run()方法，会不断的监听并执行事件，在函数结尾会调用scheduleExecution()
+函数，这个函数会提交任务到ForkJoinPool中，而提交的任务就是这个NioEventLoop Runnable，因此实际上实现了无限循环事件监听。
+group只会监听连接，当有新的连接创建时，group会将任务交给childGroup来处理。Netty可以通过设置group、childGroup，使用主从多线程模型。
+
+    protected void run() {
+        boolean oldWakenUp = wakenUp.getAndSet(false);
+        try {
+            if (hasTasks()) {
+                selectNow();
+            } else {
+                select(oldWakenUp);
+                if (wakenUp.get()) {
+                    selector.wakeup();
+                }
+            }
+
+            cancelledKeys = 0;
+            needsToSelectAgain = false;
+            final int ioRatio = this.ioRatio;
+            if (ioRatio == 100) {
+                processSelectedKeys();
+                runAllTasks();
+            } else {
+                final long ioStartTime = System.nanoTime();
+
+                processSelectedKeys();
+
+                final long ioTime = System.nanoTime() - ioStartTime;
+                runAllTasks(ioTime * (100 - ioRatio) / ioRatio);
+            }
+
+            if (isShuttingDown()) {
+                closeAll();
+                if (confirmShutdown()) {
+                    cleanupAndTerminate(true);
+                    return;
+                }
+            }
+        } catch (Throwable t) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                // Ignore.
+            }
+        }
+
+        scheduleExecution();
+    }
+
+### 6，数据读取
+&emsp;&emsp; group的EventLoop在获取到SelectionKey事件后，会将事件转交给childGroup的EventLoop处理，childGroup也会进行注册Channel，
+childGroup使用NioSocketChannel，使用config.getAllocator()来获取ByteBufAllocator，可以通过配置来自定义ByteBufAllocator，
+config.getRecvByteBufAllocator()也可以用来自定义RecvByteBufAllocator，最终通过RecvByteBufAllocator.Handle + ByteBufAllocator
+来构建读取数据的ByteBuf。 
+
+    final ChannelPipeline pipeline = pipeline();
+    final ByteBufAllocator allocator = config.getAllocator();
+    final int maxMessagesPerRead = config.getMaxMessagesPerRead();
+    RecvByteBufAllocator.Handle allocHandle = recvBufAllocHandle();
+    
+    byteBuf = allocHandle.allocate(allocator);
+    int writable = byteBuf.writableBytes();
+    int localReadAmount = doReadBytes(byteBuf);
+    
+    pipeline.fireChannelRead(byteBuf);
+    
+    ByteBufAllocator + RecvByteBufAllocator.Handle -> ByteBuf
+    
+&emsp;&emsp; config可以配置maxMessagesPerRead，表示每次读取最多能读取的次数，超过次数会丢弃数据。每次读取都会调用fireChannelRead(ByteBuf),
+在读取数据完毕后，会调用fireChannelReadComplete()。
+    
+    fireChannelRead(ByteBuf) ---> channelRead(ChannelHandlerContext ctx, Object msg)
+    fireChannelReadComplete() ---> channelReadComplete(ChannelHandlerContext ctx)
+
+### Netty 关系图
+
     ServerBootstrap --------> EventLoopGroup group、childGroup (NioEventLoopGroup) -------> EventExecutor[] children(NioEventLoop)
                        包含                               包含                        包含
                        
@@ -148,11 +254,15 @@ fireChannelActive会最终调用Channel.doBeginRead()来处理SelectionKey。
     
     // Channel中包含一个eventLoop属性，这个属性包含了一个EventLoop，即上面NioEventLoopGroup中的某个EventExecutor。
     Channel ----> eventLoop (PausableChannelEventLoop) -----> EventLoop
-            包含                                         包含
+       |    包含                                         包含      |
+       |                                                          |
+       V 包含                                                      V 包含
+    SelectionKey                                               Selector
+    
+    SelectionKey ServerSocketChannelImple.register(Selector, 0, Channel)   
             
     ChannelPromise -----> Channel
            |        包含
            | 包含
            V
      EventExecutor(NioEventLoop) 
-     

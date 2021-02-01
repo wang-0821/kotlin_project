@@ -13,7 +13,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
  */
 class DiscardServer {
     fun run() {
-        val bossGroup = NioEventLoopGroup()
+        val bossGroup = NioEventLoopGroup(1)
         val workerGroup = NioEventLoopGroup()
         try {
             val serverBootstrap = ServerBootstrap()
