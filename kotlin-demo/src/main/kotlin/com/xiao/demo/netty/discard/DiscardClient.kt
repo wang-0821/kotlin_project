@@ -10,7 +10,7 @@ import io.netty.channel.socket.nio.NioSocketChannel
  *
  * @author lix wang
  */
-class DiscardClient  {
+class DiscardClient {
     fun run() {
         val group = NioEventLoopGroup()
         try {
