@@ -2,7 +2,7 @@ package com.xiao.redis.lock
 
 import com.xiao.redis.client.RedisHelper
 import com.xiao.redis.client.service.RedisService
-import kotlinx.coroutines.runBlocking
+import com.xiao.redis.utils.SharedRedisLock
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -27,7 +27,7 @@ class RedisLockTest {
         val redisLock = SharedRedisLock(KEY, "lockValue", redisService)
         try {
             redisLock.tryLock(Duration.ofSeconds(30))
-            Assertions.assertTrue(redisLock.isLocked)
+            Assertions.assertTrue(redisLock.isLocked())
         } finally {
             redisLock.unlock()
         }
@@ -43,8 +43,8 @@ class RedisLockTest {
             redisLock1.tryLock(duration)
             redisLock2.tryLock(duration)
 
-            Assertions.assertTrue(redisLock1.isLocked)
-            Assertions.assertFalse(redisLock2.isLocked)
+            Assertions.assertTrue(redisLock1.isLocked())
+            Assertions.assertFalse(redisLock2.isLocked())
         } finally {
             redisLock1.unlock()
             redisLock2.unlock()
@@ -59,72 +59,13 @@ class RedisLockTest {
 
         try {
             redisLock1.tryLock(duration)
-            Assertions.assertTrue(redisLock1.isLocked)
-            Assertions.assertFalse(redisLock2.isLocked)
+            Assertions.assertTrue(redisLock1.isLocked())
+            Assertions.assertFalse(redisLock2.isLocked())
 
             redisLock1.unlock()
             redisLock2.tryLock(duration)
-            Assertions.assertFalse(redisLock1.isLocked)
-            Assertions.assertTrue(redisLock2.isLocked)
-        } finally {
-            redisLock1.unlock()
-            redisLock2.unlock()
-        }
-    }
-
-    @Test
-    fun `test try redis lock with retry`() {
-        val redisLock1 = SharedRedisLock(KEY, "lockValue1", redisService)
-        val redisLock2 = SharedRedisLock(KEY, "lockValue2", redisService)
-
-        try {
-            redisLock1.tryLock(Duration.ofSeconds(2))
-            Assertions.assertTrue(redisLock1.isLocked)
-            Assertions.assertFalse(redisLock2.isLocked)
-
-            redisLock2.tryLockWithRetry(Duration.ofSeconds(2), 2, Duration.ofSeconds(2))
-            Assertions.assertTrue(redisLock2.isLocked)
-            Assertions.assertFalse(redisLock1.isLocked)
-        } finally {
-            redisLock1.unlock()
-            redisLock2.unlock()
-        }
-    }
-
-    @Test
-    fun `test try redis lock with retry failed`() {
-        val redisLock1 = SharedRedisLock(KEY, "lockValue1", redisService)
-        val redisLock2 = SharedRedisLock(KEY, "lockValue2", redisService)
-
-        try {
-            redisLock1.tryLock(Duration.ofSeconds(10))
-            Assertions.assertTrue(redisLock1.isLocked)
-            Assertions.assertFalse(redisLock2.isLocked)
-
-            redisLock2.tryLockWithRetry(Duration.ofSeconds(2), 2, Duration.ofSeconds(2))
-            Assertions.assertTrue(redisLock1.isLocked)
-            Assertions.assertFalse(redisLock2.isLocked)
-        } finally {
-            redisLock1.unlock()
-            redisLock2.unlock()
-        }
-    }
-
-    @Test
-    fun `test try redis lock with retry use coroutine`() {
-        val redisLock1 = SharedRedisLock(KEY, "lockValue1", redisService)
-        val redisLock2 = SharedRedisLock(KEY, "lockValue2", redisService)
-
-        try {
-            redisLock1.tryLock(Duration.ofSeconds(3))
-            Assertions.assertTrue(redisLock1.isLocked)
-            Assertions.assertFalse(redisLock2.isLocked)
-
-            runBlocking {
-                redisLock2.tryLockWithRetrySuspend(Duration.ofSeconds(2), 2, Duration.ofSeconds(2))
-            }
-            Assertions.assertTrue(redisLock2.isLocked)
-            Assertions.assertFalse(redisLock1.isLocked)
+            Assertions.assertFalse(redisLock1.isLocked())
+            Assertions.assertTrue(redisLock2.isLocked())
         } finally {
             redisLock1.unlock()
             redisLock2.unlock()

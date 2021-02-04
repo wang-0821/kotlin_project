@@ -1,96 +1,86 @@
 package com.xiao.base.executor
 
-import com.xiao.base.executor.QueueItemHelper.getQueueItem
-import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.Future
-import java.util.concurrent.FutureTask
 import java.util.concurrent.locks.ReentrantLock
 
 /**
  *
  * @author lix wang
  */
-class ExecutionQueue {
-    private val executorService: ExecutorService
-    private val executionQueueName: String
+class ExecutionQueue : BaseExecutor {
     private val lock = ReentrantLock()
+    private val queueIsFull = lock.newCondition()
+    private val taskMaxCount: Int
+    private var taskCount = 0
 
-    constructor(executionQueueName: String, executorService: ExecutorService) {
-        this.executionQueueName = executionQueueName
-        this.executorService = executorService
+    constructor(
+        executionQueueName: String,
+        executorService: ExecutorService,
+        taskMaxCount: Int = Int.MAX_VALUE
+    ) : super(executionQueueName, executorService) {
+        check(taskMaxCount > 0)
+        this.taskMaxCount = taskMaxCount
     }
 
-    fun <T : Any?> submit(taskName: String?, callable: Callable<T>): Future<T> {
-        val name = if (taskName.isNullOrBlank()) {
-            "Queue-Callable"
-        } else {
-            taskName
+    fun <T : Any?> submit(taskName: String, task: () -> T): CompletableFuture<T> {
+        val queueItem = getQueueItem(taskName, task)
+        return submitQueueItem(queueItem)
+    }
+
+    fun <T : Any?> submit(task: () -> T): CompletableFuture<T> {
+        val queueItem = getQueueItem(null, task)
+        return submitQueueItem(queueItem)
+    }
+
+    override fun taskCount(): Int {
+        return taskCount
+    }
+
+    override fun taskCapacity(): Int {
+        return taskMaxCount
+    }
+
+    private fun <T : Any?> getQueueItem(name: String?, task: () -> T): QueueItem<T> {
+        return object : QueueItem<T>(name ?: "") {
+            override fun execute(): T {
+                return task()
+            }
         }
-        return submitCallable(getQueueItem(name, callable))
     }
 
-    fun <T : Any?> submit(queueItem: QueueItem<T>): Future<T> {
-        return submitCallable(queueItem)
-    }
-
-    fun <T : Any?> submit(callable: Callable<T>): Future<T> {
-        return submit(null, callable)
-    }
-
-    fun submit(taskName: String?, runnable: Runnable) {
-        val name = if (taskName.isNullOrBlank()) {
-            "Queue-Runnable"
-        } else {
-            taskName
-        }
-        submitRunnable(name) { getQueueItem(name, runnable).call() }
-    }
-
-    fun submit(runnable: Runnable) {
-        submit(null, runnable)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    fun <T : Any?> async(taskName: String?, callable: Callable<T>): CompletableFuture<T> {
-        val name = if (taskName.isNullOrBlank()) {
-            "Queue-Async"
-        } else taskName
-        val result = CompletableFuture<Any?>()
-        val queueItem = getQueueItem(name, callable) as QueueItem<Any?>
-        submitRunnable(name, CompletableCallback({ queueItem.call() }, result, null))
-        return result as CompletableFuture<T>
-    }
-
-    fun <T : Any?> async(callable: Callable<T>): CompletableFuture<T> {
-        return async(null, callable)
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun <T : Any?> submitCallable(queueItem: QueueItem<T>): Future<T> {
+    private fun <T : Any?> submitQueueItem(queueItem: QueueItem<T>): CompletableFuture<T> {
         lock.lock()
         try {
-            val future = FutureTask(queueItem)
-            executorService.execute(future)
-            return future
+            if (taskCount >= taskMaxCount) {
+                queueIsFull.await()
+            }
+
+            val completableFuture = execute { queueItem.call() }
+                .apply {
+                    whenComplete { _, _ ->
+                        consumeTask()
+                    }
+                }
+
+            taskCount++
+            return completableFuture
         } catch (e: Exception) {
             throw IllegalStateException(
-                "Submit task ${queueItem.name} to $executionQueueName ExecutionQueue failed. ${e.message}"
+                "Submit task ${queueItem.name} to $name ExecutionQueue failed. ${e.message}"
             )
         } finally {
             lock.unlock()
         }
     }
 
-    private fun submitRunnable(name: String, runnable: Runnable) {
+    private fun consumeTask() {
         lock.lock()
         try {
-            executorService.execute(runnable)
-        } catch (e: Exception) {
-            throw IllegalStateException(
-                "Submit task $name to $executionQueueName ExecutionQueue failed. ${e.message}"
-            )
+            taskCount--
+            if (taskCount < taskMaxCount) {
+                queueIsFull.signalAll()
+            }
         } finally {
             lock.unlock()
         }
