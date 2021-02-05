@@ -1,5 +1,4 @@
-import com.xiao.base.executor.AsyncUtil
-import com.xiao.base.util.awaitNanos
+import com.xiao.base.util.ThreadUtils
 import com.xiao.rpc.Rpc
 import com.xiao.rpc.util.UrlParser
 import kotlinx.coroutines.launch
@@ -30,7 +29,7 @@ class RpcTest {
 
     @Test
     fun `test rpc coroutine`() {
-        val job = AsyncUtil.coroutineScope.launch {
+        val job = ThreadUtils.coroutineScope.launch {
             val completableDeferred = Rpc.deferred("GetBaiduDeferred", request)
             val result = completableDeferred.awaitNanos()
             assertEquals(result.status, 200)

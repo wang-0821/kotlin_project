@@ -1,10 +1,8 @@
-package com.xiao.redis.lock
+package com.xiao.redis.utils
 
 import com.xiao.base.CommonConstants
 import com.xiao.base.logging.Logging
-import com.xiao.base.util.ThreadUtils
 import com.xiao.redis.client.service.RedisService
-import kotlinx.coroutines.delay
 import java.time.Duration
 
 /**
@@ -15,22 +13,17 @@ class SharedRedisLock(
     private val lockName: String,
     private val lockValue: String,
     private val redisService: RedisService
-) {
-    val isLocked: Boolean
-        get() {
-            return redisService.get(lockName) == lockValue
-        }
-
-    fun tryLock(duration: Duration): Boolean {
+) : RedisLock {
+    override fun tryLock(expire: Duration): Boolean {
         try {
             val value = redisService.get(lockName)
             if (value == null) {
-                return CommonConstants.STATUS_OK == redisService.setex(lockName, duration.seconds, lockValue)
+                return CommonConstants.STATUS_OK == redisService.setex(lockName, expire.seconds, lockValue)
             } else {
                 if (value != lockName) {
                     return false
                 } else {
-                    redisService.expire(lockName, duration.seconds)
+                    redisService.expire(lockName, expire.seconds)
                     if (redisService.get(lockName) != lockValue) {
                         return false
                     }
@@ -43,31 +36,24 @@ class SharedRedisLock(
         }
     }
 
-    fun tryLockWithRetry(expireDuration: Duration, retryTimes: Int, retryDuration: Duration): Boolean {
-        for (i in 1..retryTimes + 1) {
-            if (tryLock(expireDuration)) {
+    override fun tryLock(expire: Duration, waitTimeout: Duration): Boolean {
+        val deadline = System.nanoTime() + waitTimeout.toNanos()
+        while (true) {
+            if (tryLock(expire)) {
                 return true
-            }
-            if (i <= retryTimes) {
-                ThreadUtils.safeSleep(retryDuration.toMillis())
+            } else {
+                if (System.nanoTime() >= deadline) {
+                    return false
+                }
             }
         }
-        return false
     }
 
-    suspend fun tryLockWithRetrySuspend(expireDuration: Duration, retryTimes: Int, retryDuration: Duration): Boolean {
-        for (i in 1..retryTimes + 1) {
-            if (tryLock(expireDuration)) {
-                return true
-            }
-            if (i <= retryTimes) {
-                delay(retryDuration.toMillis())
-            }
-        }
-        return false
+    override fun isLocked(): Boolean {
+        return redisService.get(lockName) == lockValue
     }
 
-    fun unlock(): Boolean {
+    override fun unlock(): Boolean {
         return try {
             if (redisService.get(lockName) != lockValue) {
                 false

@@ -1,45 +1,41 @@
 package com.xiao.base.util
 
 import com.xiao.base.executor.CompletableCallback
+import com.xiao.base.executor.SafeCompletableDeferred
+import com.xiao.base.executor.SafeDeferred
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
-import java.util.concurrent.Callable
-import java.util.concurrent.TimeUnit
 
 /**
  *
  * @author lix wang
  */
 @Suppress("UNCHECKED_CAST")
-fun <T : Any?> CoroutineScope.deferred(callable: Callable<T>): CompletableDeferred<T> {
-    val result = CompletableDeferred<Any?>()
-    launch {
-        CompletableCallback({ callable.call() }, null, result).run()
+fun <T : Any?> CoroutineScope.deferred(block: () -> T): SafeDeferred<T> {
+    val deferred = CompletableDeferred<T>()
+    val result = SafeCompletableDeferred(deferred)
+    val job = launch {
+        CompletableCallback(block, null, deferred as CompletableDeferred<Any?>).run()
     }
-    return result as CompletableDeferred<T>
+    result.putJob(job)
+    return result
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <T : Any?> CoroutineScope.deferred(block: suspend () -> T): CompletableDeferred<T> {
-    val result = CompletableDeferred<Any?>()
-    launch {
-        CompletableCallback({ callSuspend { block() } }, null, result).run()
+fun <T : Any?> CoroutineScope.deferredSuspend(block: suspend () -> T): SafeDeferred<T> {
+    val deferred = CompletableDeferred<T>()
+    val result = SafeCompletableDeferred(deferred)
+    val job = launch {
+        CompletableCallback({ callSuspend { block() } }, null, deferred as CompletableDeferred<Any?>).run()
     }
-    return result as CompletableDeferred<T>
+    result.putJob(job)
+    return result
 }
 
-fun <T : Any?> CoroutineScope.callSuspend(block: suspend () -> T): T {
+private fun <T : Any?> CoroutineScope.callSuspend(block: suspend () -> T): T {
     return runBlocking(this.coroutineContext) {
         block()
-    }
-}
-
-suspend fun <T> Deferred<T>.awaitNanos(timeout: Long = 60000, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): T {
-    return withTimeout(timeUnit.toMillis(timeout)) {
-        this@awaitNanos.await()
     }
 }

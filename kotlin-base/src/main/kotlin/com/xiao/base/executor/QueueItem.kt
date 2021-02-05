@@ -7,9 +7,8 @@ import java.util.concurrent.Callable
  *
  * @author lix wang
  */
-abstract class QueueItem<T>(val name: String) : Callable<T> {
-    private val maxRetryTimes = 3
-    private var retryTimes = 0
+abstract class QueueItem<T>(val name: String, private val maxRetryTimes: Int = 2) : Callable<T> {
+    private var retriedTimes = 0
 
     override fun call(): T {
         val startTime = System.currentTimeMillis()
@@ -19,7 +18,9 @@ abstract class QueueItem<T>(val name: String) : Callable<T> {
             log.error("Task-$name execute failed. ${e.message}", e)
             retry()
         }
-        log.info("Task-$name succeed, retried $retryTimes times, consume ${System.currentTimeMillis() - startTime} ms.")
+        log.info(
+            "Task-$name succeed, retried $retriedTimes times, consume ${System.currentTimeMillis() - startTime} ms."
+        )
         return result
     }
 
@@ -27,15 +28,17 @@ abstract class QueueItem<T>(val name: String) : Callable<T> {
 
     private fun retry(): T {
         val startTime = System.currentTimeMillis()
-        for (i in 1..maxRetryTimes) {
-            retryTimes++
+        for (i in 1..maxRetryTimes + 1) {
+            retriedTimes++
             try {
                 return execute()
             } catch (e: Exception) {
-                log.error("Task-$name retry-$retryTimes failed. ${e.message}", e)
+                log.error("Task-$name retry-$retriedTimes failed. ${e.message}", e)
             }
         }
-        log.error("Task-$name failed, retried $retryTimes times, consume ${System.currentTimeMillis() - startTime} ms.")
+        log.error(
+            "Task-$name failed, retried $retriedTimes times, consume ${System.currentTimeMillis() - startTime} ms."
+        )
         throw RuntimeException("Task-$name failed.")
     }
 
