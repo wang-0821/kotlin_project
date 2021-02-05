@@ -10,7 +10,7 @@ import java.util.concurrent.ExecutorService
 @Suppress("unused")
 abstract class BaseExecutor(
     val name: String,
-    val executorService: ExecutorService
+    private val executorService: ExecutorService
 ) : ExecutorMonitor {
     @Suppress("UNCHECKED_CAST")
     open fun <T : Any?> execute(task: () -> T): CompletableFuture<T> {

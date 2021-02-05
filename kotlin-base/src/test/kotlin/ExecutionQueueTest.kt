@@ -1,6 +1,5 @@
 import com.xiao.base.executor.ExecutionQueue
 import com.xiao.base.util.ThreadUtils
-import com.xiao.base.util.awaitNanos
 import com.xiao.base.util.deferredSuspend
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -47,7 +46,7 @@ class ExecutionQueueTest {
     fun `test coroutine scope`() {
         val job = ThreadUtils.coroutineScope.launch {
             val list = mutableListOf<Int>()
-            val completableDeferred = deferredSuspend {
+            val safeDeferred = deferredSuspend {
                 async {
                     delay(300)
                     list.add(1)
@@ -59,7 +58,7 @@ class ExecutionQueueTest {
                 delay(500)
                 list
             }
-            Assertions.assertEquals(listOf(3, 2, 1), completableDeferred.awaitNanos())
+            Assertions.assertEquals(listOf(3, 2, 1), safeDeferred.awaitNanos())
         }
         while (true) {
             if (job.isCompleted) {

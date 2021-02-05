@@ -1,6 +1,6 @@
 package com.xiao.base.util
 
-import com.xiao.base.executor.ExecutorServiceFactory
+import com.xiao.base.executor.DefaultExecutorServiceFactory
 import com.xiao.base.logging.Logging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
@@ -11,7 +11,7 @@ import kotlin.coroutines.CoroutineContext
  * @author lix wang
  */
 object ThreadUtils : Logging() {
-    val DEFAULT_EXECUTOR = ExecutorServiceFactory.newThreadPoolExecutor(8)
+    val DEFAULT_EXECUTOR = DefaultExecutorServiceFactory.newExecutorService(8)
 
     @JvmField
     val coroutineScope: CoroutineScope = object : CoroutineScope {
@@ -26,7 +26,7 @@ object ThreadUtils : Logging() {
             true
         } catch (e: Exception) {
             Thread.currentThread().interrupt()
-            ThreadUtils.log.error("Thread sleep failed, ${e.message}.", e)
+            log.error("Thread sleep failed, ${e.message}.", e)
             false
         }
     }

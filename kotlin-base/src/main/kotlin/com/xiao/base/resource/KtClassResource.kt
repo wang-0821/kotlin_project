@@ -7,4 +7,4 @@ import kotlin.reflect.KClass
  *
  * @author lix wang
  */
-class KtClassResource(val file: File, val path: String, val clazz: KClass<*>)
+data class KtClassResource(val file: File, val path: String, val clazz: KClass<*>)

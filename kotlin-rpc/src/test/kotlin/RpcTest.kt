@@ -1,5 +1,4 @@
 import com.xiao.base.util.ThreadUtils
-import com.xiao.base.util.awaitNanos
 import com.xiao.rpc.Rpc
 import com.xiao.rpc.util.UrlParser
 import kotlinx.coroutines.launch

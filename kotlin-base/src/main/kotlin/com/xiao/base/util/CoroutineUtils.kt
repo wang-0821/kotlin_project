@@ -14,9 +14,10 @@ import kotlinx.coroutines.runBlocking
  */
 @Suppress("UNCHECKED_CAST")
 fun <T : Any?> CoroutineScope.deferred(block: () -> T): SafeDeferred<T> {
-    val result = SafeCompletableDeferred<T>()
+    val deferred = CompletableDeferred<T>()
+    val result = SafeCompletableDeferred(deferred)
     val job = launch {
-        CompletableCallback(block, null, result as CompletableDeferred<Any?>).run()
+        CompletableCallback(block, null, deferred as CompletableDeferred<Any?>).run()
     }
     result.putJob(job)
     return result
@@ -24,9 +25,10 @@ fun <T : Any?> CoroutineScope.deferred(block: () -> T): SafeDeferred<T> {
 
 @Suppress("UNCHECKED_CAST")
 fun <T : Any?> CoroutineScope.deferredSuspend(block: suspend () -> T): SafeDeferred<T> {
-    val result = SafeCompletableDeferred<T>()
+    val deferred = CompletableDeferred<T>()
+    val result = SafeCompletableDeferred(deferred)
     val job = launch {
-        CompletableCallback({ callSuspend { block() } }, null, result as CompletableDeferred<Any?>).run()
+        CompletableCallback({ callSuspend { block() } }, null, deferred as CompletableDeferred<Any?>).run()
     }
     result.putJob(job)
     return result

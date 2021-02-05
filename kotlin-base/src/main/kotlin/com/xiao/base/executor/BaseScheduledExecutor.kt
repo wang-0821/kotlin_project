@@ -1,6 +1,7 @@
 package com.xiao.base.executor
 
 import java.time.Duration
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -9,6 +10,7 @@ import java.util.concurrent.TimeUnit
  *
  * @author lix wang
  */
+@Suppress("unused")
 abstract class BaseScheduledExecutor(
     val name: String,
     private val scheduledExecutorService: ScheduledExecutorService
@@ -17,13 +19,20 @@ abstract class BaseScheduledExecutor(
      * Execute once when delay end.
      */
     open fun <T : Any?> schedule(
-        delay: Duration, command: () -> T
-    ): ScheduledFuture<T> {
-        return scheduledExecutorService.schedule(
-            command,
+        delay: Duration,
+        command: () -> T
+    ): SafeScheduledFuture<T> {
+        val safeScheduledFuture = SafeScheduledFuture<T>()
+        val future = scheduledExecutorService.schedule(
+            toRunnable(command, safeScheduledFuture),
             delay.toNanos(),
             TimeUnit.NANOSECONDS
         )
+
+        return safeScheduledFuture
+            .apply {
+                putFuture(future)
+            }
     }
 
     /**
@@ -34,13 +43,19 @@ abstract class BaseScheduledExecutor(
         initialDelay: Duration,
         period: Duration,
         command: () -> Unit
-    ): ScheduledFuture<Unit> {
-        return scheduledExecutorService.scheduleAtFixedRate(
-            command,
+    ): SafeScheduledFuture<Unit> {
+        val safeScheduledFuture = SafeScheduledFuture<Unit>()
+        val future = scheduledExecutorService.scheduleAtFixedRate(
+            toRunnable(command, safeScheduledFuture),
             initialDelay.toNanos(),
             period.toNanos(),
             TimeUnit.NANOSECONDS
         ) as ScheduledFuture<Unit>
+
+        return safeScheduledFuture
+            .apply {
+                putFuture(future)
+            }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -48,13 +63,19 @@ abstract class BaseScheduledExecutor(
         initialDelay: Duration,
         delay: Duration,
         command: () -> Unit
-    ): ScheduledFuture<Unit> {
-        return scheduledExecutorService.scheduleWithFixedDelay(
-            command,
+    ): SafeScheduledFuture<Unit> {
+        val safeScheduledFuture = SafeScheduledFuture<Unit>()
+        val future = scheduledExecutorService.scheduleWithFixedDelay(
+            toRunnable(command, safeScheduledFuture),
             initialDelay.toNanos(),
             delay.toNanos(),
             TimeUnit.NANOSECONDS
         ) as ScheduledFuture<Unit>
+
+        return safeScheduledFuture
+            .apply {
+                putFuture(future)
+            }
     }
 
     open fun shutdown() {
@@ -67,5 +88,21 @@ abstract class BaseScheduledExecutor(
 
     open fun isShutdown(): Boolean {
         return scheduledExecutorService.isShutdown
+    }
+
+    override fun taskCount(): Int {
+        return -1
+    }
+
+    override fun taskCapacity(): Int {
+        return -1
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T : Any?> toRunnable(
+        command: () -> T,
+        future: CompletableFuture<T>
+    ): Runnable {
+        return CompletableCallback(command, future as CompletableFuture<Any?>, null)
     }
 }

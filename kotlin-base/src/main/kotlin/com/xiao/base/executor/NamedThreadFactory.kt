@@ -14,6 +14,7 @@ class NamedThreadFactory : ThreadFactory {
     private val name: String
     private val daemon: Boolean
 
+    @JvmOverloads
     constructor(name: String? = null, daemon: Boolean = true) {
         this.name = name ?: "KThread"
         this.daemon = daemon

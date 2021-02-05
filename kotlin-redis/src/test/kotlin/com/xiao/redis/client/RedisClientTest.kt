@@ -1,7 +1,6 @@
 package com.xiao.redis.client
 
 import com.xiao.base.CommonConstants
-import com.xiao.base.util.awaitNanos
 import io.lettuce.core.LettuceFutures
 import io.lettuce.core.codec.StringCodec
 import io.lettuce.core.output.ValueOutput

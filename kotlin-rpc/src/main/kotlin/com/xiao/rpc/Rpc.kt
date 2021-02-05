@@ -2,7 +2,7 @@ package com.xiao.rpc
 
 import com.xiao.base.executor.ExecutionQueue
 import com.xiao.base.executor.QueueItem
-import com.xiao.base.executor.SafeCompletableDeferred
+import com.xiao.base.executor.SafeDeferred
 import com.xiao.base.util.ThreadUtils
 import com.xiao.base.util.deferred
 import com.xiao.rpc.io.Request
@@ -41,7 +41,7 @@ object Rpc {
         name: String,
         request: Request,
         scope: CoroutineScope? = null
-    ): SafeCompletableDeferred<Response> {
+    ): SafeDeferred<Response> {
         return scope?.coroutineContext?.let {
             withContext(it) {
                 deferred {
