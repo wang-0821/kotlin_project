@@ -91,7 +91,6 @@ class RedisClientTest {
         val execResult = command.exec()
         Assertions.assertEquals(execResult.size(), 1)
         Assertions.assertEquals(execResult[0], CommonConstants.STATUS_OK)
-        println(execResult)
     }
 
     companion object {

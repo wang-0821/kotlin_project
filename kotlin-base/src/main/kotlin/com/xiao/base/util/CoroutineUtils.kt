@@ -1,12 +1,11 @@
 package com.xiao.base.util
 
-import com.xiao.base.executor.CompletableCallback
+import com.xiao.base.executor.CoroutineCompletableCallback
 import com.xiao.base.executor.SafeCompletableDeferred
 import com.xiao.base.executor.SafeDeferred
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 /**
  *
@@ -17,25 +16,19 @@ fun <T : Any?> CoroutineScope.deferred(block: () -> T): SafeDeferred<T> {
     val deferred = CompletableDeferred<T>()
     val result = SafeCompletableDeferred(deferred)
     val job = launch {
-        CompletableCallback(block, null, deferred as CompletableDeferred<Any?>).run()
+        CoroutineCompletableCallback(block, null, deferred as CompletableDeferred<Any?>).run()
     }
     result.putJob(job)
     return result
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <T : Any?> CoroutineScope.deferredSuspend(block: suspend () -> T): SafeDeferred<T> {
+fun <T : Any?> CoroutineScope.deferredSuspend(suspendBlock: suspend () -> T): SafeDeferred<T> {
     val deferred = CompletableDeferred<T>()
     val result = SafeCompletableDeferred(deferred)
     val job = launch {
-        CompletableCallback({ callSuspend { block() } }, null, deferred as CompletableDeferred<Any?>).run()
+        CoroutineCompletableCallback(null, suspendBlock, deferred as CompletableDeferred<Any?>).suspendRun()
     }
     result.putJob(job)
     return result
-}
-
-private fun <T : Any?> CoroutineScope.callSuspend(block: suspend () -> T): T {
-    return runBlocking(this.coroutineContext) {
-        block()
-    }
 }

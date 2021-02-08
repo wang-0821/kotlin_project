@@ -19,4 +19,6 @@ interface SafeDeferred<T : Any?> {
     fun getCompleted(): T
 
     val isCompleted: Boolean
+
+    val isCanceled: Boolean
 }

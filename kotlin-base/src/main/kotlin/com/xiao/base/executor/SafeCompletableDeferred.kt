@@ -33,7 +33,7 @@ class SafeCompletableDeferred<T : Any?>(
 
     override fun cancel(cause: CancellationException?) {
         job.cancel(cause)
-        deferred.cancel(cause)
+        deferred.cancel()
     }
 
     @ExperimentalCoroutinesApi
@@ -43,4 +43,7 @@ class SafeCompletableDeferred<T : Any?>(
 
     override val isCompleted: Boolean
         get() = deferred.isCompleted
+
+    override val isCanceled: Boolean
+        get() = job.isCancelled
 }

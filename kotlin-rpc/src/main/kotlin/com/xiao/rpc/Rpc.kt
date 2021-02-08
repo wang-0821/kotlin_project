@@ -1,7 +1,6 @@
 package com.xiao.rpc
 
 import com.xiao.base.executor.ExecutionQueue
-import com.xiao.base.executor.QueueItem
 import com.xiao.base.executor.SafeDeferred
 import com.xiao.base.util.ThreadUtils
 import com.xiao.base.util.deferred
@@ -25,52 +24,43 @@ object Rpc {
     var started = AtomicInteger(0)
 
     @JvmStatic
-    fun async(name: String, request: Request): CompletableFuture<Response> {
+    fun async(request: Request): CompletableFuture<Response> {
         return executionQueue.submit {
-            queueItem(name, request).call()
+            doRequest(request)
         }
     }
 
     @JvmStatic
-    fun sync(name: String, request: Request): Response {
-        return queueItem(name, request).call()
+    fun sync(request: Request): Response {
+        return doRequest(request)
     }
 
     @JvmOverloads
     suspend fun deferred(
-        name: String,
         request: Request,
         scope: CoroutineScope? = null
     ): SafeDeferred<Response> {
         return scope?.coroutineContext?.let {
             withContext(it) {
                 deferred {
-                    queueItem(name, request).call()
+                    doRequest(request)
                 }
             }
         } ?: kotlin.run {
             coroutineScope {
                 deferred {
-                    queueItem(name, request).call()
+                    doRequest(request)
                 }
             }
         }
     }
 
-    private fun queueItem(name: String, request: Request): QueueItem<Response> {
-        return object : QueueItem<Response>(name) {
-            override fun execute(): Response {
-                return client.newCall(request).execute()
-            }
-
-            override fun call(): Response {
-                started.getAndIncrement()
-                ThreadContext.put("X-RequestId", UUID.randomUUID().toString())
-                val result = super.call()
-                ThreadContext.clearMap()
-                started.getAndDecrement()
-                return result
-            }
-        }
+    private fun doRequest(request: Request): Response {
+        started.getAndIncrement()
+        ThreadContext.put("X-RequestId", UUID.randomUUID().toString())
+        val result = client.newCall(request).execute()
+        ThreadContext.clearMap()
+        started.getAndDecrement()
+        return result
     }
 }

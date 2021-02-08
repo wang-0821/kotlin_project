@@ -17,10 +17,12 @@ abstract class BaseExecutor(
         val completableFuture = SafeCompletableFuture<T>()
         val runnable = CompletableCallback(
             task,
-            completableFuture as CompletableFuture<Any?>,
-            null
+            completableFuture as CompletableFuture<Any?>
         )
-        completableFuture.putFuture(executorService.submit(runnable))
+        val future = executorService.submit {
+            runnable.run()
+        }
+        completableFuture.putFuture(future)
         return completableFuture
     }
 

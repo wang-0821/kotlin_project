@@ -43,7 +43,7 @@ class RedisDistributeScheduler : BaseScheduledExecutor {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> schedule(delay: Duration, command: () -> T): SafeScheduledFuture<T> {
-        return execSchedule {
+        return execWithLock {
             val task = ScheduledTask(command, taskTimeout, false)
             val future = super.schedule(delay) {
                 task.call()
@@ -54,7 +54,7 @@ class RedisDistributeScheduler : BaseScheduledExecutor {
                 taskFutures.remove(task)
             }
 
-            return@execSchedule future
+            return@execWithLock future
         }
     }
 
@@ -63,7 +63,7 @@ class RedisDistributeScheduler : BaseScheduledExecutor {
         period: Duration,
         command: () -> Unit
     ): SafeScheduledFuture<Unit> {
-        return execSchedule {
+        return execWithLock {
             val task = ScheduledTask(command, taskTimeout, true)
             val future = super.scheduleAtFixedRate(initialDelay, period) {
                 task.call()
@@ -74,7 +74,7 @@ class RedisDistributeScheduler : BaseScheduledExecutor {
                 taskFutures.remove(task)
             }
 
-            return@execSchedule future
+            return@execWithLock future
         }
     }
 
@@ -83,7 +83,7 @@ class RedisDistributeScheduler : BaseScheduledExecutor {
         delay: Duration,
         command: () -> Unit
     ): SafeScheduledFuture<Unit> {
-        return execSchedule {
+        return execWithLock {
             val task = ScheduledTask(command, taskTimeout, true)
             val future = super.scheduleWithFixedDelay(initialDelay, delay) {
                 task.call()
@@ -94,7 +94,7 @@ class RedisDistributeScheduler : BaseScheduledExecutor {
                 taskFutures.remove(task)
             }
 
-            return@execSchedule future
+            return@execWithLock future
         }
     }
 
@@ -127,7 +127,7 @@ class RedisDistributeScheduler : BaseScheduledExecutor {
         lockHolderFutures.clear()
     }
 
-    private fun <T : Any?> execSchedule(block: () -> SafeScheduledFuture<T>): SafeScheduledFuture<T> {
+    private fun <T : Any?> execWithLock(block: () -> SafeScheduledFuture<T>): SafeScheduledFuture<T> {
         lock.lock()
         try {
             if (taskCount >= taskMaxCount) {

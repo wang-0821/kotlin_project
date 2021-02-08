@@ -103,6 +103,6 @@ abstract class BaseScheduledExecutor(
         command: () -> T,
         future: CompletableFuture<T>
     ): Runnable {
-        return CompletableCallback(command, future as CompletableFuture<Any?>, null)
+        return Runnable { CompletableCallback(command, future as CompletableFuture<Any?>).run() }
     }
 }
