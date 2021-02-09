@@ -17,6 +17,14 @@ open class SafeCompletableFuture<T : Any?> : CompletableFuture<T>() {
         this.future = future
     }
 
+    /**
+     * If task is running and [mayInterruptIfRunning] is false, then won't really cancel task.
+     * If task is running and [mayInterruptIfRunning] is true, then will call [Thread.interrupt] end the task.
+     * [Thread.interrupt] will throws [InterruptedException] while thread is blocking(sleep, wait, join).
+     * [Thread.interrupt] will only set interrupted flag as true while thread is running, will not break thread.
+     *
+     * So, suggest call with [mayInterruptIfRunning] false.
+     */
     override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
         future.cancel(mayInterruptIfRunning)
         return super.cancel(mayInterruptIfRunning)

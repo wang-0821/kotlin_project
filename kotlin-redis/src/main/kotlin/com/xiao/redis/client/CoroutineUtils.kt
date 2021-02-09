@@ -1,6 +1,6 @@
 package com.xiao.redis.client
 
-import com.xiao.base.executor.CompletableCallback
+import com.xiao.base.executor.CoroutineCompletableCallback
 import com.xiao.base.executor.SafeCompletableDeferred
 import com.xiao.base.executor.SafeDeferred
 import io.lettuce.core.RedisFuture
@@ -18,7 +18,7 @@ suspend fun <T : Any?> RedisFuture<T>.suspend(): SafeDeferred<T> {
         throwable?.also {
             throw it
         }
-        CompletableCallback({ value }, null, deferred as CompletableDeferred<Any?>).run()
+        CoroutineCompletableCallback({ value }, null, deferred as CompletableDeferred<Any?>).run()
     }
     return result
 }

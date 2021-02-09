@@ -1,5 +1,6 @@
 package com.xiao.base.executor
 
+import com.xiao.base.logging.Logging
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.locks.ReentrantLock
@@ -24,15 +25,17 @@ class ExecutionQueue : BaseExecutor {
     }
 
     fun <T : Any?> submit(taskName: String, task: () -> T): CompletableFuture<T> {
-        val queueItem = getQueueItem(taskName, task)
-        return submitQueueItem(queueItem)
+        return submitTask(taskName, task)
     }
 
     fun <T : Any?> submit(task: () -> T): CompletableFuture<T> {
-        val queueItem = getQueueItem(null, task)
-        return submitQueueItem(queueItem)
+        return submitTask(null, task)
     }
 
+    /**
+     * If task is been canceled while mayInterruptIfRunning is false,
+     * [taskCount] will decrease but task is still running.
+     */
     override fun taskCount(): Int {
         return taskCount
     }
@@ -41,33 +44,32 @@ class ExecutionQueue : BaseExecutor {
         return taskMaxCount
     }
 
-    private fun <T : Any?> getQueueItem(name: String?, task: () -> T): QueueItem<T> {
-        return object : QueueItem<T>(name ?: "") {
-            override fun execute(): T {
-                return task()
-            }
-        }
-    }
-
-    private fun <T : Any?> submitQueueItem(queueItem: QueueItem<T>): CompletableFuture<T> {
+    private fun <T : Any?> submitTask(taskName: String?, task: () -> T): CompletableFuture<T> {
         lock.lock()
+        val realTaskName = taskName ?: ""
         try {
             if (taskCount >= taskMaxCount) {
                 queueIsFull.await()
             }
 
-            val completableFuture = execute { queueItem.call() }
-                .apply {
-                    whenComplete { _, _ ->
-                        consumeTask()
-                    }
+            val completableFuture = execute {
+                val startTime = System.currentTimeMillis()
+                val result = task()
+                if (log.isDebugEnabled) {
+                    log.info("Execute async task $realTaskName, consume ${System.currentTimeMillis() - startTime} ms.")
                 }
+                return@execute result
+            }.apply {
+                whenComplete { _, _ ->
+                    consumeTask()
+                }
+            }
 
             taskCount++
             return completableFuture
         } catch (e: Exception) {
             throw IllegalStateException(
-                "Submit task ${queueItem.name} to $name ExecutionQueue failed. ${e.message}"
+                "Submit task $realTaskName to $name ExecutionQueue failed. ${e.message}"
             )
         } finally {
             lock.unlock()
@@ -85,4 +87,6 @@ class ExecutionQueue : BaseExecutor {
             lock.unlock()
         }
     }
+
+    companion object : Logging()
 }

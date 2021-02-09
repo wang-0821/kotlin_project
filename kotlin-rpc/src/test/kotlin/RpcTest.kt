@@ -14,14 +14,14 @@ import java.util.concurrent.TimeUnit
 class RpcTest {
     @Test
     fun `test rpc sync`() {
-        val response = Rpc.sync("GetBaiduSync", request)
+        val response = Rpc.sync(request)
         assertEquals(response.status, 200)
         assertFalse(response.asString().isNullOrBlank())
     }
 
     @Test
     fun `test rpc future`() {
-        val future = Rpc.async("GetBaiduAsync", request)
+        val future = Rpc.async(request)
         val response = future.get(timeout, TimeUnit.MILLISECONDS)
         assertEquals(response.status, 200)
         assertFalse(response.asString().isNullOrBlank())
@@ -29,8 +29,8 @@ class RpcTest {
 
     @Test
     fun `test rpc coroutine`() {
-        val job = ThreadUtils.coroutineScope.launch {
-            val completableDeferred = Rpc.deferred("GetBaiduDeferred", request)
+        val job = ThreadUtils.DEFAULT_SCOPE.launch {
+            val completableDeferred = Rpc.deferred(request)
             val result = completableDeferred.awaitNanos()
             assertEquals(result.status, 200)
             assertFalse(result.asString().isNullOrBlank())

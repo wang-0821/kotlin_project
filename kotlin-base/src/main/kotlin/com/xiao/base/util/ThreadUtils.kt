@@ -11,10 +11,11 @@ import kotlin.coroutines.CoroutineContext
  * @author lix wang
  */
 object ThreadUtils : Logging() {
+    @JvmField
     val DEFAULT_EXECUTOR = DefaultExecutorServiceFactory.newExecutorService(8)
 
     @JvmField
-    val coroutineScope: CoroutineScope = object : CoroutineScope {
+    val DEFAULT_SCOPE: CoroutineScope = object : CoroutineScope {
         override val coroutineContext: CoroutineContext
             get() = DEFAULT_EXECUTOR.asCoroutineDispatcher()
     }
