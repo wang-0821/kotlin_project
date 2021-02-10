@@ -1,4 +1,4 @@
-package com.xiao.redis.client.schedule
+package com.xiao.redis.schedule
 
 import com.xiao.base.executor.BaseScheduledExecutor
 import com.xiao.base.executor.SafeScheduledFuture
@@ -10,17 +10,17 @@ import java.util.concurrent.locks.LockSupport
 import java.util.concurrent.locks.ReentrantLock
 
 /**
- * [RedisDistributeScheduler] 是分布式[ScheduledExecutorService]
+ * [RedisLockScheduler] 是分布式[ScheduledExecutorService]
  * 在异步任务执行过程中，会一直锁定分布式锁。
  *
  * @author lix wang
  */
-class RedisDistributeScheduler : BaseScheduledExecutor {
+class RedisLockScheduler : BaseScheduledExecutor {
     private var taskCount: Int = 0
     private val redisLock: RedisLock
     private val taskMaxCount: Int
     private val lockRetryDuration: Duration
-    private val taskTimeout: Duration?
+    private val waitLockTimeout: Duration?
     private val lock = ReentrantLock()
     private val isFullCondition = lock.newCondition()
     private val lockHolderFutures = mutableMapOf<ScheduledTask<*>, SafeScheduledFuture<*>>()
@@ -31,20 +31,20 @@ class RedisDistributeScheduler : BaseScheduledExecutor {
         name: String,
         redisLock: RedisLock,
         scheduledExecutorService: ScheduledExecutorService,
-        taskMaxCount: Int = Int.MAX_VALUE,
         redisRetryDuration: Duration = DEFAULT_LOCK_RETRY_DURATION,
-        taskTimeout: Duration? = DEFAULT_TASK_TIMEOUT
+        waitLockTimeout: Duration? = DEFAULT_TASK_TIMEOUT,
+        taskMaxCount: Int = Int.MAX_VALUE
     ) : super(name, scheduledExecutorService) {
         this.redisLock = redisLock
         this.lockRetryDuration = redisRetryDuration
-        this.taskTimeout = taskTimeout
+        this.waitLockTimeout = waitLockTimeout
         this.taskMaxCount = taskMaxCount
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> schedule(delay: Duration, command: () -> T): SafeScheduledFuture<T> {
         return execWithLock {
-            val task = ScheduledTask(command, taskTimeout, false)
+            val task = ScheduledTask(command, waitLockTimeout, false)
             val future = super.schedule(delay) {
                 task.call()
             }
@@ -64,7 +64,7 @@ class RedisDistributeScheduler : BaseScheduledExecutor {
         command: () -> Unit
     ): SafeScheduledFuture<Unit> {
         return execWithLock {
-            val task = ScheduledTask(command, taskTimeout, true)
+            val task = ScheduledTask(command, waitLockTimeout, true)
             val future = super.scheduleAtFixedRate(initialDelay, period) {
                 task.call()
             }
@@ -84,7 +84,7 @@ class RedisDistributeScheduler : BaseScheduledExecutor {
         command: () -> Unit
     ): SafeScheduledFuture<Unit> {
         return execWithLock {
-            val task = ScheduledTask(command, taskTimeout, true)
+            val task = ScheduledTask(command, waitLockTimeout, true)
             val future = super.scheduleWithFixedDelay(initialDelay, delay) {
                 task.call()
             }

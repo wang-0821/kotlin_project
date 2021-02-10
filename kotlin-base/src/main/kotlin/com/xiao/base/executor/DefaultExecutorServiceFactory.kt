@@ -45,6 +45,7 @@ object DefaultExecutorServiceFactory : ExecutorServiceFactory {
             NamedThreadFactory(threadName)
         ).apply {
             maximumPoolSize = threadCount
+            removeOnCancelPolicy = true
         }
     }
 }

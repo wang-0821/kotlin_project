@@ -19,7 +19,7 @@ class RedisLockTest {
 
     @BeforeAll
     fun setup() {
-        redisService = RedisHelper.getRedisService(REDIS_URL)
+        redisService = RedisHelper.getTestingRedisService()
     }
 
     @Test
@@ -73,7 +73,6 @@ class RedisLockTest {
     }
 
     companion object {
-        private const val REDIS_URL = "redis://localhost:6379"
         private const val KEY = "lockName"
     }
 }

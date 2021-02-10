@@ -36,6 +36,7 @@ class RedisClientTest {
     fun `test redis coroutine commands`() {
         runBlocking {
             val redisAsyncCommands = RedisHelper.getRedisAsyncService(REDIS_URL)
+            redisAsyncCommands.del()
             val setCompletableDeferred = redisAsyncCommands.set(KEY, VALUE).suspend()
             setCompletableDeferred.awaitNanos()
             val getCompletableDeferred = redisAsyncCommands.get(KEY).suspend()
