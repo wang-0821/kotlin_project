@@ -4,6 +4,10 @@ import com.xiao.redis.client.proxy.RedisAsyncServiceProxy
 import com.xiao.redis.client.proxy.RedisServiceProxy
 import com.xiao.redis.client.service.RedisAsyncService
 import com.xiao.redis.client.service.RedisService
+import com.xiao.redis.client.testing.TestingRedisAsyncService
+import com.xiao.redis.client.testing.TestingRedisAsyncServiceProxy
+import com.xiao.redis.client.testing.TestingRedisService
+import com.xiao.redis.client.testing.TestingRedisServiceProxy
 import io.lettuce.core.RedisClient
 import io.lettuce.core.RedisURI
 import io.lettuce.core.resource.DefaultClientResources
@@ -30,6 +34,24 @@ object RedisHelper {
             RedisAsyncService::class.java.classLoader,
             arrayOf(RedisAsyncService::class.java),
             RedisAsyncServiceProxy(RedisClient.create(clientResources, RedisURI.create(url)))
+        ) as RedisAsyncService
+    }
+
+    @JvmStatic
+    fun getTestingRedisService(): RedisService {
+        return Proxy.newProxyInstance(
+            TestingRedisService::class.java.classLoader,
+            arrayOf(TestingRedisService::class.java),
+            TestingRedisServiceProxy()
+        ) as RedisService
+    }
+
+    @JvmStatic
+    fun getTestingRedisAsyncService(): RedisAsyncService {
+        return Proxy.newProxyInstance(
+            TestingRedisAsyncService::class.java.classLoader,
+            arrayOf(TestingRedisAsyncService::class.java),
+            TestingRedisAsyncServiceProxy()
         ) as RedisAsyncService
     }
 

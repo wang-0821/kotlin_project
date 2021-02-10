@@ -3,4 +3,5 @@ dependencies {
     compile libs['kotlinx-coroutines-core']
     compile libs['disruptor']
     compile libs['log4j-slf4j-impl']
+    compile libs['joda-time']
 }

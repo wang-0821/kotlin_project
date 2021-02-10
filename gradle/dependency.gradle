@@ -15,7 +15,7 @@ ext {
             ktlint: '0.40.0',
             netty: '5.0.0.Alpha2',
             lettuce: '6.0.2.RELEASE',
-            quartz: '2.3.2'
+            jodaTime: '2.10.10'
     ]
 
     libs = [
@@ -28,8 +28,10 @@ ext {
             // kotlin coroutines
             "kotlinx-coroutines-core": "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version.kotlinx",
 
+            // tools
             // jackson
             "jackson-databind": "com.fasterxml.jackson.core:jackson-databind:$version.jackson",
+            "joda-time": "joda-time:joda-time:$version.jodaTime",
 
             // logging
             "slf4j-api": "org.slf4j:slf4j-api:$version.slf4j",
@@ -57,9 +59,6 @@ ext {
             "netty-handler": "io.netty:netty-handler:$version.netty",
 
             //redis client
-            "lettuce-core": "io.lettuce:lettuce-core:$version.lettuce",
-
-            // scheduled task executor
-            "quartz": "org.quartz-scheduler:quartz:$version.quartz"
+            "lettuce-core": "io.lettuce:lettuce-core:$version.lettuce"
     ]
 }

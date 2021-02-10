@@ -1,10 +1,7 @@
-package com.xiao.redis.client.schedule
+package com.xiao.redis.schedule
 
 import com.xiao.base.executor.BaseScheduledExecutor
 import com.xiao.base.executor.DefaultExecutorServiceFactory
-import com.xiao.redis.client.RedisHelper
-import com.xiao.redis.utils.RedisLock
-import com.xiao.redis.utils.SharedRedisLock
 import java.time.Duration
 import java.util.concurrent.ScheduledExecutorService
 
@@ -15,16 +12,13 @@ import java.util.concurrent.ScheduledExecutorService
 class PrintScheduledService : BaseScheduledExecutor {
     constructor(
         name: String,
-        redisLock: RedisLock,
         scheduledExecutorService: ScheduledExecutorService
     ) : super(name, scheduledExecutorService)
 }
 
 fun main() {
-    val redisService = RedisHelper.getRedisService("redis://localhost:6379")
-    val redisLock = SharedRedisLock("printLock", "lock", redisService)
     val scheduledExecutorService = DefaultExecutorServiceFactory.newScheduledExecutorService(1)
-    val printScheduledService = PrintScheduledService("PrintScheduledTask", redisLock, scheduledExecutorService)
+    val printScheduledService = PrintScheduledService("PrintScheduledTask", scheduledExecutorService)
 
     printScheduledService.schedule(Duration.ofSeconds(2)) {
         println("Hello world!")
