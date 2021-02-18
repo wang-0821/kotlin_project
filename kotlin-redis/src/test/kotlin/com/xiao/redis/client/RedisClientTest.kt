@@ -10,6 +10,7 @@ import io.lettuce.core.protocol.CommandType
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledIf
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit
  *
  * @author lix wang
  */
+@EnabledIf("redisConnected")
 class RedisClientTest {
     @Test
     fun `test redis sync commands`() {
@@ -36,7 +38,6 @@ class RedisClientTest {
     fun `test redis coroutine commands`() {
         runBlocking {
             val redisAsyncCommands = RedisHelper.getRedisAsyncService(REDIS_URL)
-            redisAsyncCommands.del()
             val setCompletableDeferred = redisAsyncCommands.set(KEY, VALUE).suspend()
             setCompletableDeferred.awaitNanos()
             val getCompletableDeferred = redisAsyncCommands.get(KEY).suspend()
@@ -98,5 +99,16 @@ class RedisClientTest {
         private const val REDIS_URL = "redis://localhost:6379"
         private const val KEY = "Hello"
         private const val VALUE = "world!"
+
+        @JvmStatic
+        @Suppress("unused")
+        fun redisConnected(): Boolean {
+            return try {
+                RedisHelper.getRedisService(REDIS_URL).statefulConnection
+                true
+            } catch (e: Exception) {
+                false
+            }
+        }
     }
 }

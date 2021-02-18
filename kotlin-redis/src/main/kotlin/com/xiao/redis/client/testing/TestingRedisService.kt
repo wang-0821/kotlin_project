@@ -31,6 +31,13 @@ class TestingRedisService : AbstractTestingRedisService() {
         return CommonConstants.STATUS_OK
     }
 
+    override fun expire(key: String?, seconds: Long): Boolean {
+        expireMap[key]?.let {
+            it.plusSeconds(seconds.toInt())
+        }
+        return true
+    }
+
     override fun del(vararg keys: String?): Long {
         var result = 0L
         keys.forEach {
@@ -44,10 +51,9 @@ class TestingRedisService : AbstractTestingRedisService() {
     }
 
     private fun isKeyExpired(key: String?): Boolean {
-        val expired = expireMap[key] != null && expireMap[key]!!.isAfterNow
+        val expired = expireMap[key] != null && expireMap[key]!!.isBeforeNow
         if (expired) {
-            map.remove(key)
-            expireMap.remove(key)
+            del(key)
         }
         return expired
     }

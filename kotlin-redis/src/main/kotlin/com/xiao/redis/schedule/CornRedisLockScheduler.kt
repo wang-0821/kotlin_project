@@ -20,11 +20,11 @@ abstract class CornRedisLockScheduler {
 
     fun start() {
         if (scheduledMethods.isEmpty()) {
-            throw IllegalStateException("No accessible methods annotated by ${ScheduledCorn::class.java.simpleName}.")
+            throw IllegalStateException("No accessible methods annotated by ${ScheduledTask::class.java.simpleName}.")
         }
 
         for (method in scheduledMethods) {
-            val scheduledCorn = method.getAnnotation(ScheduledCorn::class.java)
+            val scheduledCorn = method.getAnnotation(ScheduledTask::class.java)
             val initialMills: Long = if (scheduledCorn.initialTime.isBlank()) {
                 0
             } else {
@@ -68,7 +68,7 @@ abstract class CornRedisLockScheduler {
     private fun parseScheduledMethod(): List<Method> {
         return this::class.java.methods
             .filter {
-                it.getAnnotation(ScheduledCorn::class.java) != null &&
+                it.getAnnotation(ScheduledTask::class.java) != null &&
                     it.isAccessible &&
                     it.parameterCount == 0
             }
