@@ -41,6 +41,11 @@ class RedisLockScheduler : BaseScheduledExecutor {
         this.taskMaxCount = taskMaxCount
     }
 
+    /**
+     * [command] task will try lock first, once acquired lock, will hold lock till task finished.
+     * [command] task will use [scheduleAtFixedRate] to continually refresh lock expire time.
+     * [command] task will wait locked till timeout, will not skip task.
+     */
     @Suppress("UNCHECKED_CAST")
     override fun <T> schedule(delay: Duration, command: () -> T): SafeScheduledFuture<T> {
         return execWithLock {
@@ -58,6 +63,9 @@ class RedisLockScheduler : BaseScheduledExecutor {
         }
     }
 
+    /**
+     * [command] task will try lock with [scheduleAtFixedRate], if not locked, will skip task without waiting lock.
+     */
     override fun scheduleAtFixedRate(
         initialDelay: Duration,
         period: Duration,
@@ -78,6 +86,9 @@ class RedisLockScheduler : BaseScheduledExecutor {
         }
     }
 
+    /**
+     * [command] task will skip task without waiting lock, if task can not acquire lock.
+     */
     override fun scheduleWithFixedDelay(
         initialDelay: Duration,
         delay: Duration,
@@ -142,7 +153,7 @@ class RedisLockScheduler : BaseScheduledExecutor {
         }
     }
 
-    private fun tryLockAndHoldLock(task: ScheduledTask<*>): SafeScheduledFuture<Unit> {
+    private fun tryLockAndHold(task: ScheduledTask<*>): SafeScheduledFuture<Unit> {
         var future: SafeScheduledFuture<Unit>? = null
         try {
             // try lock
@@ -157,6 +168,11 @@ class RedisLockScheduler : BaseScheduledExecutor {
                     task.thread?.let {
                         LockSupport.unpark(it)
                     }
+                }
+            }.apply {
+                exceptionally {
+                    this.cancel(false)
+                    throw it
                 }
             }
 
@@ -197,7 +213,7 @@ class RedisLockScheduler : BaseScheduledExecutor {
         }
 
         override fun call(): T {
-            val lockHolderFuture = tryLockAndHoldLock(this)
+            val lockHolderFuture = tryLockAndHold(this)
             try {
                 if (!locked) {
                     if (allowSkip) {
@@ -225,7 +241,7 @@ class RedisLockScheduler : BaseScheduledExecutor {
     }
 
     companion object {
-        private val DEFAULT_LOCK_RETRY_DURATION = Duration.ofSeconds(10)
+        private val DEFAULT_LOCK_RETRY_DURATION = Duration.ofSeconds(2)
         private val DEFAULT_TASK_TIMEOUT = Duration.ofMinutes(5)
     }
 }

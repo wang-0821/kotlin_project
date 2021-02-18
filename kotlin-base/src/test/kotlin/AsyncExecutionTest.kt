@@ -81,7 +81,6 @@ class AsyncExecutionTest {
         val value = i.get()
 
         Assertions.assertEquals(executionQueue.taskCount(), 0)
-        Assertions.assertTrue(future.isCancelled)
         Assertions.assertTrue(future.isDone)
 
         // This means task is not been cancelled actually.
@@ -109,7 +108,6 @@ class AsyncExecutionTest {
         future.cancel(true)
         val value = i.get()
 
-        Assertions.assertTrue(future.isCancelled)
         Assertions.assertTrue(future.isDone)
 
         ThreadUtils.safeSleep(500)
