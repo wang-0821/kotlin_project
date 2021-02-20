@@ -18,7 +18,7 @@ jobs:
       mysql:
         image: mysql:5.7
         ports:
-          - 3306: 3306
+          - 3306
         options: >-
           --health-cmd "mysqladmin ping"
           --health-interval 10s
@@ -29,8 +29,7 @@ jobs:
         # Docker Hub image
         image: redis
         ports:
-          # Redis port mapping to Docker host port
-          - 6379: 6379
+          - 6379
         # Set health checks to wait until redis has started
         options: >-
           --health-cmd "redis-cli ping"
