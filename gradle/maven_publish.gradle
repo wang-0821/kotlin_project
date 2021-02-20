@@ -21,7 +21,7 @@ publishing {
             }
 
             def publishingSubVersion = System.getenv("PUBLISHING_SUB_VERSION")
-            if (publishingSubVersion.isBlank()) {
+            if (publishingSubVersion == null || publishingSubVersion.isBlank()) {
                 version "$projectMavenVersion" + ".0-SNAPSHOT"
             } else {
                 version "$projectMavenVersion" + "." + publishingSubVersion
