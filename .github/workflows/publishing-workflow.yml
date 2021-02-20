@@ -27,7 +27,10 @@ jobs:
           java-version: 1.8
 
       # Runs build
-      - run: ./gradlew publish
+      - run:
+          echo "Publishing start..."
+          ./gradlew publish
+          echo "Publishing finished."
         env:
           PACKAGE_REPO_USERNAME: ${{ secrets.PACKAGE_REPO_USERNAME }}
           PACKAGE_REPO_TOKEN: ${{ secrets.PACKAGE_REPO_TOKEN }}
