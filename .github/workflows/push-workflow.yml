@@ -63,7 +63,7 @@ jobs:
 
       - run: |
           echo "Test create schema start..."
-          mysql --host 127.0.0.1 --port ${{ job.services.mysql.ports['3306'] }} -uroot -p123456 -e 'CREATE SCHEMA IF NOT EXISTS `lix_mysql_test`;'
+          mysql --host 127.0.0.1 --port ${{ job.services.mysql.ports['3306'] }} -uroot -p123456 -e 'SHOW DATABASES;'
           echo "Test create schema finished."
 
       # Runs build
