@@ -1,3 +1,5 @@
+# This is a basic workflow to help you get started with Actions
+
 name: Publishing CI
 
 # Controls when the action will run.
@@ -25,10 +27,7 @@ jobs:
           java-version: 1.8
 
       # Runs build
-      - run: |
-        echo "Publishing start..."
-        ./gradlew publish
-        echo "Publishing finished."
+      - run: ./gradlew publish
         env:
           PACKAGE_REPO_USERNAME: ${{ secrets.PACKAGE_REPO_USERNAME }}
           PACKAGE_REPO_TOKEN: ${{ secrets.PACKAGE_REPO_TOKEN }}
