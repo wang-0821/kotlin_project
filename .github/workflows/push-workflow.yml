@@ -61,6 +61,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - run: |
+          echo "Test create schema start..."
+          mysql -h localhost --port 3306 -u root -p123456 -e 'CREATE SCHEMA IF NOT EXISTS `lix_mysql_test`;'
+          echo "Test create schema finished."
+
       # Runs build
       - run: |
           echo "Build start..."
