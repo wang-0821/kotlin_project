@@ -10,7 +10,6 @@ import io.lettuce.core.protocol.CommandType
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.condition.EnabledIf
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 
@@ -18,7 +17,6 @@ import java.util.concurrent.TimeUnit
  *
  * @author lix wang
  */
-@EnabledIf("redisConnected")
 class RedisClientTest {
     @Test
     fun `test redis sync commands`() {
@@ -99,16 +97,5 @@ class RedisClientTest {
         private const val REDIS_URL = "redis://localhost:6379"
         private const val KEY = "Hello"
         private const val VALUE = "world!"
-
-        @JvmStatic
-        @Suppress("unused")
-        fun redisConnected(): Boolean {
-            return try {
-                RedisHelper.getRedisService(REDIS_URL).statefulConnection
-                true
-            } catch (e: Exception) {
-                false
-            }
-        }
     }
 }

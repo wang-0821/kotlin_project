@@ -33,7 +33,7 @@ jobs:
         # Docker Hub image
         image: redis
         ports:
-          - 6379
+          - "6379:6379"
         # Set health checks to wait until redis has started
         options: >-
           --health-cmd "redis-cli ping"
@@ -60,11 +60,6 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-
-      - run: |
-          echo "Test create schema start..."
-          mysql --host 127.0.0.1 --port 3306 -uroot -p123456 -e 'SHOW DATABASES;'
-          echo "Test create schema finished."
 
       # Runs build
       - run: |
