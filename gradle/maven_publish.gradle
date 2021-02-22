@@ -15,8 +15,18 @@ publishing {
     publications {
         maven(MavenPublication) {
             // 指定相关信息
-            groupId "$projectGroup"
-            version "$projectMavenVersion"
+            groupId "com.xiao"
+            if (project.hasProperty("projectGroup")) {
+                groupId property("projectGroup")
+            }
+
+            def publishingSubVersion = System.getenv("PUBLISHING_SUB_VERSION")
+            if (publishingSubVersion == null || publishingSubVersion.isBlank()) {
+                version "$projectMavenVersion" + ".0-SNAPSHOT"
+            } else {
+                version "$projectMavenVersion" + "." + publishingSubVersion
+            }
+
             from components.java
             artifact sourceJar
             artifact javadocJar
@@ -24,13 +34,14 @@ publishing {
     }
     repositories {
         maven {
+            name "GithubPackages"
             // 指定要上传的仓库
             url "$gradleRepoUrl"
 
             // 认证用户，可以设置在gradle.properties中并且ignore it
             credentials {
-                username "$gradleRepoUsername"
-                password "$gradleRepoPassword"
+                username = System.getenv("PACKAGE_REPO_USERNAME")
+                password = System.getenv("PACKAGE_REPO_TOKEN")
             }
         }
     }
