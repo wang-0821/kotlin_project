@@ -20,18 +20,21 @@ publishing {
                 groupId property("projectGroup")
             }
 
-            def publishingSubVersion = System.getenv("PUBLISHING_SUB_VERSION")
+            def publishingSubVersion = property("PUBLISHING_SUB_VERSION")
             if (publishingSubVersion == null || publishingSubVersion.isBlank()) {
                 version "$projectMavenVersion" + ".0-SNAPSHOT"
             } else {
                 version "$projectMavenVersion" + "." + publishingSubVersion
             }
 
+            println("Publishing version: " + getVersion())
+
             from components.java
             artifact sourceJar
             artifact javadocJar
         }
     }
+
     repositories {
         maven {
             name "GithubPackages"
@@ -40,8 +43,21 @@ publishing {
 
             // 认证用户，可以设置在gradle.properties中并且ignore it
             credentials {
-                username = System.getenv("PACKAGE_REPO_USERNAME")
-                password = System.getenv("PACKAGE_REPO_TOKEN")
+                def packageUsername = property("PACKAGE_REPO_USERNAME")
+                if (packageUsername == null) {
+                    println("Can't get package repo username")
+                } else {
+                    println("Package repo username: " + packageUsername)
+                }
+                username = packageUsername
+
+                def packageToken = property("PACKAGE_REPO_TOKEN")
+                if (packageToken == null) {
+                    println("Cant't get package repo token")
+                } else {
+                    println("Package repo token: " + packageToken)
+                }
+                password = packageToken
             }
         }
     }
