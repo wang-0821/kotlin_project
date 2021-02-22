@@ -27,7 +27,7 @@ jobs:
           java-version: 1.8
 
       # Runs build
-      - run:
+      - run: |
           echo "Publishing start..."
           ./gradlew publish
           echo "Publishing finished."
