@@ -20,7 +20,7 @@ publishing {
                 groupId property("projectGroup")
             }
 
-            def publishingSubVersion = property("PUBLISHING_SUB_VERSION")
+            def publishingSubVersion = System.getenv("PUBLISHING_SUB_VERSION")
             if (publishingSubVersion == null || publishingSubVersion.isBlank()) {
                 version "$projectMavenVersion" + ".0-SNAPSHOT"
             } else {
@@ -43,7 +43,7 @@ publishing {
 
             // 认证用户，可以设置在gradle.properties中并且ignore it
             credentials {
-                def packageUsername = property("PACKAGE_REPO_USERNAME")
+                def packageUsername = System.getenv("PACKAGE_REPO_USERNAME")
                 if (packageUsername == null) {
                     println("Can't get package repo username")
                 } else {
@@ -51,7 +51,7 @@ publishing {
                 }
                 username = packageUsername
 
-                def packageToken = property("PACKAGE_REPO_TOKEN")
+                def packageToken = System.getenv("PACKAGE_REPO_TOKEN")
                 if (packageToken == null) {
                     println("Cant't get package repo token")
                 } else {
