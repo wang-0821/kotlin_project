@@ -9,7 +9,7 @@ import java.util.concurrent.CompletableFuture
 class CompletableCallback(
     callable: () -> Any?,
     future: CompletableFuture<Any?>,
-) : ExecuteCallback(callable, null, future, null) {
+) : BaseCallback(callable, null, future, null) {
     override suspend fun suspendRun() {
         throw UnsupportedOperationException()
     }

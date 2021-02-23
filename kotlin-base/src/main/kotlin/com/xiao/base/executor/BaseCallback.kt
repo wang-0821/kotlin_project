@@ -7,7 +7,7 @@ import java.util.concurrent.CompletableFuture
  *
  * @author lix wang
  */
-abstract class ExecuteCallback(
+abstract class BaseCallback(
     private val callable: (() -> Any?)?,
     private val suspendCallback: (suspend () -> Any?)?,
     private val future: CompletableFuture<Any?>?,
