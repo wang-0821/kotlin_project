@@ -10,4 +10,4 @@ class CoroutineCompletableCallback<T : Any?>(
     block: (() -> T)?,
     suspendBlock: (suspend () -> T)?,
     deferred: CompletableDeferred<Any?>
-) : ExecuteCallback(block, suspendBlock, null, deferred)
+) : BaseCallback(block, suspendBlock, null, deferred)

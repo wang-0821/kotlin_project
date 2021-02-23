@@ -14,7 +14,6 @@ task javadocJar(type: Jar) {
 publishing {
     publications {
         maven(MavenPublication) {
-            // 指定相关信息
             groupId "com.xiao"
             if (project.hasProperty("projectGroup")) {
                 groupId property("projectGroup")
@@ -27,8 +26,6 @@ publishing {
                 version "$projectMavenVersion" + "." + publishingSubVersion
             }
 
-            println("Publishing version: " + getVersion())
-
             from components.java
             artifact sourceJar
             artifact javadocJar
@@ -38,26 +35,11 @@ publishing {
     repositories {
         maven {
             name "GithubPackages"
-            // 指定要上传的仓库
             url "$gradleRepoUrl"
 
-            // 认证用户，可以设置在gradle.properties中并且ignore it
             credentials {
-                def packageUsername = System.getenv("PACKAGE_REPO_USERNAME")
-                if (packageUsername == null) {
-                    println("Can't get package repo username")
-                } else {
-                    println("Package repo username: " + packageUsername)
-                }
-                username = packageUsername
-
-                def packageToken = System.getenv("PACKAGE_REPO_TOKEN")
-                if (packageToken == null) {
-                    println("Cant't get package repo token")
-                } else {
-                    println("Package repo token: " + packageToken)
-                }
-                password = packageToken
+                username = System.getenv("PACKAGE_REPO_USERNAME")
+                password = System.getenv("PACKAGE_REPO_TOKEN")
             }
         }
     }

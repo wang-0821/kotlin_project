@@ -59,7 +59,7 @@
 使得同Key的对象可以用来放在同一个子容器中，不同的Key来进行隔离，不同Key的子容器互不关联。Context作为外层容器，包含多个子容器。
 
 <br>
-&emsp;&emsp; kotlin-rpc模块中，ClientContextPool是一个Context，表示一个http客户端上下文，这个上下文可以注入到Context.container中，
+&emsp;&emsp; kotlin-http模块中，ClientContextPool是一个Context，表示一个http客户端上下文，这个上下文可以注入到Context.container中，
 而ConnectionContext和RouteContext，都是上下文中的元素，而且上下文中还可以有多种元素，那么就可以把这些元素都声明为Context，通过这种抽象的
 方式，就可以把所有的元素都放在上下文元素容器中，并且由于不同的Context有不同的Key，可以很容易的对各种元素进行区分。
 
@@ -228,7 +228,7 @@ ContextScanner.processAnnotatedResources(annotatedKtResources: List<AnnotatedKtR
     @KtLogger           被其注解的Logging对象，会根据注解获取对应名称的Logger对象。
     
 <h2 id="4">4.Http</h2>
-&emsp;&emsp; 本项目kotlin-rpc模块实现了简易的Http客户端。支持http、https、多路复用http、http dns缓存、http connection缓存、
+&emsp;&emsp; 本项目kotlin-http模块实现了简易的Http客户端。支持http、https、多路复用http、http dns缓存、http connection缓存、
 io字节数组及字符数组复用。该客户端可以使用 chunked transfer-encoding方式，可以使用 gzip content-encoding方式。
 而且提供了基于线程的异步请求方式和基于kotlin协程的异步请求方式。
 
