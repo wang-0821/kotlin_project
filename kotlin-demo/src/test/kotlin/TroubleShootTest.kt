@@ -1,11 +1,13 @@
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import java.util.ArrayList
 
 /**
  *
  * @author lix wang
  */
-class CpuUsageTest {
+@Disabled
+class TroubleShootTest {
     @Test
     fun `make cpu high usage`() {
         while (true) {
@@ -15,14 +17,15 @@ class CpuUsageTest {
 
     @Test
     fun `make memory high usage`() {
-        val list = mutableListOf<List<Int>>()
+        val lists: MutableList<List<Int>> = ArrayList()
         try {
             while (true) {
-                list.add(MutableList(1000) { 0 })
+                lists.add(ArrayList(1024))
             }
-        } catch (e: Error) {
+        } catch (error: Error) {
             while (true) {
-                Thread.sleep(500)
+                lists.size
+                Thread.sleep(300)
             }
         }
     }
