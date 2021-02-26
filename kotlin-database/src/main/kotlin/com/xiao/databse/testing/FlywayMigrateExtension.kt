@@ -43,7 +43,7 @@ class FlywayMigrateExtension : BeforeAllCallback {
         if (annotations.isEmpty()) {
             throw IllegalStateException("Can't find any ${KtTestDatabase::class.java.simpleName} configuration.")
         }
-        TestResourceHolder.addDatabaseAnnotations(annotations)
+        TestResourceContainer.addDatabaseAnnotations(annotations)
         migrateDatabase(annotations.map { resolveDatabase(it.database) })
     }
 
@@ -59,7 +59,7 @@ class FlywayMigrateExtension : BeforeAllCallback {
                     .schemas(matcher.group(2))
                     .load()
                     .migrate()
-                TestResourceHolder.addMigratedDatabase(database.name())
+                TestResourceContainer.addMigratedDatabase(database.name())
                 log.info("Migrate database: [${database.name()}] succeed.")
             } else {
                 throw IllegalArgumentException("Database ${database.name()} url doesn't match pattern.")
@@ -68,10 +68,10 @@ class FlywayMigrateExtension : BeforeAllCallback {
     }
 
     private fun resolveDatabase(databaseClass: KClass<out BaseDatabase>): BaseDatabase {
-        return TestResourceHolder.databaseInstances[databaseClass] ?: kotlin.run {
+        return TestResourceContainer.databaseInstances[databaseClass] ?: kotlin.run {
             databaseClass.java.newInstance()
                 .also {
-                    TestResourceHolder.addDatabaseInstance(databaseClass, it)
+                    TestResourceContainer.addDatabaseInstance(databaseClass, it)
                 }
         }
     }

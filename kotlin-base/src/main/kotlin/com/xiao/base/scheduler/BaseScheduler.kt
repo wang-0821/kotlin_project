@@ -1,5 +1,7 @@
-package com.xiao.base.executor
+package com.xiao.base.scheduler
 
+import com.xiao.base.executor.CompletableCallback
+import com.xiao.base.executor.ExecutorMonitor
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ScheduledExecutorService
@@ -11,7 +13,7 @@ import java.util.concurrent.TimeUnit
  * @author lix wang
  */
 @Suppress("unused")
-abstract class BaseScheduledExecutor(
+abstract class BaseScheduler(
     val name: String,
     private val scheduledExecutorService: ScheduledExecutorService
 ) : ExecutorMonitor {

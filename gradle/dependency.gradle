@@ -15,7 +15,8 @@ ext {
             ktlint: '0.40.0',
             netty: '5.0.0.Alpha2',
             lettuce: '6.0.2.RELEASE',
-            jodaTime: '2.10.10'
+            jodaTime: '2.10.10',
+            caffeine: '3.0.0'
     ]
 
     libs = [
@@ -32,6 +33,7 @@ ext {
             // jackson
             "jackson-databind": "com.fasterxml.jackson.core:jackson-databind:$version.jackson",
             "joda-time": "joda-time:joda-time:$version.jodaTime",
+            "caffeine": "com.github.ben-manes.caffeine:caffeine:$version.caffeine",
 
             // logging
             "slf4j-api": "org.slf4j:slf4j-api:$version.slf4j",
@@ -57,6 +59,7 @@ ext {
 
             // netty
             "netty-handler": "io.netty:netty-handler:$version.netty",
+            "netty-buffer": "io.netty:netty-buffer:$version.netty",
 
             //redis client
             "lettuce-core": "io.lettuce:lettuce-core:$version.lettuce"

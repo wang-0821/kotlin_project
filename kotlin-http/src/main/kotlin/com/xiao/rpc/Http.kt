@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * @author lix wang
  */
-object Rpc {
+object Http {
     private val executionQueue = ExecutionQueue("Rpc-execution-queue", ThreadUtils.DEFAULT_EXECUTOR)
     val client = Client()
     var started = AtomicInteger(0)
