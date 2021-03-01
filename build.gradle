@@ -50,7 +50,7 @@ subprojects {
 		api libs['kotlin-stdlib']
 		api libs['kotlin-reflect']
 		api libs['slf4j-api']
-		testImplementation libs['junit-jupiter']
+		api libs['junit-jupiter']
 	}
 
 	// set encoding
