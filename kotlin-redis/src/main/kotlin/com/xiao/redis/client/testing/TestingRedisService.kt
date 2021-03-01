@@ -32,7 +32,7 @@ class TestingRedisService : AbstractTestingRedisService() {
     }
 
     override fun expire(key: String?, seconds: Long): Boolean {
-        (expireMap[key] ?: DateTime.now()).plusSeconds(seconds.toInt())
+        expireMap[key] = DateTime.now().plusSeconds(seconds.toInt())
         return true
     }
 

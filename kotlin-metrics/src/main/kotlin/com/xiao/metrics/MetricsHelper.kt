@@ -13,7 +13,7 @@ object MetricsHelper {
     @JvmStatic
     fun recordMetrics(event: MetricsEvent, runningMills: Int) {
         // atomic ops
-        metricsSummaryMap.putIfAbsent(event, MetricsSummary())
+        metricsSummaryMap.putIfAbsent(event, MetricsSummary(event))
         metricsSummaryMap[event]?.addLatency(runningMills)
     }
 }

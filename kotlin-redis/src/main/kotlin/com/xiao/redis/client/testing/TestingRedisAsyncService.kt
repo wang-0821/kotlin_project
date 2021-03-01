@@ -2,6 +2,7 @@ package com.xiao.redis.client.testing
 
 import io.lettuce.core.RedisFuture
 import io.lettuce.core.codec.StringCodec
+import io.lettuce.core.output.BooleanOutput
 import io.lettuce.core.output.IntegerOutput
 import io.lettuce.core.output.ValueOutput
 import io.lettuce.core.protocol.AsyncCommand
@@ -30,6 +31,19 @@ class TestingRedisAsyncService : AbstractTestingRedisAsyncService() {
 
     override fun del(vararg keys: String?): RedisFuture<Long> {
         return toLongRedisFuture(redisService.del(*keys), CommandType.DEL)
+    }
+
+    override fun expire(key: String?, seconds: Long): RedisFuture<Boolean> {
+        return toBooleanRedisFuture(redisService.expire(key, seconds), CommandType.EXPIRE)
+    }
+
+    private fun toBooleanRedisFuture(value: Boolean, commandType: CommandType): RedisFuture<Boolean> {
+        val output = BooleanOutput(StringCodec.UTF8)
+        output.set(value)
+        return AsyncCommand(Command(commandType, output))
+            .apply {
+                complete()
+            }
     }
 
     private fun toStringRedisFuture(value: String?, commandType: CommandType): RedisFuture<String> {
