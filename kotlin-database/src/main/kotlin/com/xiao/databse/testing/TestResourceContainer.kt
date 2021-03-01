@@ -8,7 +8,7 @@ import kotlin.reflect.KClass
  *
  * @author lix wang
  */
-object TestResourceHolder {
+object TestResourceContainer {
     var databaseInstances = mutableMapOf<KClass<out BaseDatabase>, BaseDatabase>()
         private set
     var databaseAnnotations = mutableSetOf<KtTestDatabase>()

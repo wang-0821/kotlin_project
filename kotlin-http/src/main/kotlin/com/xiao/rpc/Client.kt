@@ -1,7 +1,7 @@
 package com.xiao.rpc
 
-import com.xiao.base.annotation.AnnotatedKtResource
 import com.xiao.base.context.ContextScanner
+import com.xiao.base.resource.AnnotatedKtResource
 import com.xiao.base.util.packageName
 import com.xiao.rpc.context.ClientContextPool
 import com.xiao.rpc.handler.Chain

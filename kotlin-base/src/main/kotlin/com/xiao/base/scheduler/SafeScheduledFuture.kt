@@ -1,5 +1,6 @@
-package com.xiao.base.executor
+package com.xiao.base.scheduler
 
+import com.xiao.base.executor.SafeCompletableFuture
 import java.util.concurrent.Delayed
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledFuture

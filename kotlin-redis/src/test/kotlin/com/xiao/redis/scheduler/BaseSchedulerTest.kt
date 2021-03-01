@@ -1,7 +1,7 @@
 package com.xiao.redis.scheduler
 
-import com.xiao.base.executor.BaseScheduledExecutor
 import com.xiao.base.executor.DefaultExecutorServiceFactory
+import com.xiao.base.scheduler.BaseScheduler
 import com.xiao.base.util.ThreadUtils
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -14,18 +14,18 @@ import java.util.concurrent.atomic.AtomicInteger
  * @author lix wang
  */
 class BaseSchedulerTest {
-    private lateinit var scheduledExecutor: BaseScheduledExecutor
+    private lateinit var scheduler: BaseScheduler
 
     @BeforeEach
     fun setup() {
         val scheduledExecutorService = DefaultExecutorServiceFactory.newScheduledExecutorService(2)
-        scheduledExecutor = object : BaseScheduledExecutor("TestScheduledExecutor", scheduledExecutorService) {}
+        scheduler = object : BaseScheduler("TestScheduledExecutor", scheduledExecutorService) {}
     }
 
     @Test
     fun `test schedule task`() {
         val value = AtomicInteger(0)
-        val scheduledFuture = scheduledExecutor.schedule(Duration.ZERO) {
+        val scheduledFuture = scheduler.schedule(Duration.ZERO) {
             value.set(2)
         }
 
@@ -41,7 +41,7 @@ class BaseSchedulerTest {
     @Test
     fun `test schedule task cancel`() {
         val value = AtomicInteger(0)
-        val scheduledFuture = scheduledExecutor.scheduleAtFixedRate(Duration.ZERO, Duration.ofMillis(100)) {
+        val scheduledFuture = scheduler.scheduleAtFixedRate(Duration.ZERO, Duration.ofMillis(100)) {
             value.getAndIncrement()
         }
         ThreadUtils.safeSleep(50)

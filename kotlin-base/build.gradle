@@ -1,7 +1,7 @@
 dependencies {
-    compile libs["jackson-databind"]
-    compile libs['kotlinx-coroutines-core']
-    compile libs['disruptor']
-    compile libs['log4j-slf4j-impl']
-    compile libs['joda-time']
+    api libs["jackson-databind"]
+    api libs['kotlinx-coroutines-core']
+    api libs['disruptor']
+    api libs['log4j-slf4j-impl']
+    api libs['joda-time']
 }

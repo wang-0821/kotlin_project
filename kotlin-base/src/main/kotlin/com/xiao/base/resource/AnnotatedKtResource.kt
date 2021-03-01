@@ -1,6 +1,5 @@
-package com.xiao.base.annotation
+package com.xiao.base.resource
 
-import com.xiao.base.resource.KtClassResource
 import kotlin.reflect.KClass
 
 /**

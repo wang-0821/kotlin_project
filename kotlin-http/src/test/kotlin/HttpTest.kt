@@ -1,5 +1,5 @@
 import com.xiao.base.util.ThreadUtils
-import com.xiao.rpc.Rpc
+import com.xiao.rpc.Http
 import com.xiao.rpc.util.UrlParser
 import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -11,26 +11,26 @@ import java.util.concurrent.TimeUnit
  *
  * @author lix wang
  */
-class RpcTest {
+class HttpTest {
     @Test
-    fun `test rpc sync`() {
-        val response = Rpc.sync(request)
+    fun `test http sync`() {
+        val response = Http.sync(request)
         assertEquals(response.status, 200)
         assertFalse(response.asString().isNullOrBlank())
     }
 
     @Test
-    fun `test rpc future`() {
-        val future = Rpc.async(request)
+    fun `test http future`() {
+        val future = Http.async(request)
         val response = future.get(timeout, TimeUnit.MILLISECONDS)
         assertEquals(response.status, 200)
         assertFalse(response.asString().isNullOrBlank())
     }
 
     @Test
-    fun `test rpc coroutine`() {
+    fun `test http coroutine`() {
         val job = ThreadUtils.DEFAULT_SCOPE.launch {
-            val completableDeferred = Rpc.deferred(request)
+            val completableDeferred = Http.deferred(request)
             val result = completableDeferred.awaitNanos()
             assertEquals(result.status, 200)
             assertFalse(result.asString().isNullOrBlank())

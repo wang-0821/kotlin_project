@@ -2,7 +2,6 @@ package com.xiao.redis.scheduler
 
 import com.xiao.base.executor.DefaultExecutorServiceFactory
 import com.xiao.redis.client.RedisHelper
-import com.xiao.redis.schedule.RedisLockScheduler
 import com.xiao.redis.utils.SharedRedisLock
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach

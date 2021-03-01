@@ -1,3 +1,4 @@
+import com.xiao.base.util.UnsafeUtils;
 import model.UnsafeInstanceObject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
@@ -5,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import sun.misc.Unsafe;
 
 import java.io.*;
-import java.lang.reflect.Field;
 
 /**
  * @author lix wang
@@ -49,10 +49,7 @@ public class ObjectInstanceTest implements Serializable {
     @Test
     void testUnsafeAllocateInstance() {
         try {
-            Field field = Unsafe.class.getDeclaredField("theUnsafe");
-            field.setAccessible(true);
-            Unsafe unsafe = (Unsafe) field.get(null);
-
+            Unsafe unsafe = UnsafeUtils.getUnsafe();
             UnsafeInstanceObject unsafeInstanceObject =
                     (UnsafeInstanceObject) unsafe.allocateInstance(UnsafeInstanceObject.class);
             Assertions.assertEquals(unsafeInstanceObject.val, 0);
