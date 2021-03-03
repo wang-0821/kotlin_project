@@ -1,4 +1,4 @@
-package com.xiao.base.executor
+package com.xiao.base.thread
 
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicLong
