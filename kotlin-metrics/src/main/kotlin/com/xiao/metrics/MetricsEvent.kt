@@ -9,6 +9,18 @@ class MetricsEvent(
     val prefixName: String,
     val suffixName: String
 ) {
+    fun name(): String {
+        return if (prefixName.isNotEmpty()) {
+            if (suffixName.isNotEmpty()) {
+                "$prefixName.$suffixName"
+            } else {
+                prefixName
+            }
+        } else {
+            suffixName
+        }
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

@@ -6,8 +6,10 @@ package com.xiao.metrics
  * @author lix wang
  */
 enum class MetricsType {
-    DB_QUERY_SLOW,
-    RPC_REQUEST_SLOW,
-    API_SLOW,
-    NORMAL
+    DB,
+    DB_SLOW,
+    RPC,
+    RPC_SLOW,
+    API,
+    API_SLOW;
 }

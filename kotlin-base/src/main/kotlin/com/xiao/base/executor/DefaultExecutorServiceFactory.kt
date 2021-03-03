@@ -1,5 +1,6 @@
 package com.xiao.base.executor
 
+import com.xiao.base.thread.NamedThreadFactory
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.ScheduledExecutorService

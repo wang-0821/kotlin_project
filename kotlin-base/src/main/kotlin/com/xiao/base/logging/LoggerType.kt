@@ -9,5 +9,6 @@ enum class LoggerType(val text: String) {
     RPC("rpc"),
     DATA_SOURCE("dataSource"),
     TEST_DATA_SOURCE("testDataSource"),
-    REDIS("redis");
+    REDIS("redis"),
+    METRICS("metrics");
 }

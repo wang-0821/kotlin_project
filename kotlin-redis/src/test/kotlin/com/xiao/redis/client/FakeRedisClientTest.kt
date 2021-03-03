@@ -55,6 +55,7 @@ class FakeRedisClientTest {
         redisAsyncService.set(KEY, VALUE).get()
         Assertions.assertEquals(redisAsyncService.get(KEY).get(), VALUE)
         redisAsyncService.expire(KEY, 0).get()
+        ThreadUtils.safeSleep(10)
         Assertions.assertNull(redisAsyncService.get(KEY).get())
     }
 
