@@ -19,18 +19,9 @@ class MetricsScheduler(
 ) {
     @ScheduledTask(initial = 30, fixedDelay = 30)
     fun executeMetrics() {
-        val oldSummary = mutableMapOf<MetricsEvent, MetricsSummary>()
-        val newSummary = mutableMapOf<MetricsEvent, MetricsSummary>()
-        for (metricsEvent in MetricsUrils.metricsContainerMap.keys()) {
-            MetricsUrils.metricsSummaryMap[metricsEvent]
-                ?.let {
-                    oldSummary[metricsEvent] = it
-                }
-            MetricsUrils.resetMetricsSummary(metricsEvent)
-                ?.let {
-                    newSummary[metricsEvent] = it
-                }
-        }
+        val oldSummary = MetricsUtils.metricsSummary()
+        MetricsUtils.resetSummary()
+        val newSummary = MetricsUtils.metricsSummary()
 
         metricsHandlers.forEach {
             it.handle(oldSummary, newSummary)

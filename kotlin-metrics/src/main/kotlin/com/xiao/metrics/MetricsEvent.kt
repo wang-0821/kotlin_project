@@ -6,18 +6,18 @@ package com.xiao.metrics
  */
 class MetricsEvent(
     val type: MetricsType,
-    val prefixName: String,
-    val suffixName: String
+    val prefixName: String? = null,
+    val suffixName: String? = null
 ) {
     fun name(): String {
-        return if (prefixName.isNotEmpty()) {
-            if (suffixName.isNotEmpty()) {
+        return if (!prefixName.isNullOrEmpty()) {
+            if (!suffixName.isNullOrEmpty()) {
                 "$prefixName.$suffixName"
             } else {
                 prefixName
             }
         } else {
-            suffixName
+            suffixName ?: ""
         }
     }
 

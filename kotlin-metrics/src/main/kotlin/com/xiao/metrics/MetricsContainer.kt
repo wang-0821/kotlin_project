@@ -119,15 +119,15 @@ class MetricsContainer(
 
     private fun stateAt(index: Int): Int {
         // index << ASHIFT + ABASE = index << 2 + ABASE = 4 * index + ABASE
-        return UNSAFE.getObjectVolatile(stateTable, (index.toLong() shl ASHIFT) + ABASE) as Int
+        return UNSAFE.getIntVolatile(stateTable, (index.toLong() shl ASHIFT) + ABASE) as Int
     }
 
     private fun casStateAt(index: Int, origin: Int, expect: Int): Boolean {
-        return UNSAFE.compareAndSwapObject(stateTable, (index.toLong() shl ASHIFT) + ABASE, origin, expect)
+        return UNSAFE.compareAndSwapInt(stateTable, (index.toLong() shl ASHIFT) + ABASE, origin, expect)
     }
 
     private fun setStateAt(index: Int, value: Int) {
-        return UNSAFE.putObjectVolatile(stateTable, ((index.toLong()) shl ASHIFT) + ABASE, value)
+        return UNSAFE.putIntVolatile(stateTable, ((index.toLong()) shl ASHIFT) + ABASE, value)
     }
 
     companion object {
