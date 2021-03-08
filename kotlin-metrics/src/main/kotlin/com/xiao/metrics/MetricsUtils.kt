@@ -32,7 +32,7 @@ object MetricsUtils {
     @ThreadUnsafe
     @JvmStatic
     fun resetSummary() {
-        for (event in metricsSummaryMap.keys) {
+        for (event in metricsContainerMap.keys) {
             val latencies = metricsContainerMap[event]?.resetLatencies()
             if (latencies.isNullOrEmpty()) {
                 metricsSummaryMap.remove(event)

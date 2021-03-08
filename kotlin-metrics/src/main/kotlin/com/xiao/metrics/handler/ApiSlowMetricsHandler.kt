@@ -12,9 +12,14 @@ import com.xiao.metrics.MetricsType
  * @author lix wang
  */
 class ApiSlowMetricsHandler : MetricsHandler {
-    override fun handle(oldSummary: Map<MetricsEvent, MetricsSummary>, newSummary: Map<MetricsEvent, MetricsSummary>) {
+    override fun handle(
+        oldSummary: Map<MetricsEvent, MetricsSummary>,
+        newSummary: Map<MetricsEvent, MetricsSummary>
+    ) {
         val apiSlowEvents: List<MetricsEvent> = newSummary.keys.filter { it.type == MetricsType.API_SLOW }
-        log.warn("Api slow: ${apiSlowEvents.joinToString { it.name() }}.")
+        if (apiSlowEvents.isNotEmpty()) {
+            log.warn("Api slow: ${apiSlowEvents.joinToString { it.name() }}.")
+        }
     }
 
     @KtLogger(LoggerType.METRICS)

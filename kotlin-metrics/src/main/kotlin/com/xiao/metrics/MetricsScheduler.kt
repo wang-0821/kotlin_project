@@ -17,7 +17,7 @@ class MetricsScheduler(
     name,
     executorServiceFactory.newScheduledExecutorService(name, 2)
 ) {
-    @ScheduledTask(initial = 30, fixedDelay = 30)
+    @ScheduledTask(initial = 5, fixedDelay = 5)
     fun executeMetrics() {
         val oldSummary = MetricsUtils.metricsSummary()
         MetricsUtils.resetSummary()

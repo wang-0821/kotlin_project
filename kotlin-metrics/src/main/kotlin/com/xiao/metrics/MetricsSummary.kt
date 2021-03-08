@@ -7,7 +7,7 @@ import com.xiao.base.thread.ThreadUnsafe
  * @author lix wang
  */
 class MetricsSummary {
-    var times: Long = 0
+    var times: Int = 0
         private set
     var min: Int = Int.MIN_VALUE
         private set
@@ -21,6 +21,7 @@ class MetricsSummary {
         if (latencies.isNotEmpty()) {
             val latencyList = latencies.sorted()
             val size = latencyList.size
+            times = latencyList.size
             min = latencyList[0]
             max = latencyList[size - 1]
             avg = latencyList[size / 2]

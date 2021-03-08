@@ -26,4 +26,8 @@ abstract class CronScheduler : AbstractCronScheduledService {
     ) {
         execScheduledMethod(initialMills, fixedDelayedMills, fixedRateMills, method, scheduler)
     }
+
+    override fun shutdown() {
+        scheduler.shutdown()
+    }
 }

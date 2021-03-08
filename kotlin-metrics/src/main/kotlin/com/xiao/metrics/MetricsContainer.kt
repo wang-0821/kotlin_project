@@ -11,7 +11,7 @@ import com.xiao.base.util.UnsafeUtils
 class MetricsContainer(
     private val capacity: Int = 5
 ) {
-    private val latencies = ArrayList<MetricsLatencyBuf?>(capacity)
+    private val latencies = Array<MetricsLatencyBuf?>(capacity) { null }
     private val stateTable = IntArray(capacity) { EMPTY }
 
     /**
@@ -39,7 +39,7 @@ class MetricsContainer(
             } finally {
                 // make sure release lock
                 if (!lockReleased) {
-                    casStateAt(index, INUSE, FULL)
+                    setStateAt(index, READY)
                 }
             }
         }
@@ -56,8 +56,9 @@ class MetricsContainer(
                 val state = stateAt(i)
                 if (!resetArray[i]) {
                     if (state == READY || state == FULL) {
+                        // legacy latency byteBuf
                         if (casStateAt(i, state, INUSE)) {
-                            latencies[i]!!.resetLatency(result)
+                            latencies[i]!!.resetLatencies(result)
                             resetArray[i] = true
                             setStateAt(i, READY)
                         }
@@ -119,7 +120,7 @@ class MetricsContainer(
 
     private fun stateAt(index: Int): Int {
         // index << ASHIFT + ABASE = index << 2 + ABASE = 4 * index + ABASE
-        return UNSAFE.getIntVolatile(stateTable, (index.toLong() shl ASHIFT) + ABASE) as Int
+        return UNSAFE.getIntVolatile(stateTable, (index.toLong() shl ASHIFT) + ABASE)
     }
 
     private fun casStateAt(index: Int, origin: Int, expect: Int): Boolean {

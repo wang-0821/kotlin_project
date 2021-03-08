@@ -9,6 +9,8 @@ import java.lang.reflect.Method
 interface CronScheduledService {
     fun start()
 
+    fun shutdown()
+
     fun execScheduledMethod(method: Method)
 
     fun execScheduledMethod(
