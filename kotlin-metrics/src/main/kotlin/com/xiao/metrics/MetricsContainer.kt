@@ -9,7 +9,8 @@ import com.xiao.base.util.UnsafeUtils
  * @author lix wang
  */
 class MetricsContainer(
-    private val capacity: Int = 5
+    private val capacity: Int = 5,
+    private val recordingTimeout: Long = -1
 ) {
     private val latencies = Array<MetricsLatencyBuf?>(capacity) { null }
     private val stateTable = IntArray(capacity) { EMPTY }
@@ -75,9 +76,9 @@ class MetricsContainer(
         return result
     }
 
-    private fun getLatencyIndex(timeout: Long = 5000): Int {
-        val timeoutMills = if (timeout > 0) {
-            System.currentTimeMillis() + timeout
+    private fun getLatencyIndex(): Int {
+        val timeoutMills = if (recordingTimeout > 0) {
+            System.currentTimeMillis() + recordingTimeout
         } else {
             -1
         }
