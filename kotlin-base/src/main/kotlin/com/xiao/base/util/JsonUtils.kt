@@ -10,7 +10,7 @@ object JsonUtils {
     private val objectMapper = ObjectMapper()
 
     @JvmStatic
-    fun serialize(obj: Any): String {
+    fun <T : Any?> serialize(obj: T): String {
         return objectMapper.writeValueAsString(obj)
     }
 }

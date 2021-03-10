@@ -37,17 +37,17 @@ class MetricsSchedulerTest {
             executionQueue.submit {
                 for (i in 1..500) {
                     MetricsUtils.recordMetrics(
-                        MetricsEvent(MetricsType.API, "MetricsApiRecording"),
+                        MetricsEvent(MetricsType.API, "SchedulerMetricsApiRecording"),
                         Random.nextInt(100)
                     )
 
                     MetricsUtils.recordMetrics(
-                        MetricsEvent(MetricsType.DB, "MetricsDbRecording"),
+                        MetricsEvent(MetricsType.DB, "SchedulerMetricsDbRecording"),
                         Random.nextInt(10)
                     )
 
                     MetricsUtils.recordMetrics(
-                        MetricsEvent(MetricsType.RPC, "MetricsRpcRecording"),
+                        MetricsEvent(MetricsType.RPC, "SchedulerMetricsRpcRecording"),
                         Random.nextInt(20)
                     )
                 }

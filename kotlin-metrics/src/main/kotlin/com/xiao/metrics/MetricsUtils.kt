@@ -17,7 +17,7 @@ object MetricsUtils {
     fun recordMetrics(event: MetricsEvent, runningMills: Int): Boolean {
         // atomic ops
         metricsContainerMap.putIfAbsent(event, MetricsContainer())
-        return metricsContainerMap[event]?.addLatency(runningMills) ?: false
+        return metricsContainerMap[event]!!.addLatency(runningMills)
     }
 
     @ThreadUnsafe

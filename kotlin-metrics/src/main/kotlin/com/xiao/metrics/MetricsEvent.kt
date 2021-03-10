@@ -36,8 +36,8 @@ class MetricsEvent(
 
     override fun hashCode(): Int {
         var result = type.hashCode()
-        result = 31 * result + prefixName.hashCode()
-        result = 31 * result + suffixName.hashCode()
+        result = 31 * result + (prefixName?.hashCode() ?: 0)
+        result = 31 * result + (suffixName?.hashCode() ?: 0)
         return result
     }
 }
