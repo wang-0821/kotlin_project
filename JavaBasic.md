@@ -111,4 +111,51 @@ Condition 的await、signal、signalAll都需要在先使用lock()获取锁。
     }
     
 <h2 id="5">5.缓存一致性MESI与volatile</h2>
-&emsp;&emsp; 
+&emsp;&emsp; CPU与内存之间的速度差距较大，在处理器时钟周期中，CPU需要等待主存，因此使用：CPU -> Cache -> Memory结构。
+Cache由Cache line组成。
+
+### 局部性原理
+&emsp;&emsp; 在CPU访问存储设备时，无论是存取数据或者存取指令，都趋于聚集在一片连续的区域中，这被称为局部性原理。
+时间局部性：如果一个信息项正在被访问，那么近期它还可能被再次访问。空间局部性：如果一个存储器的位置被引用，那么将来它附近的位置也会被引用。
+
+### 三级缓存
+&emsp;&emsp; 在多核CPU的结构中，分为三级缓存，一级、二级缓存为CPU私有的缓存，三级缓存为多核CPU共享的。一级缓存分为数据和指令两部分，
+二级缓存指令和数据共存。
+
+### 缓存一致性(MESI)
+&emsp;&emsp; 在多核CPU中，内存中的数据会在多个核心中保存数据副本，其中一个CPU修改数据，就产生了数据不一致的问题，一致性协议用于保证多个CPU
+Cache之间共享数据的一致。每个Cache line可能存在4种状态，状态值可以用2bit表示。
+
+    缓存行状态                       描述                                                     监听任务
+    M(modified):    该缓存行有效，数据被修改了，与内存中的数据不一致，                  缓存行需要监听其他试图读取该缓存行的操作，
+                    数据只存在本Cache中。监听所有试图读主存中该缓存行的操作，           监听到后，需要先将本Cache中缓存行写回主存，   
+                                                                                 并将状态变为S，然后再让读取操作执行。
+                                                                                                                  
+    E(Exclusive)：  该缓存行有效，数据与内存中的数据一致，数据只存在本Cache中。          缓存行需要监听其他缓存读取主存中该缓存行的操作，
+                                                                                 一旦监听到，该缓存行需要变成S状态。
+    
+    S(Shared)：     该缓存行有效，数据与内存中的数据一致，数据存在多个Cache中。         缓存行需要监听其他缓存使该缓存行无效或者独享
+                                                                                的请求。并将该缓存行变成I状态。
+                                                                                
+    I(Invalid):     该缓存行无效。                                                无
+
+### Cache操作
+&emsp;&emsp; Cache的操作有4种：1，本地读取(Local Read): 本地Cache读取本地Cache数据。
+2，本地写入(Local Write): 本地Cache写入本地Cache数据。3，远端读取(Remote Read): 其他Cache读取本Cache数据。
+4，远端写入(Remote Write): 其他Cache写入本地Cache数据。
+
+### Store buffer和Invalidate queue
+&emsp;&emsp; Store buffer在 CPU 和 Cache之间，对其他Cache不可见。如果要修改本地Cache中的一条缓存行，此时需要将无效状态通知到其他Cache中，
+并且要等待确认，这个过程比较耗时，因此使用Store buffer(存储缓冲区)。此时CPU会先发出一条无效(Invalid)消息，
+然后将写操作放到Store buffer中，接着CPU会去处理其他任务，Store buffer在收到所有失效确认后，会将缓存行写入到内存中。
+
+<br>
+&emsp;&emsp; 为了提高无效请求的处理，CPU使用Invalidate queue(无效队列)，会在接收到无效请求时，将无效请求直接放入到无效队列，然后直接返回。
+
+### 内存屏障
+&emsp;&emsp; 写屏障：告诉处理器在执行这条指令前，将所有Store buffer中的缓存行修改刷新到一级缓存中，这样修改就对其他Cache可见。
+读屏障：告诉处理器在执行这条指令前，先刷新所有已经在失效队列中的指令到一级缓存中，这样就能知道当前Cache的缓存行是否失效。
+
+### Volatile
+&emsp;&emsp; Volatile原理是通过内存屏障来保证变量的可见性。由于Store buffer和Invalidate buffer的存在，可能导致脏读的问题。
+volatile通过内存屏障，实时刷新Store buffer和Invalidate buffer，从而实现变量的可见性。
