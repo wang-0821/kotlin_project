@@ -2,6 +2,7 @@
 * [2.线程池](#2)
 * [3.类加载](#3)
 * [4.锁](#4)
+* [5.缓存一致性MESI与volatile](#5)
 
 <h2 id="1">1.对象创建方式</h2>
 ### 使用new创建对象
@@ -108,3 +109,6 @@ Condition 的await、signal、signalAll都需要在先使用lock()获取锁。
     synchronized(obj) {
         obj.wait();   // 此时需要先放弃锁，否则其他的线程没办法获取到锁，无法被唤醒。
     }
+    
+<h2 id="5">5.缓存一致性MESI与volatile</h2>
+&emsp;&emsp; 

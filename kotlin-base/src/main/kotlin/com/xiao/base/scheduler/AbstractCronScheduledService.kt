@@ -76,9 +76,7 @@ abstract class AbstractCronScheduledService : CronScheduledService {
     private fun parseScheduledMethod(): List<Method> {
         return this::class.java.methods
             .filter {
-                it.getAnnotation(ScheduledTask::class.java) != null &&
-                    it.isAccessible &&
-                    it.parameterCount == 0
+                it.getAnnotation(ScheduledTask::class.java) != null && it.parameterCount == 0
             }
     }
 }

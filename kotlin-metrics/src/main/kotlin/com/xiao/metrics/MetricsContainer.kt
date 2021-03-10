@@ -9,9 +9,10 @@ import com.xiao.base.util.UnsafeUtils
  * @author lix wang
  */
 class MetricsContainer(
-    private val capacity: Int = 5
+    private val capacity: Int = 5,
+    private val recordingTimeout: Long = -1
 ) {
-    private val latencies = ArrayList<MetricsLatencyBuf?>(capacity)
+    private val latencies = Array<MetricsLatencyBuf?>(capacity) { null }
     private val stateTable = IntArray(capacity) { EMPTY }
 
     /**
@@ -39,7 +40,7 @@ class MetricsContainer(
             } finally {
                 // make sure release lock
                 if (!lockReleased) {
-                    casStateAt(index, INUSE, FULL)
+                    setStateAt(index, READY)
                 }
             }
         }
@@ -56,8 +57,9 @@ class MetricsContainer(
                 val state = stateAt(i)
                 if (!resetArray[i]) {
                     if (state == READY || state == FULL) {
+                        // legacy latency byteBuf
                         if (casStateAt(i, state, INUSE)) {
-                            latencies[i]!!.resetLatency(result)
+                            latencies[i]!!.resetLatencies(result)
                             resetArray[i] = true
                             setStateAt(i, READY)
                         }
@@ -74,9 +76,9 @@ class MetricsContainer(
         return result
     }
 
-    private fun getLatencyIndex(timeout: Long = 5000): Int {
-        val timeoutMills = if (timeout > 0) {
-            System.currentTimeMillis() + timeout
+    private fun getLatencyIndex(): Int {
+        val timeoutMills = if (recordingTimeout > 0) {
+            System.currentTimeMillis() + recordingTimeout
         } else {
             -1
         }
@@ -119,15 +121,15 @@ class MetricsContainer(
 
     private fun stateAt(index: Int): Int {
         // index << ASHIFT + ABASE = index << 2 + ABASE = 4 * index + ABASE
-        return UNSAFE.getObjectVolatile(stateTable, (index.toLong() shl ASHIFT) + ABASE) as Int
+        return UNSAFE.getIntVolatile(stateTable, (index.toLong() shl ASHIFT) + ABASE)
     }
 
     private fun casStateAt(index: Int, origin: Int, expect: Int): Boolean {
-        return UNSAFE.compareAndSwapObject(stateTable, (index.toLong() shl ASHIFT) + ABASE, origin, expect)
+        return UNSAFE.compareAndSwapInt(stateTable, (index.toLong() shl ASHIFT) + ABASE, origin, expect)
     }
 
     private fun setStateAt(index: Int, value: Int) {
-        return UNSAFE.putObjectVolatile(stateTable, ((index.toLong()) shl ASHIFT) + ABASE, value)
+        return UNSAFE.putIntVolatile(stateTable, ((index.toLong()) shl ASHIFT) + ABASE, value)
     }
 
     companion object {

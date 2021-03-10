@@ -9,48 +9,50 @@ import io.netty.util.ReferenceCountUtil
  *
  * @author lix wang
  */
-class MetricsLatencyBuf {
+@ThreadUnsafe
+class MetricsLatencyBuf(
+    private val minCapacity: Int = 64,
+    private val maxCapacity: Int = 2048
+) {
     var times: Long = 0
         private set
-    private var writeableBytes = MAX_CAPACITY
+    private var lastUpdateTime: Long = -1
+    private var writeableSize = maxCapacity
     private var latencies: ByteBuf? = null
 
-    @ThreadUnsafe
     fun writeable(): Boolean {
-        return writeableBytes - LATENCY_BYTES >= 0
+        return writeableSize > 0
     }
 
-    @ThreadUnsafe
     fun addLatency(runningTime: Int) {
-        val currentWriteableBytes = writeableBytes - LATENCY_BYTES
-        if (currentWriteableBytes >= 0) {
-            writeableBytes = currentWriteableBytes
+        if (writeable()) {
+            writeableSize--
             if (latencies == null) {
-                latencies = PooledByteBufAllocator.DEFAULT.buffer(MIN_CAPACITY, MAX_CAPACITY)
+                latencies = PooledByteBufAllocator.DEFAULT.buffer(
+                    minCapacity * LATENCY_BYTES, maxCapacity * LATENCY_BYTES
+                )
             }
             latencies!!.writeInt(runningTime)
             times++
+            lastUpdateTime = System.currentTimeMillis()
         }
     }
 
-    @ThreadUnsafe
-    fun resetLatency(target: MutableList<Int>) {
+    fun resetLatencies(target: MutableList<Int>) {
         latencies?.let {
             try {
                 while (it.isReadable(LATENCY_BYTES)) {
                     target.add(it.readInt())
                 }
-                it.clear()
-            } catch (e: Exception) {
+            } finally {
                 ReferenceCountUtil.release(it)
+                writeableSize = maxCapacity
                 latencies = null
             }
         }
     }
 
     companion object {
-        private const val MIN_CAPACITY = 256
-        private const val MAX_CAPACITY = 8192
         private const val LATENCY_BYTES = 4
     }
 }

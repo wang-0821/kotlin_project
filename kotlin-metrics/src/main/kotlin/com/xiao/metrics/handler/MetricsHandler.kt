@@ -8,5 +8,8 @@ import com.xiao.metrics.MetricsSummary
  * @author lix wang
  */
 interface MetricsHandler {
-    fun handle(oldSummary: Map<MetricsEvent, MetricsSummary>, newSummary: Map<MetricsEvent, MetricsSummary>)
+    fun handle(
+        oldSummary: Map<MetricsEvent, MetricsSummary>,
+        newSummary: Map<MetricsEvent, MetricsSummary>
+    )
 }
