@@ -3,13 +3,15 @@ package com.xiao.base.executor
 import com.xiao.base.logging.Logging
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.Future
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.locks.ReentrantLock
 
 /**
  *
  * @author lix wang
  */
-class ExecutionQueue : BaseExecutor {
+class ExecutionQueue : AbstractExecutor {
     private val lock = ReentrantLock()
     private val queueIsFull = lock.newCondition()
     private val taskMaxCount: Int
@@ -44,6 +46,28 @@ class ExecutionQueue : BaseExecutor {
         return taskMaxCount
     }
 
+    override fun fastShutdown(): Future<Unit> {
+        lock.lock()
+        try {
+            shutdown()
+            if (executorService is ThreadPoolExecutor) {
+                // remove all tasks
+                while (executorService.queue.poll() != null) {
+                    taskCount--
+                }
+            }
+            signalNotFull()
+
+            return CallableFuture {
+                while (isShutdown()) {
+                    break
+                }
+            }
+        } finally {
+            lock.unlock()
+        }
+    }
+
     private fun <T : Any?> submitTask(taskName: String?, task: () -> T): CompletableFuture<T> {
         lock.lock()
         val realTaskName = taskName ?: ""
@@ -73,6 +97,12 @@ class ExecutionQueue : BaseExecutor {
             )
         } finally {
             lock.unlock()
+        }
+    }
+
+    private fun signalNotFull() {
+        if (taskCount < taskMaxCount) {
+            queueIsFull.signalAll()
         }
     }
 

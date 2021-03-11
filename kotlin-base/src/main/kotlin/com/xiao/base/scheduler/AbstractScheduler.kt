@@ -1,5 +1,6 @@
 package com.xiao.base.scheduler
 
+import com.xiao.base.executor.AbstractExecutorService
 import com.xiao.base.executor.CompletableCallback
 import com.xiao.base.executor.ExecutorMonitor
 import java.time.Duration
@@ -13,10 +14,10 @@ import java.util.concurrent.TimeUnit
  * @author lix wang
  */
 @Suppress("unused")
-abstract class BaseScheduler(
+abstract class AbstractScheduler(
     val name: String,
     private val scheduledExecutorService: ScheduledExecutorService
-) : ExecutorMonitor {
+) : AbstractExecutorService(scheduledExecutorService), ExecutorMonitor {
     /**
      * Execute once when delay end.
      */
@@ -78,18 +79,6 @@ abstract class BaseScheduler(
             .apply {
                 putFuture(future)
             }
-    }
-
-    open fun shutdown() {
-        scheduledExecutorService.shutdown()
-    }
-
-    open fun shutdownNow() {
-        scheduledExecutorService.shutdownNow()
-    }
-
-    open fun isShutdown(): Boolean {
-        return scheduledExecutorService.isShutdown
     }
 
     override fun taskCount(): Int {

@@ -8,14 +8,14 @@ import java.util.concurrent.ScheduledExecutorService
  * @author lix wang
  */
 abstract class CronScheduler : AbstractCronScheduledService {
-    private val scheduler: BaseScheduler
+    private val scheduler: AbstractScheduler
 
-    constructor(scheduler: BaseScheduler) {
+    constructor(scheduler: AbstractScheduler) {
         this.scheduler = scheduler
     }
 
     constructor(name: String, scheduledExecutorService: ScheduledExecutorService) {
-        this.scheduler = object : BaseScheduler(name, scheduledExecutorService) {}
+        this.scheduler = object : AbstractScheduler(name, scheduledExecutorService) {}
     }
 
     override fun execScheduledMethod(

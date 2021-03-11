@@ -48,7 +48,7 @@ abstract class AbstractCronScheduledService : CronScheduledService {
         fixedDelay: Long,
         fixedRate: Long,
         method: Method,
-        scheduler: BaseScheduler
+        scheduler: AbstractScheduler
     ) {
         if (initial > 0) {
             scheduler.scheduleWithFixedDelay(
