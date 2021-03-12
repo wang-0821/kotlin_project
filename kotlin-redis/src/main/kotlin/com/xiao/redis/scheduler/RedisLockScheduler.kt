@@ -1,6 +1,6 @@
 package com.xiao.redis.scheduler
 
-import com.xiao.base.scheduler.BaseScheduler
+import com.xiao.base.scheduler.AbstractScheduler
 import com.xiao.base.scheduler.SafeScheduledFuture
 import com.xiao.redis.utils.RedisLock
 import java.time.Duration
@@ -15,7 +15,7 @@ import java.util.concurrent.locks.ReentrantLock
  *
  * @author lix wang
  */
-class RedisLockScheduler : BaseScheduler {
+class RedisLockScheduler : AbstractScheduler {
     private var taskCount: Int = 0
     private val redisLock: RedisLock
     private val taskMaxCount: Int

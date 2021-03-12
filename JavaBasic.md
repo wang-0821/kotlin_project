@@ -3,6 +3,8 @@
 * [3.类加载](#3)
 * [4.锁](#4)
 * [5.缓存一致性MESI与volatile](#5)
+* [6.ThreadLocal](#6)
+* [7.Java的四种引用](#7)
 
 <h2 id="1">1.对象创建方式</h2>
 ### 使用new创建对象
@@ -159,3 +161,19 @@ Cache之间共享数据的一致。每个Cache line可能存在4种状态，状�
 ### Volatile
 &emsp;&emsp; Volatile原理是通过内存屏障来保证变量的可见性。由于Store buffer和Invalidate buffer的存在，可能导致脏读的问题。
 volatile通过内存屏障，实时刷新Store buffer和Invalidate buffer，从而实现变量的可见性。
+
+<h2 id="6">6.ThreadLocal</h2>
+&emsp;&emsp; ThreadLocal的实现为：每个线程维护一个ThreadLocalMap，ThreadLocalMap Entry的key为WeakReference<ThreadLocal<?>>，
+key为弱引用，弱引用的对象在GC时，可能会被回收。这样ThreadLocalMap中就会出现key为null的Entry。如果当前线程迟迟不结束，
+那么会存在一条强引用链：Thread.threadLocals -> ThreadLocalMap -> Entry(key == null) -> value，这条强引用链无法回收，
+可能导致内存泄漏。ThreadLocal的get()、set()、remove()方法，在调用的时候都会检查key == null的情况，并进行清理。
+
+    ThreadLocal导致内存泄漏的情况：
+    1，使用线程池时，线程执行任务完毕，放回线程池中没有销毁，线程一直没被使用，导致内存泄漏。
+    2，分配了ThreadLocal，但是没有调用get()、set()、remove()方法，导致线程泄漏。
+    
+<h2 id="7">7.Java的四种引用</h2>
+&emsp;&emsp; Java有四种引用：强引用、软引用(SoftReference)、弱引用(WeakReference)、虚引用(PhantomReference)。
+软引用：当JVM触发GC后，内存还是不足，那么会把软引用包裹的对象回收掉。弱引用：只要发生GC，弱引用包裹的对象就会被回收。
+虚引用：虚引用必须跟引用队列(ReferenceQueue)一起使用，一个对象是否有虚引用的存在，完全不会对其生存时间构成影响，当对象被回收时，
+如果对象有虚引用，那么会将回收的通知放到引用队列中，这样我们就能知道对象已经被回收。
