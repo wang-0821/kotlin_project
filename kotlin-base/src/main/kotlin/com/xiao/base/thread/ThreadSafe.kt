@@ -13,5 +13,5 @@ package com.xiao.base.thread
     AnnotationTarget.FUNCTION
 )
 annotation class ThreadSafe(
-    val desciption: String = ""
+    val description: String = ""
 )
