@@ -19,7 +19,6 @@ allprojects {
 subprojects {
 	apply plugin: 'java'
 	apply plugin: 'idea'
-	apply plugin: 'maven'
 	apply plugin: 'kotlin'
 
 	apply from: rootProject.file("gradle/maven_publish.gradle")

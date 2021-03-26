@@ -8,8 +8,6 @@ import kotlin.coroutines.cancellation.CancellationException
  * @author lix wang
  */
 interface SafeDeferred<T : Any?> {
-    suspend fun await(): T
-
     suspend fun awaitNanos(timeout: Long = 60000, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): T
 
     fun cancel(cause: CancellationException? = null)
