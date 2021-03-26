@@ -20,13 +20,9 @@ class SafeCompletableDeferred<T : Any?>(
         job.cancel()
     }
 
-    override suspend fun await(): T {
-        return deferred.await()
-    }
-
     override suspend fun awaitNanos(timeout: Long, timeUnit: TimeUnit): T {
         return withTimeout(timeUnit.toMillis(timeout)) {
-            await()
+            deferred.await()
         }
     }
 
