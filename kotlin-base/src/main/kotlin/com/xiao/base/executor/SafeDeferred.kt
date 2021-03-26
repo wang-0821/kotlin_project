@@ -1,5 +1,6 @@
 package com.xiao.base.executor
 
+import com.xiao.base.CommonConstants.DEFAULT_EXECUTION_TIMEOUT
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -8,9 +9,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * @author lix wang
  */
 interface SafeDeferred<T : Any?> {
-    suspend fun await(): T
-
-    suspend fun awaitNanos(timeout: Long = 60000, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): T
+    suspend fun awaitNanos(timeout: Long = DEFAULT_EXECUTION_TIMEOUT, timeUnit: TimeUnit = TimeUnit.MILLISECONDS): T
 
     fun cancel(cause: CancellationException? = null)
 

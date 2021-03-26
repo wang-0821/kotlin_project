@@ -1,6 +1,7 @@
 package com.xiao.base.scheduler
 
 /**
+ * Annotation time unit is second.
  *
  * @author lix wang
  */

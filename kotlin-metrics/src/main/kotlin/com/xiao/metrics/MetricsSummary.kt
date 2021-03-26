@@ -15,13 +15,11 @@ class MetricsSummary {
         private set
     var avg: Int = -1
         private set
-    private var latencies: List<Int>? = null
 
     @ThreadUnsafe
     fun calculateSummary(latencies: List<Int>): MetricsSummary {
         if (latencies.isNotEmpty()) {
             val latencyList = latencies.sorted()
-            this.latencies = latencyList
             val size = latencyList.size
             times = latencyList.size
             min = latencyList[0]

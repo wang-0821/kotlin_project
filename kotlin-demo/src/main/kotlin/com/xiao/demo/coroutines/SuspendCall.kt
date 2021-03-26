@@ -44,15 +44,15 @@ class SuspendCall {
         println("Computed in $time ms")
     }
 
-    suspend fun printSuspend() {
+    private fun printSuspend() {
         println("suspend method")
     }
 
-    fun doSomethingUsefulOneAsync() = GlobalScope.async {
+    private fun doSomethingUsefulOneAsync() = GlobalScope.async {
         doSomething1()
     }
 
-    fun doSomethingUsefulTwoAsync() = GlobalScope.async {
+    private fun doSomethingUsefulTwoAsync() = GlobalScope.async {
         doSomething2()
     }
 

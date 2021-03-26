@@ -1,4 +1,4 @@
 dependencies {
     api project(":kotlin-base")
-    api libs["lettuce-core"]
+    implementation libs["lettuce-core"]
 }

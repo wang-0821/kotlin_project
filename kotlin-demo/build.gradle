@@ -1,5 +1,7 @@
 dependencies {
-    api project(":kotlin-database")
-    api project(":kotlin-http")
-    api libs["netty-handler"]
+//    api project(":kotlin-database")
+//    api project(":kotlin-http")
+    api project(":kotlin-base")
+//    api project(":kotlin-redis")
+    implementation libs["netty-handler"]
 }

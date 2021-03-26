@@ -1,5 +1,6 @@
 package com.xiao.base.executor
 
+import com.xiao.base.CommonConstants.DEFAULT_EXECUTION_TIMEOUT
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
@@ -42,5 +43,18 @@ open class SafeCompletableFuture<T : Any?> : CompletableFuture<T>() {
             future.cancel(false)
             throw e
         }
+    }
+
+    /**
+     * Delegate to get result with timeout.
+     * Avoid dead lock.
+     */
+    @Throws(
+        InterruptedException::class,
+        ExecutionException::class,
+        TimeoutException::class
+    )
+    override fun get(): T {
+        return get(DEFAULT_EXECUTION_TIMEOUT, TimeUnit.MILLISECONDS)
     }
 }

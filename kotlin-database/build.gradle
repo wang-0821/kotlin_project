@@ -3,9 +3,9 @@ plugins {
 }
 
 dependencies {
-    api libs['mybatis']
-    api libs['HikariCP']
-    api libs['flyway-core']
-    api libs['mysql-connector-java']
+    implementation libs['mybatis']
+    implementation libs['HikariCP']
+    implementation libs['flyway-core']
+    implementation libs['mysql-connector-java']
     api project(":kotlin-base")
 }
