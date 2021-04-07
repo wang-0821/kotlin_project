@@ -1,5 +1,6 @@
 package com.xiao.redis.client
 
+import com.xiao.base.util.NettyUtils
 import com.xiao.redis.client.proxy.RedisAsyncServiceProxy
 import com.xiao.redis.client.proxy.RedisServiceProxy
 import com.xiao.redis.client.service.RedisAsyncService
@@ -9,8 +10,8 @@ import com.xiao.redis.client.testing.TestingRedisServiceProxy
 import io.lettuce.core.RedisClient
 import io.lettuce.core.RedisURI
 import io.lettuce.core.resource.DefaultClientResources
+import io.netty.channel.EventLoopGroup
 import java.lang.reflect.Proxy
-import kotlin.math.max
 
 /**
  *
@@ -53,8 +54,11 @@ object RedisHelper {
         ) as RedisAsyncService
     }
 
+    private val ioThreads = Runtime.getRuntime().availableProcessors()
+    private val ioEventLoopGroup: EventLoopGroup = NettyUtils.getIoEventLoopGroup(ioThreads)
+    // use shared io eventLoopGroup
     private val clientResources = DefaultClientResources
         .builder()
-        .ioThreadPoolSize(max(3, Runtime.getRuntime().availableProcessors()))
+        .eventExecutorGroup(ioEventLoopGroup)
         .build()
 }

@@ -34,6 +34,6 @@ abstract class BaseRedisProxy(private val redisClient: RedisClient) : Invocation
     }
 
     companion object {
-        private val REDIS_TIMEOUT = Duration.ofSeconds(30)
+        private val REDIS_TIMEOUT = Duration.ofSeconds(5)
     }
 }

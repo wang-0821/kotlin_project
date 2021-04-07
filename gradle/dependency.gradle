@@ -13,7 +13,7 @@ ext {
             mysqlConnectorJava: '8.0.21',
             hikariCP: '3.4.5',
             ktlint: '0.40.0',
-            netty: '5.0.0.Alpha2',
+            netty: '4.1.56.Final',
             lettuce: '6.0.2.RELEASE',
             jodaTime: '2.10.10',
             caffeine: '3.0.0'
@@ -60,6 +60,8 @@ ext {
             // netty
             "netty-handler": "io.netty:netty-handler:$version.netty",
             "netty-buffer": "io.netty:netty-buffer:$version.netty",
+            "netty-transport-native-epoll_x86_64": "io.netty:netty-transport-native-epoll:$version.netty:linux-x86_64",
+            "netty-transport-native-kqueue_x86_64": "io.netty:netty-transport-native-kqueue:$version.netty:osx-x86_64",
 
             //redis client
             "lettuce-core": "io.lettuce:lettuce-core:$version.lettuce"

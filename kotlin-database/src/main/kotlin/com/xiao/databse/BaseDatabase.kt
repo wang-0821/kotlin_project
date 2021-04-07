@@ -138,6 +138,7 @@ abstract class BaseDatabase(
             isMapUnderscoreToCamelCase = true
             isLazyLoadingEnabled = true
             localCacheScope = LocalCacheScope.STATEMENT
+            isCacheEnabled = false
         }
     }
 

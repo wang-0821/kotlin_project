@@ -1,10 +1,9 @@
 package com.xiao.demo.netty.discard
 
+import com.xiao.base.util.NettyUtils
 import io.netty.bootstrap.Bootstrap
 import io.netty.channel.ChannelInitializer
-import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
-import io.netty.channel.socket.nio.NioSocketChannel
 
 /**
  *
@@ -12,12 +11,12 @@ import io.netty.channel.socket.nio.NioSocketChannel
  */
 class DiscardClient {
     fun run() {
-        val group = NioEventLoopGroup()
+        val group = NettyUtils.getIoEventLoopGroup(Runtime.getRuntime().availableProcessors())
         try {
             val bootstrap = Bootstrap()
             bootstrap
                 .group(group)
-                .channel(NioSocketChannel::class.java)
+                .channel(NettyUtils.getSocketChannel())
                 .handler(
                     object : ChannelInitializer<SocketChannel>() {
                         override fun initChannel(ch: SocketChannel) {

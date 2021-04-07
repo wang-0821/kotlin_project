@@ -4,4 +4,7 @@ dependencies {
     api libs['disruptor']
     api libs['log4j-slf4j-impl']
     api libs['joda-time']
+    api libs['netty-handler']
+    api libs['netty-transport-native-epoll_x86_64']
+    api libs['netty-transport-native-kqueue_x86_64']
 }
