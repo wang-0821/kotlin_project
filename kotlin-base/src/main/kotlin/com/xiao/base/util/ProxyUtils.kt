@@ -7,7 +7,6 @@ import java.lang.reflect.Method
  * @author lix wang
  */
 object ProxyUtils {
-
     /**
      * Set method accessible as true, skip security check, to speed up.
      */

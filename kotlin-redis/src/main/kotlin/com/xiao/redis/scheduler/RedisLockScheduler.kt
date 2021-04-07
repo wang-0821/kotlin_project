@@ -15,6 +15,7 @@ import java.util.concurrent.locks.ReentrantLock
  *
  * @author lix wang
  */
+@Suppress("JoinDeclarationAndAssignment")
 class RedisLockScheduler : AbstractScheduler {
     private var taskCount: Int = 0
     private val redisLock: RedisLock

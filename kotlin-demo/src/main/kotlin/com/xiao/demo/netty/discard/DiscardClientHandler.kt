@@ -25,10 +25,6 @@ class DiscardClientHandler : SimpleChannelInboundHandler<Any>() {
         byteBuf!!.release()
     }
 
-    override fun messageReceived(ctx: ChannelHandlerContext?, msg: Any?) {
-        TODO("Not yet implemented")
-    }
-
     override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
         cause.printStackTrace()
         ctx.close()
@@ -51,5 +47,9 @@ class DiscardClientHandler : SimpleChannelInboundHandler<Any>() {
     companion object {
         private const val BUFFER_SIZE = 512
         private const val MAX_TIMES = 20
+    }
+
+    override fun channelRead0(ctx: ChannelHandlerContext?, msg: Any?) {
+        TODO("Not yet implemented")
     }
 }

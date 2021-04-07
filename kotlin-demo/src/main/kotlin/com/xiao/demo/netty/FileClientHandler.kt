@@ -8,7 +8,7 @@ import io.netty.channel.SimpleChannelInboundHandler
  * @author lix wang
  */
 class FileClientHandler : SimpleChannelInboundHandler<Any>() {
-    override fun messageReceived(ctx: ChannelHandlerContext, msg: Any) {
-        println(ctx.toString() + msg.toString())
+    override fun channelRead0(ctx: ChannelHandlerContext?, msg: Any?) {
+        TODO("Not yet implemented")
     }
 }

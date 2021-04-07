@@ -17,10 +17,6 @@ class FileServerHandler : SimpleChannelInboundHandler<String>() {
         sendFile(ctx, "JUnit5.md")
     }
 
-    override fun messageReceived(ctx: ChannelHandlerContext, msg: String) {
-        // do nothing
-    }
-
     override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
         if (ctx.channel().isActive) {
             ctx.writeAndFlush("ERR: ${cause::class.java.simpleName}: ${cause.message}\n")
@@ -48,5 +44,9 @@ class FileServerHandler : SimpleChannelInboundHandler<String>() {
         } else {
             ctx.write(ChunkedFile(raf))
         }
+    }
+
+    override fun channelRead0(ctx: ChannelHandlerContext?, msg: String?) {
+        TODO("Not yet implemented")
     }
 }

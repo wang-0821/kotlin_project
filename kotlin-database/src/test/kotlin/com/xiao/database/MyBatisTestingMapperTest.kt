@@ -27,7 +27,13 @@ import org.junit.jupiter.api.assertThrows
         )
     ]
 )
-class MyBatisTestMapperTest : KtTestDataSourceBase() {
+class MyBatisTestingMapperTest : KtTestDataSourceBase() {
+    @Test
+    fun `test query by testing mapper`() {
+        val userMapper = MapperUtils.getTestMapper(UserMapper::class.java)
+        Assertions.assertEquals(userMapper.getById(1L).username, "user_1")
+    }
+
     @Test
     fun `test query using custom testMapperProxy with different sqlSessions`() {
         val userMapper = MapperUtils.getTestMapper(UserMapper::class.java)
