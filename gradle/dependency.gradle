@@ -60,8 +60,8 @@ ext {
             // netty
             "netty-handler": "io.netty:netty-handler:$version.netty",
             "netty-buffer": "io.netty:netty-buffer:$version.netty",
-            "netty-transport-native-epoll": "io.netty:netty-transport-native-epoll:$version.netty",
-            "netty-transport-native-kqueue": "io.netty:netty-transport-native-kqueue:$version.netty",
+            "netty-transport-native-epoll_x86_64": "io.netty:netty-transport-native-epoll:$version.netty:linux-x86_64",
+            "netty-transport-native-kqueue_x86_64": "io.netty:netty-transport-native-kqueue:$version.netty:osx-x86_64",
 
             //redis client
             "lettuce-core": "io.lettuce:lettuce-core:$version.lettuce"

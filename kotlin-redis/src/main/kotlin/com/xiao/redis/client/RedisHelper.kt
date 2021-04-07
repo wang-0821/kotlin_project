@@ -10,14 +10,8 @@ import com.xiao.redis.client.testing.TestingRedisServiceProxy
 import io.lettuce.core.RedisClient
 import io.lettuce.core.RedisURI
 import io.lettuce.core.resource.DefaultClientResources
-import io.lettuce.core.resource.EventLoopGroupProvider
 import io.netty.channel.EventLoopGroup
-import io.netty.util.concurrent.DefaultPromise
-import io.netty.util.concurrent.EventExecutorGroup
-import io.netty.util.concurrent.Future
-import io.netty.util.concurrent.GlobalEventExecutor
 import java.lang.reflect.Proxy
-import java.util.concurrent.TimeUnit
 
 /**
  *
@@ -66,40 +60,5 @@ object RedisHelper {
     private val clientResources = DefaultClientResources
         .builder()
         .eventExecutorGroup(ioEventLoopGroup)
-        .eventLoopGroupProvider(
-            object : EventLoopGroupProvider {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : EventLoopGroup?> allocate(type: Class<T>): T {
-                    if (type.isAssignableFrom(ioEventLoopGroup::class.java)) {
-                        return ioEventLoopGroup as T
-                    } else {
-                        throw IllegalArgumentException("Unexpected eventLoopGroup type: ${type.simpleName}.")
-                    }
-                }
-
-                override fun threadPoolSize(): Int {
-                    return ioThreads
-                }
-
-                override fun release(
-                    eventLoopGroup: EventExecutorGroup,
-                    quietPeriod: Long,
-                    timeout: Long,
-                    unit: TimeUnit?
-                ): Future<Boolean> {
-                    return DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE)
-                        .apply {
-                            setSuccess(true)
-                        }
-                }
-
-                override fun shutdown(quietPeriod: Long, timeout: Long, timeUnit: TimeUnit?): Future<Boolean> {
-                    return DefaultPromise<Boolean>(GlobalEventExecutor.INSTANCE)
-                        .apply {
-                            setSuccess(true)
-                        }
-                }
-            }
-        )
         .build()
 }
