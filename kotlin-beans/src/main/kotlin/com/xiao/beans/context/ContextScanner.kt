@@ -1,12 +1,12 @@
-package com.xiao.base.context
+package com.xiao.beans.context
 
-import com.xiao.base.annotation.AnnotationScan
-import com.xiao.base.annotation.ContextInject
-import com.xiao.base.annotation.KtComponent
 import com.xiao.base.resource.AnnotatedKtResource
 import com.xiao.base.resource.KtClassResource
 import com.xiao.base.resource.PathResourceScanner
 import com.xiao.base.util.extractAnnotations
+import com.xiao.beans.annotation.AnnotationScan
+import com.xiao.beans.annotation.ContextInject
+import com.xiao.beans.annotation.KtComponent
 
 /**
  *

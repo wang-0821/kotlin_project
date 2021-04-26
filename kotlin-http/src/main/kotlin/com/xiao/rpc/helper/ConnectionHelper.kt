@@ -1,7 +1,7 @@
 package com.xiao.rpc.helper
 
-import com.xiao.base.context.Context
 import com.xiao.base.logging.Logging
+import com.xiao.beans.context.Context
 import com.xiao.rpc.Client
 import com.xiao.rpc.Route
 import com.xiao.rpc.context.ConnectionContextAware

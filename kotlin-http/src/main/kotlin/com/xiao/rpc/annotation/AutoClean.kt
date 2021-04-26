@@ -1,6 +1,6 @@
 package com.xiao.rpc.annotation
 
-import com.xiao.base.annotation.AnnotationScan
+import com.xiao.beans.annotation.AnnotationScan
 
 /**
  * This annotation mark a [com.xiao.rpc.cleaner.Cleaner] effective.

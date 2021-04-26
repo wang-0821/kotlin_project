@@ -1,4 +1,4 @@
-package com.xiao.base.context
+package com.xiao.beans.context
 
 /**
  *
@@ -15,12 +15,13 @@ object BeanHelper : BeanRegistryAware {
         val constructor = constructors[0]
         val parameterTypes = constructor.parameterTypes
         val parameters = arrayOfNulls<Any>(parameterTypes.size)
-        for (i in parameterTypes.indices) {
-            parameters[i] = getByType(parameterTypes[i])
-            check(parameters[i] != null) {
-                "${clazz.simpleName} constructor parameterType ${parameterTypes[i].simpleName} can't find value."
+        parameterTypes.indices
+            .forEach {
+                parameters[it] = getByType(parameterTypes[it])
+                check(parameters[it] != null) {
+                    "${clazz.simpleName} constructor parameterType ${parameterTypes[it].simpleName} can't find value."
+                }
             }
-        }
         return constructor.newInstance(*parameters) as E
     }
 }

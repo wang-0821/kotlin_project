@@ -1,8 +1,10 @@
-import com.xiao.base.context.BeanHelper
-import com.xiao.base.context.BeanRegistry
-import com.xiao.base.context.Context
-import com.xiao.base.context.ContextScanner
+package com.xiao.beans
+
 import com.xiao.base.util.packageName
+import com.xiao.beans.context.BeanHelper
+import com.xiao.beans.context.BeanRegistry
+import com.xiao.beans.context.Context
+import com.xiao.beans.context.ContextScanner
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test

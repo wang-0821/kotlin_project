@@ -1,7 +1,7 @@
 package com.xiao.rpc.context
 
-import com.xiao.base.context.Context
 import com.xiao.base.logging.Logging
+import com.xiao.beans.context.Context
 import com.xiao.rpc.Address
 import com.xiao.rpc.Cleaner
 import com.xiao.rpc.Route

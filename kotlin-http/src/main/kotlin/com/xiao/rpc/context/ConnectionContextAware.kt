@@ -1,6 +1,6 @@
 package com.xiao.rpc.context
 
-import com.xiao.base.context.Context
+import com.xiao.beans.context.Context
 import com.xiao.rpc.Route
 import com.xiao.rpc.io.Connection
 

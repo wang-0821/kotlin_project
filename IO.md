@@ -1,5 +1,7 @@
 * [1.Linux零拷贝](#1)
 * [2.Java零拷贝](#2)
+* [3.Reactor模型和Proactor](#3)
+* [4.select,poll,epoll](#4)
 
 <h2 id="1">1.Linux零拷贝</h2>
 &emsp;&emsp; 零拷贝通常是指计算机执行操作时，CPU不需要先将数据从某处内存复制到另一个特定区域。
@@ -51,3 +53,35 @@
 <h2 id="2">2.Java零拷贝</h2>
 &emsp;&emsp; Java中支持mmap、sendfile。Java中sendfile使用FileChannel.transferTo()方法，transferTo()实现方式也是通过系统调用sendfile()，
 Netty是使用FileChannel.transferTo()实现文件传输。
+
+<h2 id="3">3.Reactor模型和Proactor</h2>
+&emsp;&emsp; Reactor模型是基于同步I/O的，而Proactor是基于异步I/O操作的。Netty就是基于主从Reactor多线程模型。
+
+<h2 id="4">4.select,poll,epoll</h2>
+&emsp;&emsp; select、poll、epoll都是IO多路复用机制，监视多个描述符，一旦某个描述符就绪，就能够通知程序进行相应的读写操作。
+select、poll、epoll都是同步IO，因为都需要在读写事件就绪后负责进行读写。
+
+### Select
+&emsp;&emsp; select步骤：1，创建所关注事件的描述符集合(fd_set)，对于一个描述符可以关注read、write、exception事件，所以通常要创建三个描述符集合。
+2，调用select()等待事件发生。3，轮询所有文件描述符集合中的文件描述符，检查是否有对应的事件发生，如果有，则处理事件。
+
+    Select的优点：单线程，占用资源少，不消耗太多CPU。
+    Select的缺点：
+        1，每次select都需要把fd_set从用户态拷贝到内核态，这个复制开销在fd很多时，开销会很大。
+        2，每次select都需要在内核遍历所有的fd，fd很多时，这个开销也很大。
+        3，单个进程能监控的fd数量存在最大限制，32位机器默认是1024，数量超过后，select性能会急剧下降。
+        4，select触发方式是水平触发，应用程序如果没有完成对一个已经就绪的文件描述符进行IO操作，
+            那么之后每次select调用还是会将这些文件描述符通知进程。
+        5，该模型将事件探测和事件响应夹杂在一起，一旦事件响应的执行体庞大，则对整个模型是灾难性的。
+
+### Poll
+&emsp;&emsp; poll是linux中引入的，poll与select本质上没有太大区别。poll流程：1，创建描述符集合，设置关注的事件。2，调用poll，等待事件发生。
+3，轮询描述符集合，检查事件，处理事件。poll和select的区别在于，poll只有一个描述符集合，每个描述符上分别设置读、写、异常事件，最后轮询的时候，
+可以同时检查三种事件。
+
+### Epoll
+&emsp;&emsp; epoll将fd_set描述符列表交给内核，一旦有事件发生，内核把发生事件的描述符列表通知给进程，这样避免了轮询整个描述符列表。
+epoll支持水平触发和边缘触发，边缘触发只告诉进程哪些fd刚刚变为就绪状态，并且只会通知一次。epoll提供了三个函数：epoll_create、epoll_ctl、
+epoll_wait。
+    
+    epoll_create是创建一个epoll句柄。epoll_ctl是注册要监听的事件类型

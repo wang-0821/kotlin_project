@@ -1,6 +1,6 @@
 package com.xiao.rpc.io
 
-import com.xiao.rpc.helper.IoHelper
+import com.xiao.base.io.IoHelper
 import java.io.InputStream
 import java.nio.charset.Charset
 

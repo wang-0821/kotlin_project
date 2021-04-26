@@ -1,13 +1,13 @@
 package com.xiao.rpc.context
 
-import com.xiao.base.context.BeanHelper
-import com.xiao.base.context.BeanRegistry
-import com.xiao.base.context.Context
-import com.xiao.base.context.ContextAware
 import com.xiao.base.logging.KtLogger
 import com.xiao.base.logging.LoggerType
 import com.xiao.base.logging.Logging
 import com.xiao.base.resource.AnnotatedKtResource
+import com.xiao.beans.context.BeanHelper
+import com.xiao.beans.context.BeanRegistry
+import com.xiao.beans.context.Context
+import com.xiao.beans.context.ContextAware
 import com.xiao.rpc.Cleaner
 import com.xiao.rpc.Client
 import com.xiao.rpc.RunningState
@@ -86,7 +86,7 @@ abstract class ClientContextPool(override val key: Context.Key<*>) : ContextAwar
     private fun startClean() {
         synchronized(state) {
             val thread = Thread(
-                Runnable {
+                {
                     cleanupRunnable()
                 },
                 "RpcCleanerThread"

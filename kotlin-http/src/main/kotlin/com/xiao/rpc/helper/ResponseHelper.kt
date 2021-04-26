@@ -1,5 +1,6 @@
 package com.xiao.rpc.helper
 
+import com.xiao.base.io.IoHelper
 import com.xiao.rpc.ContentEncodingType
 import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.Protocol

@@ -1,6 +1,6 @@
 package com.xiao.rpc.annotation
 
-import com.xiao.base.annotation.AnnotationScan
+import com.xiao.beans.annotation.AnnotationScan
 
 /**
  * Mark a kind of client context which implements [com.xiao.rpc.context.ClientContextPoolAware] effective.

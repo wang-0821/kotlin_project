@@ -1,6 +1,5 @@
-package com.xiao.rpc.helper
+package com.xiao.base.io
 
-import com.xiao.rpc.io.PooledBuffer
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
@@ -11,51 +10,57 @@ import java.nio.charset.Charset
  * @author lix wang
  */
 object IoHelper {
-    const val KILO = 1024
+    private const val KILO = 1024
+    private const val CARRIAGE_RETURN_BYTE = '\r'.toByte()
+    private const val LINE_FEED_BYTE = '\n'.toByte()
     const val BUFFER_SIZE = 8 * KILO
     const val CRLF = "\r\n"
-    const val CARRIAGE_RETURN_BYTE = '\r'.toByte()
-    const val LINE_FEED_BYTE = '\n'.toByte()
-    private const val MAX_CACHE_SIZE = 32
-    private val RPC_IO_BYTE_ARRAY = object : RpcContextKey<ByteArray> {}
-    private val RPC_IO_CHAR_ARRAY = object : RpcContextKey<CharArray> {}
 
     @JvmStatic
     fun readPlainTextLine(
         inputStream: InputStream,
-        charset: Charset = Charsets.UTF_8
+        charset: Charset = Charsets.UTF_8,
+        byteArray: ByteArray? = null,
+        charArray: CharArray? = null,
+        bufferAdapter: BufferAdapter? = null
     ): String {
-        val byteArray = getByteArray()
-        val charArray = getCharArray()
-        val result = readLine(inputStream, byteArray, charArray, charset)
-        cacheByteArray(byteArray)
-        cacheCharArray(charArray)
-        return result
+        return readLine(
+            inputStream,
+            byteArray ?: ByteArray(BUFFER_SIZE),
+            charArray ?: CharArray(BUFFER_SIZE),
+            charset,
+            bufferAdapter ?: DefaultBufferAdapter(BUFFER_SIZE)
+        )
     }
 
     @JvmStatic
     fun contentAsString(
         inputStream: InputStream,
         charset: Charset,
-        length: Long = -1
+        length: Long = -1,
+        byteArray: ByteArray? = null,
+        charArray: CharArray? = null,
+        bufferAdapter: BufferAdapter? = null
     ): String {
-        val byteArray = getByteArray()
-        val charArray = getCharArray()
-        val result = asString(inputStream, byteArray, charArray, charset, length) { input, bytes, offset, len ->
+        return asString(
+            inputStream,
+            byteArray ?: ByteArray(BUFFER_SIZE),
+            charArray ?: CharArray(BUFFER_SIZE),
+            charset,
+            length,
+            bufferAdapter ?: DefaultBufferAdapter(BUFFER_SIZE)
+        ) { input, bytes, offset, len ->
             input.read(bytes, offset, len)
         }
-        cacheByteArray(byteArray)
-        cacheCharArray(charArray)
-        return result
     }
 
     private fun readLine(
         inputStream: InputStream,
         byteArray: ByteArray,
         charArray: CharArray,
-        charset: Charset
+        charset: Charset,
+        buffer: BufferAdapter
     ): String {
-        var buffer: PooledBuffer? = null
         val byteBuffer = ByteBuffer.wrap(byteArray)
         val charBuffer = CharBuffer.wrap(charArray)
         val charSetDecoder = charset.newDecoder()
@@ -102,7 +107,7 @@ object IoHelper {
                 charSetDecoder.decode(byteBuffer, charBuffer, true)
                 charBuffer.flip()
                 // all chars are in single char array
-                return if (buffer == null) {
+                return if (buffer.size() <= 0) {
                     String(charBuffer.array(), charBuffer.position(), charBuffer.remaining())
                 } else {
                     buffer.appendCharBuffer(charBuffer)
@@ -113,7 +118,6 @@ object IoHelper {
             } else {
                 charSetDecoder.decode(byteBuffer, charBuffer, false)
                 charBuffer.flip()
-                buffer = buffer ?: PooledBuffer()
                 buffer.appendCharBuffer(charBuffer)
                 charBuffer.clear()
                 byteBuffer.compact()
@@ -127,9 +131,9 @@ object IoHelper {
         charArray: CharArray,
         charset: Charset,
         length: Long,
+        bufferAdapter: BufferAdapter,
         readBlock: (InputStream, ByteArray, Int, Int) -> Int
     ): String {
-        var buffer: PooledBuffer? = null
         val byteBuffer = ByteBuffer.wrap(byteArray)
         val charBuffer = CharBuffer.wrap(charArray)
         val charsetDecoder = charset.newDecoder()
@@ -145,8 +149,7 @@ object IoHelper {
                 byteBuffer.flip()
                 charsetDecoder.decode(byteBuffer, charBuffer, false)
                 charBuffer.flip()
-                buffer = buffer ?: PooledBuffer()
-                buffer.appendCharBuffer(charBuffer)
+                bufferAdapter.appendCharBuffer(charBuffer)
                 charBuffer.clear()
                 byteBuffer.compact()
             } else {
@@ -156,61 +159,15 @@ object IoHelper {
                 byteBuffer.flip()
                 charsetDecoder.decode(byteBuffer, charBuffer, true)
                 charBuffer.flip()
-                return if (buffer == null) {
+                return if (bufferAdapter.size() <= 0) {
                     String(charBuffer.array(), charBuffer.position(), charBuffer.remaining())
                 } else {
-                    buffer.appendCharBuffer(charBuffer)
+                    bufferAdapter.appendCharBuffer(charBuffer)
                     charBuffer.clear()
                     byteBuffer.compact()
-                    buffer.asString()
+                    bufferAdapter.asString()
                 }
             }
-        }
-    }
-
-    private fun getCharArray(): CharArray {
-        val charArrayList = RpcHelper.fetch(RPC_IO_CHAR_ARRAY) {
-            mutableListOf<CharArray>()
-        }
-
-        return if (charArrayList.isNotEmpty()) {
-            charArrayList.removeAt(0)
-        } else {
-            CharArray(BUFFER_SIZE)
-        }
-    }
-
-    private fun getByteArray(): ByteArray {
-        val byteArrayList = RpcHelper.fetch(RPC_IO_BYTE_ARRAY) {
-            mutableListOf<ByteArray>()
-        }
-
-        return if (byteArrayList.isNotEmpty()) {
-            byteArrayList.removeAt(0)
-        } else {
-            ByteArray(BUFFER_SIZE)
-        }
-    }
-
-    private fun cacheCharArray(charArray: CharArray): Boolean {
-        val charArrayList = RpcHelper.fetch(RPC_IO_CHAR_ARRAY) {
-            mutableListOf<CharArray>()
-        }
-        return if (charArrayList.size >= MAX_CACHE_SIZE) {
-            false
-        } else {
-            charArrayList.add(charArray)
-        }
-    }
-
-    private fun cacheByteArray(byteArray: ByteArray): Boolean {
-        val byteArrayList = RpcHelper.fetch(RPC_IO_BYTE_ARRAY) {
-            mutableListOf<ByteArray>()
-        }
-        return if (byteArrayList.size >= MAX_CACHE_SIZE) {
-            return false
-        } else {
-            byteArrayList.add(byteArray)
         }
     }
 }
