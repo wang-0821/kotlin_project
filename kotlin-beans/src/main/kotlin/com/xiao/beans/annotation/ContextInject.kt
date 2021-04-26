@@ -1,4 +1,4 @@
-package com.xiao.base.annotation
+package com.xiao.beans.annotation
 
 import kotlin.reflect.KClass
 

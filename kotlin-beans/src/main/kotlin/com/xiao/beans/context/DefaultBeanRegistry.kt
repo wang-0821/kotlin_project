@@ -1,29 +1,15 @@
-package com.xiao.base.context
+package com.xiao.beans.context
 
-import com.xiao.base.annotation.ContextInject
+import com.xiao.beans.annotation.ContextInject
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  *
  * @author lix wang
  */
-interface BeanRegistry : Context {
-    fun <T : Any> getByType(clazz: Class<T>): T?
-
-    fun <T : Any> getByName(beanName: String): T?
-
-    fun <T : Any> register(beanName: String, bean: T)
-
-    fun <T : Any> registerSingleton(bean: T)
-
-    fun <T : Any> registerSingleton(name: String, bean: T)
-
-    companion object Key : Context.Key<BeanRegistry>
-}
-
 @ContextInject
 @Suppress("UNCHECKED_CAST")
-class ContextBeanFactory : BeanRegistry {
+class DefaultBeanRegistry : BeanRegistry {
     override val key: Context.Key<*>
         get() = BeanRegistry.Key
     private val contextBeanPool = ConcurrentHashMap<String, Any>()

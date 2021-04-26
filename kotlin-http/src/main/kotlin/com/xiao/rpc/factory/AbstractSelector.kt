@@ -1,6 +1,6 @@
 package com.xiao.rpc.factory
 
-import com.xiao.base.context.BeanRegistryAware
+import com.xiao.beans.context.BeanRegistryAware
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 

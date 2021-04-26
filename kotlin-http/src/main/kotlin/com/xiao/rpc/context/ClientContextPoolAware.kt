@@ -1,7 +1,7 @@
 package com.xiao.rpc.context
 
-import com.xiao.base.context.Context
-import com.xiao.base.context.ContextAware
+import com.xiao.beans.context.Context
+import com.xiao.beans.context.ContextAware
 
 /**
  * 所有实现了[ClientContextPoolAware]的类，都会被当作[ClientContextPool]中的一种缓存类型，
