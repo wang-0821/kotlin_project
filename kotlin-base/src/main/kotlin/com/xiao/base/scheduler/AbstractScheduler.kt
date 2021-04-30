@@ -94,6 +94,8 @@ abstract class AbstractScheduler(
         command: () -> T,
         future: CompletableFuture<T>
     ): Runnable {
-        return Runnable { CompletableCallback(command, future as CompletableFuture<Any?>).run() }
+        return Runnable {
+            CompletableCallback(command, future as CompletableFuture<Any?>).run()
+        }
     }
 }

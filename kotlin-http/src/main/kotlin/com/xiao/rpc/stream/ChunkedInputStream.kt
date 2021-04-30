@@ -1,6 +1,6 @@
 package com.xiao.rpc.stream
 
-import com.xiao.base.io.IoHelper
+import com.xiao.base.util.IoUtils
 import java.io.InputStream
 import java.nio.ByteBuffer
 
@@ -10,7 +10,7 @@ import java.nio.ByteBuffer
  */
 class ChunkedInputStream : InputStream {
     private val inputStream: InputStream
-    private val byteBuffer: ByteBuffer = ByteBuffer.allocate(IoHelper.BUFFER_SIZE)
+    private val byteBuffer: ByteBuffer = ByteBuffer.allocate(IoUtils.BUFFER_SIZE)
     private var pos: Int = 0
     private var chunkSize: Int = 0
     private var eof = false
@@ -102,7 +102,7 @@ class ChunkedInputStream : InputStream {
     private fun nextChunk() {
         if (ChunkState.CHUNK_LINE_FEED == state) {
             // skip line feed
-            val chunkSizeStr = IoHelper.readPlainTextLine(inputStream)
+            val chunkSizeStr = IoUtils.readPlainTextLine(inputStream)
             check(chunkSizeStr.isEmpty()) {
                 "Unexpected content at end of chunk."
             }
@@ -111,7 +111,7 @@ class ChunkedInputStream : InputStream {
 
         // calculate chunk size
         if (ChunkState.CHUNK_LENGTH == state) {
-            val chunkSizeStr = IoHelper.readPlainTextLine(inputStream)
+            val chunkSizeStr = IoUtils.readPlainTextLine(inputStream)
             chunkSize = Integer.parseInt(chunkSizeStr, 16)
             pos = 0
             if (chunkSize <= 0) {

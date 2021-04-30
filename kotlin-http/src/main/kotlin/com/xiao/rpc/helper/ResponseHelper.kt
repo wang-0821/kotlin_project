@@ -1,6 +1,6 @@
 package com.xiao.rpc.helper
 
-import com.xiao.base.io.IoHelper
+import com.xiao.base.util.IoUtils
 import com.xiao.rpc.ContentEncodingType
 import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.Protocol
@@ -20,7 +20,7 @@ import java.nio.charset.Charset
  */
 object ResponseHelper {
     fun parseResponse(inputStream: InputStream, responseListener: ResponseListener, socket: Socket): Response {
-        val startLine = IoHelper.readPlainTextLine(inputStream)
+        val startLine = IoUtils.readPlainTextLine(inputStream)
         val startLineSplits = startLine.split(" ")
         val protocol = Protocol.parseProtocol(startLineSplits[0])
         val status = startLineSplits[1].toInt()
@@ -82,7 +82,7 @@ object ResponseHelper {
     private fun parseHeaders(inputStream: InputStream): List<Header> {
         val headers = mutableListOf<Header>()
         while (true) {
-            val line = IoHelper.readPlainTextLine(inputStream)
+            val line = IoUtils.readPlainTextLine(inputStream)
             if (line.isNotBlank()) {
                 parseHeader(line)?.let {
                     headers.add(it)

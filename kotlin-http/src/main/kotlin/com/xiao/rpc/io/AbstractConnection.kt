@@ -1,6 +1,6 @@
 package com.xiao.rpc.io
 
-import com.xiao.base.io.IoHelper.CRLF
+import com.xiao.base.util.IoUtils.CRLF
 import com.xiao.base.util.JsonUtils
 import com.xiao.rpc.ContentHeaders
 import com.xiao.rpc.ResponseListener
