@@ -1,6 +1,6 @@
 package com.xiao.rpc.io
 
-import com.xiao.base.io.IoHelper
+import com.xiao.base.util.IoUtils
 import java.io.InputStream
 import java.nio.charset.Charset
 
@@ -29,9 +29,9 @@ class DefaultHttpResponseContent(
     override fun asString(): String? {
         val charset = charset ?: Charsets.UTF_8
         return if (contentLength > 0) {
-            IoHelper.contentAsString(inputStream, charset, contentLength)
+            IoUtils.contentAsString(inputStream, charset, contentLength)
         } else {
-            IoHelper.contentAsString(inputStream, charset)
+            IoUtils.contentAsString(inputStream, charset)
         }
     }
 

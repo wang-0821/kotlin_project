@@ -1,5 +1,6 @@
 package com.xiao.base.io
 
+import com.xiao.base.util.IoUtils
 import java.nio.CharBuffer
 
 /**
@@ -11,7 +12,7 @@ class DefaultBufferAdapter : BufferAdapter {
     private var currentBuffer: PooledCharArrayBuffer
     private val bufferSize: Int
 
-    constructor(bufferSize: Int = IoHelper.BUFFER_SIZE) {
+    constructor(bufferSize: Int = IoUtils.BUFFER_SIZE) {
         this.bufferSize = bufferSize
         this.currentBuffer = PooledCharArrayBuffer(this.bufferSize)
         buffers.add(currentBuffer)

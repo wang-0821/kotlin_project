@@ -1,5 +1,7 @@
-package com.xiao.base.io
+package com.xiao.base.util
 
+import com.xiao.base.io.BufferAdapter
+import com.xiao.base.io.DefaultBufferAdapter
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
@@ -9,7 +11,7 @@ import java.nio.charset.Charset
  *
  * @author lix wang
  */
-object IoHelper {
+object IoUtils {
     private const val KILO = 1024
     private const val CARRIAGE_RETURN_BYTE = '\r'.toByte()
     private const val LINE_FEED_BYTE = '\n'.toByte()
@@ -158,6 +160,7 @@ object IoHelper {
                 }
                 byteBuffer.flip()
                 charsetDecoder.decode(byteBuffer, charBuffer, true)
+                charsetDecoder.flush(charBuffer)
                 charBuffer.flip()
                 return if (bufferAdapter.size() <= 0) {
                     String(charBuffer.array(), charBuffer.position(), charBuffer.remaining())
