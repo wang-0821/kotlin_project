@@ -1,7 +1,7 @@
 package com.xiao.base.util
 
-import com.xiao.base.io.BufferAdapter
-import com.xiao.base.io.DefaultBufferAdapter
+import com.xiao.base.io.CharBufferAdapter
+import com.xiao.base.io.DefaultCharBufferAdapter
 import java.io.InputStream
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
@@ -19,40 +19,50 @@ object IoUtils {
     const val CRLF = "\r\n"
 
     @JvmStatic
-    fun readPlainTextLine(
+    fun readLine(
         inputStream: InputStream,
         charset: Charset = Charsets.UTF_8,
         byteArray: ByteArray? = null,
         charArray: CharArray? = null,
-        bufferAdapter: BufferAdapter? = null
+        charBufferAdapter: CharBufferAdapter? = null
     ): String {
-        return readLine(
-            inputStream,
-            byteArray ?: ByteArray(BUFFER_SIZE),
-            charArray ?: CharArray(BUFFER_SIZE),
-            charset,
-            bufferAdapter ?: DefaultBufferAdapter(BUFFER_SIZE)
-        )
+        val buffer = charBufferAdapter ?: DefaultCharBufferAdapter(BUFFER_SIZE)
+        try {
+            return readLine(
+                inputStream,
+                byteArray ?: ByteArray(BUFFER_SIZE),
+                charArray ?: CharArray(BUFFER_SIZE),
+                charset,
+                buffer
+            )
+        } finally {
+            buffer.close()
+        }
     }
 
     @JvmStatic
-    fun contentAsString(
+    fun asString(
         inputStream: InputStream,
         charset: Charset,
         length: Long = -1,
         byteArray: ByteArray? = null,
         charArray: CharArray? = null,
-        bufferAdapter: BufferAdapter? = null
+        charBufferAdapter: CharBufferAdapter? = null
     ): String {
-        return asString(
-            inputStream,
-            byteArray ?: ByteArray(BUFFER_SIZE),
-            charArray ?: CharArray(BUFFER_SIZE),
-            charset,
-            length,
-            bufferAdapter ?: DefaultBufferAdapter(BUFFER_SIZE)
-        ) { input, bytes, offset, len ->
-            input.read(bytes, offset, len)
+        val buffer = charBufferAdapter ?: DefaultCharBufferAdapter(BUFFER_SIZE)
+        try {
+            return asString(
+                inputStream,
+                byteArray ?: ByteArray(BUFFER_SIZE),
+                charArray ?: CharArray(BUFFER_SIZE),
+                charset,
+                length,
+                buffer
+            ) { input, bytes, offset, len ->
+                input.read(bytes, offset, len)
+            }
+        } finally {
+            buffer.close()
         }
     }
 
@@ -61,7 +71,7 @@ object IoUtils {
         byteArray: ByteArray,
         charArray: CharArray,
         charset: Charset,
-        buffer: BufferAdapter
+        charBufferAdapter: CharBufferAdapter
     ): String {
         val byteBuffer = ByteBuffer.wrap(byteArray)
         val charBuffer = CharBuffer.wrap(charArray)
@@ -109,18 +119,18 @@ object IoUtils {
                 charSetDecoder.decode(byteBuffer, charBuffer, true)
                 charBuffer.flip()
                 // all chars are in single char array
-                return if (buffer.size() <= 0) {
+                return if (charBufferAdapter.size() <= 0) {
                     String(charBuffer.array(), charBuffer.position(), charBuffer.remaining())
                 } else {
-                    buffer.appendCharBuffer(charBuffer)
+                    charBufferAdapter.appendCharBuffer(charBuffer)
                     charBuffer.clear()
                     byteBuffer.compact()
-                    buffer.asString()
+                    charBufferAdapter.asString()
                 }
             } else {
                 charSetDecoder.decode(byteBuffer, charBuffer, false)
                 charBuffer.flip()
-                buffer.appendCharBuffer(charBuffer)
+                charBufferAdapter.appendCharBuffer(charBuffer)
                 charBuffer.clear()
                 byteBuffer.compact()
             }
@@ -133,7 +143,7 @@ object IoUtils {
         charArray: CharArray,
         charset: Charset,
         length: Long,
-        bufferAdapter: BufferAdapter,
+        charBufferAdapter: CharBufferAdapter,
         readBlock: (InputStream, ByteArray, Int, Int) -> Int
     ): String {
         val byteBuffer = ByteBuffer.wrap(byteArray)
@@ -151,7 +161,7 @@ object IoUtils {
                 byteBuffer.flip()
                 charsetDecoder.decode(byteBuffer, charBuffer, false)
                 charBuffer.flip()
-                bufferAdapter.appendCharBuffer(charBuffer)
+                charBufferAdapter.appendCharBuffer(charBuffer)
                 charBuffer.clear()
                 byteBuffer.compact()
             } else {
@@ -162,13 +172,13 @@ object IoUtils {
                 charsetDecoder.decode(byteBuffer, charBuffer, true)
                 charsetDecoder.flush(charBuffer)
                 charBuffer.flip()
-                return if (bufferAdapter.size() <= 0) {
+                return if (charBufferAdapter.size() <= 0) {
                     String(charBuffer.array(), charBuffer.position(), charBuffer.remaining())
                 } else {
-                    bufferAdapter.appendCharBuffer(charBuffer)
+                    charBufferAdapter.appendCharBuffer(charBuffer)
                     charBuffer.clear()
                     byteBuffer.compact()
-                    bufferAdapter.asString()
+                    charBufferAdapter.asString()
                 }
             }
         }
