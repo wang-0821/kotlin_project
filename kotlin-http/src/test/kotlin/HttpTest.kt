@@ -16,10 +16,7 @@ class HttpTest {
     fun `test http sync`() {
         val response = Http.sync(request)
         assertEquals(response.status, 200)
-        val responseString = response.asString()
-        println(responseString)
-        assertTrue(responseString!!.startsWith("<html>"))
-        assertTrue(responseString.endsWith("</html>"))
+        assertTrue(response.asString()!!.isNotBlank())
     }
 
     @Test
@@ -27,10 +24,7 @@ class HttpTest {
         val future = Http.async(request)
         val response = future.get(timeout, TimeUnit.MILLISECONDS)
         assertEquals(response.status, 200)
-        val responseString = response.asString()
-        println(responseString)
-        assertTrue(responseString!!.startsWith("<html>"))
-        assertTrue(responseString.endsWith("</html>"))
+        assertTrue(response.asString()!!.isNotBlank())
     }
 
     @Test
@@ -39,10 +33,7 @@ class HttpTest {
             val completableDeferred = Http.deferred(request)
             val response = completableDeferred.awaitNanos()
             assertEquals(response.status, 200)
-            val responseString = response.asString()
-            println(responseString)
-            assertTrue(responseString!!.startsWith("<html>"))
-            assertTrue(responseString.endsWith("</html>"))
+            assertTrue(response.asString()!!.isNotBlank())
         }
         while (true) {
             if (job.isCompleted) {
