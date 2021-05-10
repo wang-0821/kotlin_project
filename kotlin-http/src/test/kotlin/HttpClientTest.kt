@@ -14,6 +14,7 @@ class HttpClientTest {
         val response = Client().newCall(UrlParser.parseUrl("https://www.baidu.com")).execute()
         assertEquals(response.status, 200)
         val responseString = response.asString()
+        println(responseString)
         Assertions.assertTrue(responseString!!.startsWith("<html>"))
         Assertions.assertTrue(responseString.endsWith("</html>"))
     }

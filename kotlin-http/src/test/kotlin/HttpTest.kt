@@ -17,6 +17,7 @@ class HttpTest {
         val response = Http.sync(request)
         assertEquals(response.status, 200)
         val responseString = response.asString()
+        println(responseString)
         assertTrue(responseString!!.startsWith("<html>"))
         assertTrue(responseString.endsWith("</html>"))
     }
@@ -27,6 +28,7 @@ class HttpTest {
         val response = future.get(timeout, TimeUnit.MILLISECONDS)
         assertEquals(response.status, 200)
         val responseString = response.asString()
+        println(responseString)
         assertTrue(responseString!!.startsWith("<html>"))
         assertTrue(responseString.endsWith("</html>"))
     }
@@ -38,6 +40,7 @@ class HttpTest {
             val response = completableDeferred.awaitNanos()
             assertEquals(response.status, 200)
             val responseString = response.asString()
+            println(responseString)
             assertTrue(responseString!!.startsWith("<html>"))
             assertTrue(responseString.endsWith("</html>"))
         }
