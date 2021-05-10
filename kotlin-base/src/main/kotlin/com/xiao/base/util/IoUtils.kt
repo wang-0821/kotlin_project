@@ -25,7 +25,7 @@ object IoUtils {
         byteArray: ByteArray? = null,
         charArray: CharArray? = null,
         charBufferAdapter: CharBufferAdapter? = null
-    ): String {
+    ): String? {
         val buffer = charBufferAdapter ?: DefaultCharBufferAdapter(BUFFER_SIZE)
         try {
             return readLine(
@@ -48,7 +48,7 @@ object IoUtils {
         byteArray: ByteArray? = null,
         charArray: CharArray? = null,
         charBufferAdapter: CharBufferAdapter? = null
-    ): String {
+    ): String? {
         val buffer = charBufferAdapter ?: DefaultCharBufferAdapter(BUFFER_SIZE)
         try {
             return asString(
@@ -72,7 +72,7 @@ object IoUtils {
         charArray: CharArray,
         charset: Charset,
         charBufferAdapter: CharBufferAdapter
-    ): String {
+    ): String? {
         val byteBuffer = ByteBuffer.wrap(byteArray)
         val charBuffer = CharBuffer.wrap(charArray)
         val charSetDecoder = charset.newDecoder()
@@ -120,7 +120,12 @@ object IoUtils {
                 charBuffer.flip()
                 // all chars are in single char array
                 return if (charBufferAdapter.size() <= 0) {
-                    String(charBuffer.array(), charBuffer.position(), charBuffer.remaining())
+                    // no content read
+                    if (alreadyRead <= 0) {
+                        null
+                    } else {
+                        String(charBuffer.array(), charBuffer.position(), charBuffer.remaining())
+                    }
                 } else {
                     charBufferAdapter.appendCharBuffer(charBuffer)
                     charBuffer.clear()
@@ -145,7 +150,7 @@ object IoUtils {
         length: Long,
         charBufferAdapter: CharBufferAdapter,
         readBlock: (InputStream, ByteArray, Int, Int) -> Int
-    ): String {
+    ): String? {
         val byteBuffer = ByteBuffer.wrap(byteArray)
         val charBuffer = CharBuffer.wrap(charArray)
         val charsetDecoder = charset.newDecoder()
@@ -172,8 +177,14 @@ object IoUtils {
                 charsetDecoder.decode(byteBuffer, charBuffer, true)
                 charsetDecoder.flush(charBuffer)
                 charBuffer.flip()
+                // all chars read in single read block.
                 return if (charBufferAdapter.size() <= 0) {
-                    String(charBuffer.array(), charBuffer.position(), charBuffer.remaining())
+                    // no content read
+                    if (total <= 0) {
+                        null
+                    } else {
+                        String(charBuffer.array(), charBuffer.position(), charBuffer.remaining())
+                    }
                 } else {
                     charBufferAdapter.appendCharBuffer(charBuffer)
                     charBuffer.clear()

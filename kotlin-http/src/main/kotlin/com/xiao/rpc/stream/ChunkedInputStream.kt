@@ -103,7 +103,7 @@ class ChunkedInputStream : InputStream {
         if (ChunkState.CHUNK_LINE_FEED == state) {
             // skip line feed
             val chunkSizeStr = IoUtils.readLine(inputStream)
-            check(chunkSizeStr.isEmpty()) {
+            check(chunkSizeStr.isNullOrEmpty()) {
                 "Unexpected content at end of chunk."
             }
             state = ChunkState.CHUNK_LENGTH
@@ -111,7 +111,7 @@ class ChunkedInputStream : InputStream {
 
         // calculate chunk size
         if (ChunkState.CHUNK_LENGTH == state) {
-            val chunkSizeStr = IoUtils.readLine(inputStream)
+            val chunkSizeStr = IoUtils.readLine(inputStream)!!
             chunkSize = Integer.parseInt(chunkSizeStr, 16)
             pos = 0
             if (chunkSize <= 0) {

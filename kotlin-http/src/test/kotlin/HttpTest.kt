@@ -3,7 +3,7 @@ import com.xiao.rpc.Http
 import com.xiao.rpc.util.UrlParser
 import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
@@ -16,7 +16,9 @@ class HttpTest {
     fun `test http sync`() {
         val response = Http.sync(request)
         assertEquals(response.status, 200)
-        assertFalse(response.asString().isNullOrBlank())
+        val responseString = response.asString()
+        assertTrue(responseString!!.startsWith("<html>"))
+        assertTrue(responseString.endsWith("</html>"))
     }
 
     @Test
@@ -24,16 +26,20 @@ class HttpTest {
         val future = Http.async(request)
         val response = future.get(timeout, TimeUnit.MILLISECONDS)
         assertEquals(response.status, 200)
-        assertFalse(response.asString().isNullOrBlank())
+        val responseString = response.asString()
+        assertTrue(responseString!!.startsWith("<html>"))
+        assertTrue(responseString.endsWith("</html>"))
     }
 
     @Test
     fun `test http coroutine`() {
         val job = ThreadUtils.DEFAULT_SCOPE.launch {
             val completableDeferred = Http.deferred(request)
-            val result = completableDeferred.awaitNanos()
-            assertEquals(result.status, 200)
-            assertFalse(result.asString().isNullOrBlank())
+            val response = completableDeferred.awaitNanos()
+            assertEquals(response.status, 200)
+            val responseString = response.asString()
+            assertTrue(responseString!!.startsWith("<html>"))
+            assertTrue(responseString.endsWith("</html>"))
         }
         while (true) {
             if (job.isCompleted) {

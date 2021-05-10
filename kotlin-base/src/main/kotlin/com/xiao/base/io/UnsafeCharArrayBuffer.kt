@@ -22,7 +22,7 @@ class UnsafeCharArrayBuffer(private val capacity: Int) : AutoCloseable {
             index += charBufferRemaining
             0
         } else {
-            unsafeCharArrayBuf!!.copyFrom(charBuffer.array(), charBuffer.position(), index, charBufferRemaining)
+            unsafeCharArrayBuf!!.copyFrom(charBuffer.array(), charBuffer.position(), index, currentRemaining)
             charBuffer.position(charBuffer.position() + currentRemaining)
             index += currentRemaining
             charBuffer.remaining()
