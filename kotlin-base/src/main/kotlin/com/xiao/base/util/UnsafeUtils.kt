@@ -7,10 +7,10 @@ import sun.misc.Unsafe
  * @author lix wang
  */
 object UnsafeUtils {
-    @JvmStatic
-    fun getUnsafe(): Unsafe {
+    @JvmField
+    val UNSAFE = kotlin.run {
         val unsafeField = Unsafe::class.java.getDeclaredField("theUnsafe")
         unsafeField.isAccessible = true
-        return unsafeField.get(null) as Unsafe
+        unsafeField.get(null) as Unsafe
     }
 }

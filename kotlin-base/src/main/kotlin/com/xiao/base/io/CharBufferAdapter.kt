@@ -6,7 +6,7 @@ import java.nio.CharBuffer
  *
  * @author lix wang
  */
-interface BufferAdapter {
+interface CharBufferAdapter : AutoCloseable {
     fun appendCharBuffer(charBuffer: CharBuffer)
 
     fun size(): Int

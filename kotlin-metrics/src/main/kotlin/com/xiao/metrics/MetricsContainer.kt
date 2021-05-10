@@ -2,7 +2,7 @@ package com.xiao.metrics
 
 import com.xiao.base.thread.ThreadSafe
 import com.xiao.base.thread.ThreadUnsafe
-import com.xiao.base.util.UnsafeUtils
+import com.xiao.base.util.UnsafeUtils.UNSAFE
 
 /**
  *
@@ -138,7 +138,6 @@ class MetricsContainer(
         private const val INUSE = 1
         private const val FULL = 2
 
-        private val UNSAFE = UnsafeUtils.getUnsafe()
         private val STATE_ARRAY_CLASS = IntArray::class.java
         // 起始位置，所有的基本类型、Object、String都是16，因为JVM开启指针压缩后，12字节的对象头 + 4字节(length)
         private val ABASE = UNSAFE.arrayBaseOffset(STATE_ARRAY_CLASS)

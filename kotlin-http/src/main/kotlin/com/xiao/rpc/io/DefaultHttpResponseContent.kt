@@ -29,9 +29,9 @@ class DefaultHttpResponseContent(
     override fun asString(): String? {
         val charset = charset ?: Charsets.UTF_8
         return if (contentLength > 0) {
-            IoUtils.contentAsString(inputStream, charset, contentLength)
+            IoUtils.asString(inputStream, charset, contentLength)
         } else {
-            IoUtils.contentAsString(inputStream, charset)
+            IoUtils.asString(inputStream, charset)
         }
     }
 

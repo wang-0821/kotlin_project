@@ -49,9 +49,8 @@ public class ObjectInstanceTest implements Serializable {
     @Test
     void testUnsafeAllocateInstance() {
         try {
-            Unsafe unsafe = UnsafeUtils.getUnsafe();
             UnsafeInstanceObject unsafeInstanceObject =
-                    (UnsafeInstanceObject) unsafe.allocateInstance(UnsafeInstanceObject.class);
+                    (UnsafeInstanceObject) UnsafeUtils.UNSAFE.allocateInstance(UnsafeInstanceObject.class);
             Assertions.assertEquals(unsafeInstanceObject.val, 0);
         } catch (Exception e) {
             e.printStackTrace();

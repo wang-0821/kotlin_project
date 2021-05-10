@@ -20,27 +20,27 @@ import java.nio.charset.Charset
  */
 object ResponseHelper {
     fun parseResponse(inputStream: InputStream, responseListener: ResponseListener, socket: Socket): Response {
-        val startLine = IoUtils.readPlainTextLine(inputStream)
-        val startLineSplits = startLine.split(" ")
+        val startLine = IoUtils.readLine(inputStream)
+        val startLineSplits = startLine!!.split(" ")
         val protocol = Protocol.parseProtocol(startLineSplits[0])
         val status = startLineSplits[1].toInt()
         val headers = parseHeaders(inputStream)
 
         // get content headers
         val contentEncoding = headers.lastOrNull {
-            it.name.toUpperCase() == ContentHeaders.CONTENT_ENCODING.text.toUpperCase()
+            it.name.equals(ContentHeaders.CONTENT_ENCODING.text, ignoreCase = true)
         }?.value?.let {
             ContentEncodingType.parse(it)
         } ?: ContentEncodingType.IDENTITY
         val transferEncoding = headers.lastOrNull {
-            it.name.toUpperCase() == ContentHeaders.TRANSFER_ENCODING.text.toUpperCase()
+            it.name.equals(ContentHeaders.TRANSFER_ENCODING.text, ignoreCase = true)
         }?.value
         val contentLength = headers.lastOrNull {
-            it.name.toUpperCase() == ContentHeaders.CONTENT_LENGTH.text.toUpperCase()
+            it.name.equals(ContentHeaders.CONTENT_LENGTH.text, ignoreCase = true)
         }?.value?.toLong() ?: -1
 
         val contentType = headers.lastOrNull {
-            it.name.toUpperCase() == ContentHeaders.CONTENT_TYPE.text.toUpperCase()
+            it.name.equals(ContentHeaders.CONTENT_TYPE.text, ignoreCase = true)
         }?.value
 
         return Response(
@@ -82,13 +82,13 @@ object ResponseHelper {
     private fun parseHeaders(inputStream: InputStream): List<Header> {
         val headers = mutableListOf<Header>()
         while (true) {
-            val line = IoUtils.readPlainTextLine(inputStream)
-            if (line.isNotBlank()) {
+            val line = IoUtils.readLine(inputStream)
+            if (line.isNullOrBlank()) {
+                break
+            } else {
                 parseHeader(line)?.let {
                     headers.add(it)
                 }
-            } else {
-                break
             }
         }
         return headers
