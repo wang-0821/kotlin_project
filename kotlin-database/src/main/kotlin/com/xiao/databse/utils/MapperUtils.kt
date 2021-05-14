@@ -2,7 +2,7 @@ package com.xiao.databse.utils
 
 import com.xiao.databse.KtMapperProxy
 import com.xiao.databse.testing.KtTestMapperProxy
-import com.xiao.databse.testing.TestResourceContainer
+import com.xiao.databse.testing.TestDataSourceContainer
 import org.apache.ibatis.session.SqlSessionFactory
 import java.lang.reflect.Proxy
 import java.util.concurrent.ConcurrentHashMap
@@ -62,7 +62,7 @@ object MapperUtils {
     }
 
     private fun <T> createTestMapper(clazz: Class<T>): T {
-        val database = TestResourceContainer.databaseAnnotations
+        val database = TestDataSourceContainer.databaseAnnotations
             .firstOrNull {
                 it.mappers
                     .any {
@@ -70,7 +70,7 @@ object MapperUtils {
                     }
             }?.database
             ?.let {
-                TestResourceContainer.getDatabase(it)
+                TestDataSourceContainer.getDatabase(it)
             }
             ?: throw IllegalStateException("Can't find database for mapper: ${clazz.simpleName}.")
 

@@ -5,7 +5,7 @@ import com.xiao.database.mybatis.mapper.common.UserMapper
 import com.xiao.database.mybatis.mapper.common.UserMapperV2
 import com.xiao.databse.annotation.KtTestDatabase
 import com.xiao.databse.testing.KtTestDataSourceBase
-import com.xiao.databse.testing.TestResourceContainer
+import com.xiao.databse.testing.TestDataSourceContainer
 import org.apache.ibatis.session.SqlSessionFactory
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
@@ -25,7 +25,7 @@ class MyBatisMapperTest : KtTestDataSourceBase() {
 
     @BeforeAll
     fun init() {
-        sqlSessionFactory = TestResourceContainer.getDatabase(DemoDatabase::class).sqlSessionFactory()
+        sqlSessionFactory = TestDataSourceContainer.getDatabase(DemoDatabase::class).sqlSessionFactory()
     }
 
     @Test

@@ -1,16 +1,15 @@
+import com.xiao.base.testing.KtTestBase
 import com.xiao.model.ClassTarget
 import com.xiao.model.CustomClassLoader
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 
 /**
  *
  * @author lix wang
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ClassLoaderTest {
+class ClassLoaderTest : KtTestBase() {
     private lateinit var classLoader: ClassLoader
 
     @BeforeAll

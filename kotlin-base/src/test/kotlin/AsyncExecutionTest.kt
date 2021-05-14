@@ -1,6 +1,7 @@
 import com.xiao.base.executor.DefaultExecutorServiceFactory
 import com.xiao.base.executor.ExecutionQueue
 import com.xiao.base.executor.SafeDeferred
+import com.xiao.base.testing.KtTestBase
 import com.xiao.base.util.ThreadUtils
 import com.xiao.base.util.deferredSuspend
 import kotlinx.coroutines.CancellationException
@@ -12,7 +13,6 @@ import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
@@ -21,8 +21,7 @@ import kotlin.coroutines.CoroutineContext
  *
  * @author lix wang
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class AsyncExecutionTest {
+class AsyncExecutionTest : KtTestBase() {
     private lateinit var executionQueue: ExecutionQueue
 
     private lateinit var coroutineScope: CoroutineScope

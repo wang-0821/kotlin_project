@@ -1,15 +1,14 @@
+import com.xiao.base.testing.KtTestBase
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 
 /**
  *
  * @author lix wang
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class FirstTest {
+class FirstTest : KtTestBase() {
     @BeforeAll
     fun beforeAllTest() {
         assertEquals(4, 1 + 3)
