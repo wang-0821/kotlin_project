@@ -2,7 +2,7 @@ package com.xiao.redis.scheduler
 
 import com.xiao.base.scheduler.AbstractScheduler
 import com.xiao.base.scheduler.SafeScheduledFuture
-import com.xiao.redis.utils.RedisLock
+import com.xiao.redis.lock.RedisLock
 import java.time.Duration
 import java.util.concurrent.Callable
 import java.util.concurrent.ScheduledExecutorService

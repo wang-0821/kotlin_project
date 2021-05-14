@@ -1,4 +1,4 @@
-package com.xiao.redis.utils
+package com.xiao.redis.lock
 
 import com.xiao.base.CommonConstants
 import com.xiao.base.logging.Logging
@@ -9,12 +9,12 @@ import java.time.Duration
  *
  * @author lix wang
  */
-class SharedRedisLock(
+class RedisLock(
     private val lockName: String,
     private val lockValue: String,
     private val redisService: RedisService
-) : RedisLock {
-    override fun tryLock(expire: Duration): Boolean {
+) {
+    fun tryLock(expire: Duration): Boolean {
         try {
             val value = redisService.get(lockName)
             if (value == null) {
@@ -36,7 +36,7 @@ class SharedRedisLock(
         }
     }
 
-    override fun tryLock(expire: Duration, waitTimeout: Duration): Boolean {
+    fun tryLock(expire: Duration, waitTimeout: Duration): Boolean {
         val deadline = System.nanoTime() + waitTimeout.toNanos()
         while (true) {
             if (tryLock(expire)) {
@@ -49,11 +49,11 @@ class SharedRedisLock(
         }
     }
 
-    override fun isLocked(): Boolean {
+    fun isLocked(): Boolean {
         return redisService.get(lockName) == lockValue
     }
 
-    override fun unlock(): Boolean {
+    fun unlock(): Boolean {
         return try {
             if (redisService.get(lockName) != lockValue) {
                 false
