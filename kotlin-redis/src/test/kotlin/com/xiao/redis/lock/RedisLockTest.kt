@@ -2,7 +2,6 @@ package com.xiao.redis.lock
 
 import com.xiao.redis.client.RedisHelper
 import com.xiao.redis.client.service.RedisService
-import com.xiao.redis.utils.SharedRedisLock
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -24,7 +23,7 @@ class RedisLockTest {
 
     @Test
     fun `test try redis lock`() {
-        val redisLock = SharedRedisLock(KEY, "lockValue", redisService)
+        val redisLock = RedisLock(KEY, "lockValue", redisService)
         try {
             redisLock.tryLock(Duration.ofSeconds(30))
             Assertions.assertTrue(redisLock.isLocked())
@@ -35,8 +34,8 @@ class RedisLockTest {
 
     @Test
     fun `test try redis lock failed`() {
-        val redisLock1 = SharedRedisLock(KEY, "lockValue1", redisService)
-        val redisLock2 = SharedRedisLock(KEY, "lockValue2", redisService)
+        val redisLock1 = RedisLock(KEY, "lockValue1", redisService)
+        val redisLock2 = RedisLock(KEY, "lockValue2", redisService)
 
         try {
             val duration = Duration.ofSeconds(30)
@@ -53,8 +52,8 @@ class RedisLockTest {
 
     @Test
     fun `test try redis lock in turn`() {
-        val redisLock1 = SharedRedisLock(KEY, "lockValue1", redisService)
-        val redisLock2 = SharedRedisLock(KEY, "lockValue2", redisService)
+        val redisLock1 = RedisLock(KEY, "lockValue1", redisService)
+        val redisLock2 = RedisLock(KEY, "lockValue2", redisService)
         val duration = Duration.ofSeconds(30)
 
         try {
