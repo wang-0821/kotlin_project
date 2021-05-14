@@ -3,6 +3,7 @@ package lock
 import com.xiao.base.executor.DefaultExecutorServiceFactory
 import com.xiao.base.executor.ExecutionQueue
 import com.xiao.base.lock.AtomicLock
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
@@ -33,5 +34,9 @@ class AtomicLockTest {
                 result.add(2)
             }
         }
+
+        Thread.sleep(1000)
+        Assertions.assertEquals(result[0], 1)
+        Assertions.assertEquals(result[1], 2)
     }
 }
