@@ -1,6 +1,6 @@
 package com.xiao.databse.testing
 
-import org.junit.jupiter.api.TestInstance
+import com.xiao.base.testing.KtTestBase
 import org.junit.jupiter.api.extension.ExtendWith
 
 /**
@@ -11,5 +11,4 @@ import org.junit.jupiter.api.extension.ExtendWith
     FlywayMigrateExtension::class,
     TablesMigrateExtension::class
 )
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-abstract class KtTestDataSourceBase
+abstract class KtTestDataSourceBase : KtTestBase()

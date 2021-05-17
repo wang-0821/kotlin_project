@@ -1,19 +1,18 @@
 package com.xiao.redis.lock
 
+import com.xiao.base.testing.KtTestBase
 import com.xiao.redis.client.RedisHelper
 import com.xiao.redis.client.service.RedisService
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 import java.time.Duration
 
 /**
  *
  * @author lix wang
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class RedisLockTest {
+class RedisLockTest : KtTestBase() {
     lateinit var redisService: RedisService
 
     @BeforeAll

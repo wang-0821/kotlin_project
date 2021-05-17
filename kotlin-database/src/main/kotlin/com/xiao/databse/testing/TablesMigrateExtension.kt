@@ -19,9 +19,9 @@ import kotlin.reflect.KClass
  * @author lix wang
  */
 class TablesMigrateExtension : BeforeEachCallback {
-    override fun beforeEach(context: ExtensionContext?) {
-        TestResourceContainer.databaseAnnotations.forEach { ktTestDatabase ->
-            val database = TestResourceContainer.databaseInstances[ktTestDatabase.database]
+    override fun beforeEach(context: ExtensionContext) {
+        TestDataSourceContainer.databaseAnnotations.forEach { ktTestDatabase ->
+            val database = TestDataSourceContainer.databaseInstances[ktTestDatabase.database]
                 ?: throw IllegalStateException("Not migrated database: ${ktTestDatabase.database.simpleName}.")
             migrate(database, database.datasetPath(), extractTables(ktTestDatabase.mappers))
         }
@@ -60,7 +60,7 @@ class TablesMigrateExtension : BeforeEachCallback {
                         .createStatement()
                         .executeUpdate("DELETE FROM $fileName;")
                     scriptRunner.runScript(InputStreamReader(FileInputStream(ktFileResource.file)))
-                    TestResourceContainer.addMigratedTable(database.name(), fileName)
+                    TestDataSourceContainer.addMigratedTable(database.name(), fileName)
                 }
             log.info("Migrate database: ${database.name()}, sql files: [${tables.joinToString(", ")}] succeed.")
         } finally {
