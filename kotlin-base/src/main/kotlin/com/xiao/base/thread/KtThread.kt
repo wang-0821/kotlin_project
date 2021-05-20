@@ -9,5 +9,5 @@ class KtThread : Thread {
     constructor(runnable: Runnable) : super(runnable)
     constructor(name: String) : super(name)
 
-    var indexedVariables: Array<Any?> = arrayOfNulls(32)
+    var indexedVariables: Array<Any?>? = null
 }

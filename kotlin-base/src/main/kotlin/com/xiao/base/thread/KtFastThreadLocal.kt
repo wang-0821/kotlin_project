@@ -14,8 +14,8 @@ abstract class KtFastThreadLocal<T> {
     fun get() : T? {
         val thread = Thread.currentThread()
         return if (thread is KtThread) {
-            if (index < thread.indexedVariables.size) {
-                thread.indexedVariables[index] as T?
+            if (thread.indexedVariables != null && index < thread.indexedVariables!!.size) {
+                thread.indexedVariables!![index] as T?
             } else {
                 null
             }
