@@ -1,5 +1,6 @@
 package com.xiao.databse.utils
 
+import com.xiao.base.thread.KtFastThreadLocal
 import com.xiao.databse.TransactionHandler
 import com.xiao.databse.TransactionalWrapper
 import javax.sql.DataSource
@@ -10,9 +11,9 @@ import kotlin.reflect.KClass
  * @author lix wang
  */
 object TransactionalUtils {
-    private val resources = ThreadLocal<MutableMap<Any, Any>>()
-    private val transactionalWrapper = ThreadLocal<TransactionalWrapper>()
-    private val transactionHandlers = ThreadLocal< MutableList<TransactionHandler>>()
+    private val resources = KtFastThreadLocal<MutableMap<Any, Any>>()
+    private val transactionalWrapper = KtFastThreadLocal<TransactionalWrapper>()
+    private val transactionHandlers = KtFastThreadLocal< MutableList<TransactionHandler>>()
 
     @Suppress("UNCHECKED_CAST")
     fun <T> getResource(key: Any): T? {
