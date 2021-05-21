@@ -9,19 +9,15 @@ import java.util.concurrent.atomic.AtomicLong
  *
  * @author lix wang
  */
-class NamedThreadFactory : ThreadFactory {
+class NamedThreadFactory @JvmOverloads constructor(
+    name: String? = null,
+    private val daemon: Boolean = true
+) : ThreadFactory {
     private val threadNumber = AtomicLong()
-    private val name: String
-    private val daemon: Boolean
-
-    @JvmOverloads
-    constructor(name: String? = null, daemon: Boolean = true) {
-        this.name = name ?: "KThread"
-        this.daemon = daemon
-    }
+    private val name = name ?: "KThread"
 
     override fun newThread(r: Runnable): Thread {
-        val thread = Thread(r, "$name-${threadNumber.getAndIncrement()}")
+        val thread = KtThread(r, "$name-${threadNumber.getAndIncrement()}")
         thread.isDaemon = daemon
         return thread
     }

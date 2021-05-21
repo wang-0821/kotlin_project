@@ -3,7 +3,6 @@ package com.xiao.rpc.handler
 import com.xiao.rpc.Address
 import com.xiao.rpc.Client
 import com.xiao.rpc.factory.ChainHandlerFactorySelector
-import com.xiao.rpc.helper.RpcHelper
 import com.xiao.rpc.io.Exchange
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
@@ -29,9 +28,7 @@ class Chain(val client: Client, val request: Request) {
         }
 
         @Suppress("USELESS_ELVIS")
-        val result = handlers[index++].handle() ?: throw IllegalStateException("Chain execute result must not null.")
-        afterExecute()
-        return result
+        return handlers[index++].handle() ?: throw IllegalStateException("Chain execute result must not null.")
     }
 
     init {
@@ -49,9 +46,5 @@ class Chain(val client: Client, val request: Request) {
 
     private fun createAddress(request: Request): Address {
         return Address(request.host()!!, request.scheme()!!, request.port())
-    }
-
-    private fun afterExecute() {
-        RpcHelper.deleteRpc()
     }
 }
