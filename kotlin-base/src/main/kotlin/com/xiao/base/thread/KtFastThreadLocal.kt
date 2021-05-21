@@ -1,5 +1,7 @@
 package com.xiao.base.thread
 
+import io.netty.util.concurrent.FastThreadLocal
+import io.netty.util.concurrent.FastThreadLocalThread
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -9,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 class KtFastThreadLocal<T> {
     private var threadLocal: ThreadLocal<T>? = null
+    private var fastThreadLocal: FastThreadLocal<T>? = null
     private val index = nextIndex
 
     @Suppress("UNCHECKED_CAST")
@@ -21,6 +24,7 @@ class KtFastThreadLocal<T> {
                     null
                 }
             }
+            is FastThreadLocalThread -> fastThreadLocal?.get()
             else -> {
                 threadLocal?.get()
             }
@@ -46,9 +50,23 @@ class KtFastThreadLocal<T> {
                     thread.indexedVariables!![index] = value
                 }
             }
+            is FastThreadLocalThread -> {
+                if (fastThreadLocal == null) {
+                    synchronized(this) {
+                        if (fastThreadLocal == null) {
+                            fastThreadLocal = FastThreadLocal<T>()
+                        }
+                    }
+                }
+                fastThreadLocal!!.set(value)
+            }
             else -> {
                 if (threadLocal == null) {
-                    threadLocal = ThreadLocal<T>()
+                    synchronized(this) {
+                        if (threadLocal == null) {
+                            threadLocal = ThreadLocal<T>()
+                        }
+                    }
                 }
                 threadLocal!!.set(value)
             }
