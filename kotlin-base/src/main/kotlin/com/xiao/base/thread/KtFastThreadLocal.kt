@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class KtFastThreadLocal<T> {
     private var threadLocal: ThreadLocal<T>? = null
     private var fastThreadLocal: FastThreadLocal<T>? = null
-    private val index = nextIndex
+    private val index = nextIndex()
 
     @Suppress("UNCHECKED_CAST")
     fun get(): T? {
@@ -102,6 +102,6 @@ class KtFastThreadLocal<T> {
 
     companion object {
         private val indexGenerator = AtomicInteger(0)
-        val nextIndex = indexGenerator.getAndIncrement()
+        private fun nextIndex() = indexGenerator.getAndIncrement()
     }
 }
