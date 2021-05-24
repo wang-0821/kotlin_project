@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class KtFastThreadLocal<T> {
     private var threadLocal: ThreadLocal<T>? = null
     private var fastThreadLocal: FastThreadLocal<T>? = null
-    private val index = nextIndex
+    private val index = nextIndex()
 
     @Suppress("UNCHECKED_CAST")
     fun get(): T? {
@@ -80,28 +80,29 @@ class KtFastThreadLocal<T> {
     }
 
     private fun tableSizeFor(index: Int): Int {
-        var value = index
-        value = value or value ushr 1
-        value = value or value ushr 2
-        value = value or value ushr 4
-        value = value or value ushr 8
-        value = value or value ushr 16
+        var size = index
+        size = size or (size ushr 1)
+        size = size or (size ushr 2)
+        size = size or (size ushr 4)
+        size = size or (size ushr 8)
+        size = size or (size ushr 16)
 
-        return when {
-            value < 0 -> {
+        size = when {
+            size < 0 -> {
                 1
             }
-            value >= Int.MAX_VALUE -> {
+            size >= Int.MAX_VALUE -> {
                 Int.MAX_VALUE
             }
             else -> {
-                value + 1
+                size + 1
             }
         }
+        return size.coerceAtLeast(16)
     }
 
     companion object {
         private val indexGenerator = AtomicInteger(0)
-        val nextIndex = indexGenerator.getAndIncrement()
+        private fun nextIndex() = indexGenerator.getAndIncrement()
     }
 }
