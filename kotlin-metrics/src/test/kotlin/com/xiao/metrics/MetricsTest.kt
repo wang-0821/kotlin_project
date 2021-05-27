@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class MetricsTest : KtTestBase() {
     @Test
     fun `test add latency`() {
+        val suffix = "testAddLatency"
         val completableFuture = CompletableFuture<Unit>()
         KtThread {
             try {
@@ -24,23 +25,27 @@ class MetricsTest : KtTestBase() {
                     MetricsUtils.STATE_SUCCESS,
                     10,
                     this::class.java.simpleName,
-                    "testAddLatency"
+                    suffix
                 )
             } finally {
                 completableFuture.complete(Unit)
             }
         }.start()
         completableFuture.get()
-        Assertions.assertTrue {
-            MetricsUtils.metricsSummary().isEmpty()
-        }
-        MetricsUtils.updateSummary()
-        val summary = MetricsUtils.metricsSummary()
+
+        val summary1 = MetricsUtils.metricsSummary()
             .filter { (event, _) ->
-                event.type == MetricsUtils.TYPE_API
+                event.type == MetricsUtils.TYPE_API && event.suffix == suffix
+            }.values.firstOrNull()
+        Assertions.assertEquals(summary1, null)
+
+        MetricsUtils.updateSummary()
+        val summary2 = MetricsUtils.metricsSummary()
+            .filter { (event, _) ->
+                event.type == MetricsUtils.TYPE_API && event.suffix == suffix
             }.values.first()
-        Assertions.assertEquals(summary.total, 1)
-        Assertions.assertEquals(summary.avg, 10)
+        Assertions.assertEquals(summary2.total, 1)
+        Assertions.assertEquals(summary2.avg, 10)
     }
 
     @Test
