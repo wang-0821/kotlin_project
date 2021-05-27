@@ -9,15 +9,28 @@ import java.util.concurrent.ConcurrentHashMap
  * @author lix wang
  */
 object MetricsUtils {
-    @Volatile private var metricsContainerMap = ConcurrentHashMap<MetricsEvent, MetricsContainer>()
-    @Volatile private var metricsSummaryMap = ConcurrentHashMap<MetricsEvent, MetricsSummary>()
+    const val STATE_SUCCESS = "success"
+    const val STATE_FAIL = "fail"
+    const val STATE_SLOW = "slow"
+
+    const val TYPE_API = "API"
+    const val TYPE_DB = "DB"
+    const val TYPE_RPC = "RPC"
+
+    private val metricsBufferMap = ConcurrentHashMap<MetricsEvent, MetricsBuffer>()
+    private val metricsSummaryMap = ConcurrentHashMap<MetricsEvent, MetricsSummary>()
 
     @ThreadSafe
-    @JvmStatic
-    fun recordMetrics(event: MetricsEvent, runningMills: Int): Boolean {
-        // atomic ops
-        metricsContainerMap.putIfAbsent(event, MetricsContainer())
-        return metricsContainerMap[event]!!.addLatency(runningMills)
+    fun recordMetrics(
+        type: String,
+        state: String,
+        mills: Int,
+        prefix: String?,
+        suffix: String?
+    ): Boolean {
+        val event = MetricsEvent(type, state, prefix, suffix)
+        metricsBufferMap.putIfAbsent(event, MetricsBuffer())
+        return metricsBufferMap[event]!!.add(mills)
     }
 
     @ThreadUnsafe
@@ -31,19 +44,22 @@ object MetricsUtils {
 
     @ThreadUnsafe
     @JvmStatic
-    fun resetSummary() {
-        for (event in metricsContainerMap.keys) {
-            val latencies = metricsContainerMap[event]?.resetLatencies()
-            if (latencies.isNullOrEmpty()) {
-                metricsSummaryMap.remove(event)
-                continue
-            }
+    fun updateSummary() {
+        val bufferMap = mutableMapOf<MetricsEvent, MetricsBuffer>()
+        metricsBufferMap.forEach { (metricsEvent, metricsBuffer) ->
+            bufferMap[metricsEvent] = metricsBuffer
+            metricsBufferMap[metricsEvent] = metricsBuffer.newBuffer()
+        }
 
-            val metricsSummary = MetricsSummary()
-                .apply {
-                    calculateSummary(latencies)
+        bufferMap.forEach { (metricsEvent, metricsBuffer) ->
+            metricsBuffer.use {
+                var buffer = metricsSummaryMap[metricsEvent]
+                if (buffer == null) {
+                    buffer = MetricsSummary()
+                    metricsSummaryMap[metricsEvent] = buffer
                 }
-            metricsSummaryMap[event] = metricsSummary
+                buffer.update(metricsBuffer.toList())
+            }
         }
     }
 }

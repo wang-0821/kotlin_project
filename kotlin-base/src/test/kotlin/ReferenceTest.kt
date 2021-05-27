@@ -12,11 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class ReferenceTest : KtTestBase() {
     @Test
     fun `test weak reference object clean up by gc`() {
-        var classTarget: ClassTarget? = ClassTarget()
-        val classTargetReference = WeakReference(classTarget)
-        System.gc()
-        Assertions.assertEquals(classTargetReference.get()!!.val2, 2)
-        classTarget = null
+        val classTargetReference = WeakReference(ClassTarget())
         System.gc()
         Assertions.assertEquals(classTargetReference.get(), null)
     }

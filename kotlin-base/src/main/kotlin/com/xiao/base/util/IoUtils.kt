@@ -1,5 +1,6 @@
 package com.xiao.base.util
 
+import com.xiao.base.CommonConstants.BUFFER_SIZE
 import com.xiao.base.io.CharBufferAdapter
 import com.xiao.base.io.DefaultCharBufferAdapter
 import java.io.InputStream
@@ -12,10 +13,8 @@ import java.nio.charset.Charset
  * @author lix wang
  */
 object IoUtils {
-    private const val KILO = 1024
     private const val CARRIAGE_RETURN_BYTE = '\r'.toByte()
     private const val LINE_FEED_BYTE = '\n'.toByte()
-    const val BUFFER_SIZE = 8 * KILO
     const val CRLF = "\r\n"
 
     @JvmStatic
@@ -27,16 +26,14 @@ object IoUtils {
         charBufferAdapter: CharBufferAdapter? = null
     ): String? {
         val buffer = charBufferAdapter ?: DefaultCharBufferAdapter(BUFFER_SIZE)
-        try {
-            return readLine(
+        return buffer.use {
+            readLine(
                 inputStream,
                 byteArray ?: ByteArray(BUFFER_SIZE),
                 charArray ?: CharArray(BUFFER_SIZE),
                 charset,
                 buffer
             )
-        } finally {
-            buffer.close()
         }
     }
 
@@ -50,8 +47,8 @@ object IoUtils {
         charBufferAdapter: CharBufferAdapter? = null
     ): String? {
         val buffer = charBufferAdapter ?: DefaultCharBufferAdapter(BUFFER_SIZE)
-        try {
-            return asString(
+        return buffer.use {
+            asString(
                 inputStream,
                 byteArray ?: ByteArray(BUFFER_SIZE),
                 charArray ?: CharArray(BUFFER_SIZE),
@@ -61,8 +58,6 @@ object IoUtils {
             ) { input, bytes, offset, len ->
                 input.read(bytes, offset, len)
             }
-        } finally {
-            buffer.close()
         }
     }
 

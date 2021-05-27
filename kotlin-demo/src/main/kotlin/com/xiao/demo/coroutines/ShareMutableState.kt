@@ -3,6 +3,8 @@ package com.xiao.demo.coroutines
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.channels.produce
@@ -50,6 +52,7 @@ class ShareMutableState {
         println("Counter = $counter")
     }
 
+    @ObsoleteCoroutinesApi
     fun fineGrainedCounter() = runBlocking {
         var counter = 0
         val counterContext = newSingleThreadContext("CounterContext")
@@ -63,6 +66,7 @@ class ShareMutableState {
         println("Counter = $counter")
     }
 
+    @ObsoleteCoroutinesApi
     fun coarseGrainedCounter() = runBlocking {
         var counter = 0
         val counterContext = newSingleThreadContext("CounterContext")
@@ -87,6 +91,7 @@ class ShareMutableState {
         println("Counter = $counter")
     }
 
+    @ObsoleteCoroutinesApi
     private fun CoroutineScope.actorCounter() = actor<CounterMsg> {
         var counter = 0
         for (msg in channel) {
@@ -97,6 +102,7 @@ class ShareMutableState {
         }
     }
 
+    @ObsoleteCoroutinesApi
     fun actorCounterRun() = runBlocking {
         val counter = actorCounter()
         withContext(Dispatchers.Default) {
@@ -110,6 +116,7 @@ class ShareMutableState {
         counter.close()
     }
 
+    @ExperimentalCoroutinesApi
     fun CoroutineScope.fizz() = produce {
         while (true) {
             delay(300)

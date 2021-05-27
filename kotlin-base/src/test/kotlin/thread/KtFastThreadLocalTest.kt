@@ -1,3 +1,5 @@
+package thread
+
 import com.xiao.base.testing.KtTestBase
 import com.xiao.base.thread.KtFastThreadLocal
 import com.xiao.base.thread.KtThread

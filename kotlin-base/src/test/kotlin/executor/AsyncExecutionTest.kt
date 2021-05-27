@@ -1,3 +1,5 @@
+package executor
+
 import com.xiao.base.executor.DefaultExecutorServiceFactory
 import com.xiao.base.executor.ExecutionQueue
 import com.xiao.base.executor.SafeDeferred

@@ -1,6 +1,7 @@
 package com.xiao.base.scheduler
 
 import java.lang.reflect.Method
+import java.time.Duration
 import java.util.concurrent.ScheduledExecutorService
 
 /**
@@ -19,12 +20,12 @@ abstract class CronScheduler : AbstractCronScheduledService {
     }
 
     override fun execScheduledMethod(
-        initialMills: Long,
-        fixedDelayedMills: Long,
-        fixedRateMills: Long,
+        initial: Duration,
+        fixedDelay: Duration,
+        fixedRate: Duration,
         method: Method
     ) {
-        execScheduledMethod(initialMills, fixedDelayedMills, fixedRateMills, method, scheduler)
+        execScheduledMethod(initial, fixedDelay, fixedRate, method, scheduler)
     }
 
     override fun shutdown() {

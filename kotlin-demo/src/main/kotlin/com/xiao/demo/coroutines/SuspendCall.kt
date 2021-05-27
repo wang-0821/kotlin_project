@@ -72,7 +72,7 @@ class SuspendCall {
     suspend fun computeSum(): Int = coroutineScope {
         val one = async { doSomething1() }
         val two = async { doSomething2() }
-        one.await() + one.await()
+        one.await() + two.await()
     }
 
     fun defineCoroutineName() = runBlocking {
@@ -83,9 +83,9 @@ class SuspendCall {
 }
 
 fun main() {
-    val obj = SuspendCall()
+//    val obj = SuspendCall()
 //    obj.syncSuspendCall()
-    val job = obj.asyncSuspendCall()
+//    val job = obj.asyncSuspendCall()
 //    obj.asyncSuspendCall2()
 //    runBlocking { obj.computeSum() }
 //    obj.defineCoroutineName()

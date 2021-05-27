@@ -1,6 +1,7 @@
 package com.xiao.base.scheduler
 
 import java.lang.reflect.Method
+import java.time.Duration
 
 /**
  *
@@ -14,9 +15,9 @@ interface CronScheduledService {
     fun execScheduledMethod(method: Method)
 
     fun execScheduledMethod(
-        initialMills: Long,
-        fixedDelayedMills: Long,
-        fixedRateMills: Long,
+        initial: Duration,
+        fixedDelay: Duration,
+        fixedRate: Duration,
         method: Method
     )
 }

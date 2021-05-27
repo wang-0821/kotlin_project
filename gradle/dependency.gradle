@@ -20,12 +20,10 @@ ext {
     ]
 
     libs = [
-            // kotlin
-            "kotlin-stdlib": "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion",
-
             // kotlin-reflect used to implement KClass methods
             "kotlin-reflect": "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion",
-
+            // kotlin jdk8
+            "kotlin-stdlib-jdk8": "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion",
             // kotlin coroutines
             "kotlinx-coroutines-core": "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version.kotlinx",
 

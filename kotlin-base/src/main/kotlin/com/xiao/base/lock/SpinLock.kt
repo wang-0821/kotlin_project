@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * @author lix wang
  */
-class AtomicLock {
+class SpinLock {
     private val value = AtomicBoolean(false)
 
     fun <T> use(block: () -> T): T {
@@ -18,13 +18,13 @@ class AtomicLock {
         }
     }
 
-    private fun lock() {
+    fun unlock() {
+        value.compareAndSet(true, false)
+    }
+
+    fun lock() {
         @Suppress("ControlFlowWithEmptyBody")
         while (!value.compareAndSet(false, true)) {
         }
-    }
-
-    private fun unlock() {
-        value.compareAndSet(true, false)
     }
 }

@@ -1,6 +1,7 @@
 package com.xiao.base.executor
 
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.withTimeout
 import java.util.concurrent.TimeUnit
@@ -30,6 +31,7 @@ class SafeCompletableDeferred<T : Any?>(
         deferred.cancel()
     }
 
+    @ExperimentalCoroutinesApi
     override fun getCompleted(): T {
         return deferred.getCompleted()
     }

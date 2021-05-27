@@ -2,7 +2,7 @@ package lock
 
 import com.xiao.base.executor.DefaultExecutorServiceFactory
 import com.xiao.base.executor.ExecutionQueue
-import com.xiao.base.lock.AtomicLock
+import com.xiao.base.lock.SpinLock
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -12,10 +12,10 @@ import org.junit.jupiter.api.TestInstance
  * @author lix wang
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class AtomicLockTest {
+class SpinLockTest {
     @Test
     fun `test atomic lock`() {
-        val lock = AtomicLock()
+        val lock = SpinLock()
         val result = mutableListOf<Int>()
         val executionQueue = ExecutionQueue(
             "atomic-lock-test-exec",

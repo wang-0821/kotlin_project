@@ -29,44 +29,41 @@ abstract class AbstractCronScheduledService : CronScheduledService {
 
     override fun execScheduledMethod(method: Method) {
         val scheduledCorn = method.getAnnotation(ScheduledTask::class.java)
-        var initial: Long = if (scheduledCorn.initialTime.isBlank()) {
+        var initialMills: Long = if (scheduledCorn.initialTime.isBlank()) {
             0
         } else {
-            val currentSeconds = System.currentTimeMillis() / 1000
-            JodaTimeUtils.fromUtcString(scheduledCorn.initialTime).millis / 1000 - currentSeconds
+            val currentMills = System.currentTimeMillis()
+            JodaTimeUtils.fromUtcString(scheduledCorn.initialTime).millis - currentMills
         }
 
-        if (initial <= 0) {
-            initial = scheduledCorn.initial
+        if (initialMills <= 0) {
+            initialMills = scheduledCorn.timeUnit.toMillis(scheduledCorn.initial)
         }
 
-        execScheduledMethod(initial, scheduledCorn.fixedDelay, scheduledCorn.fixedRate, method)
+        val initial = Duration.ofMillis(initialMills)
+        val fixedDelay = Duration.ofMillis(scheduledCorn.timeUnit.toMillis(scheduledCorn.fixedDelay))
+        val fixedRate = Duration.ofMillis(scheduledCorn.timeUnit.toMillis(scheduledCorn.fixedRate))
+        execScheduledMethod(initial, fixedDelay, fixedRate, method)
     }
 
     fun execScheduledMethod(
-        initial: Long,
-        fixedDelay: Long,
-        fixedRate: Long,
+        initial: Duration,
+        fixedDelay: Duration,
+        fixedRate: Duration,
         method: Method,
         scheduler: AbstractScheduler
     ) {
-        if (initial > 0) {
-            scheduler.scheduleWithFixedDelay(
-                Duration.ofSeconds(initial),
-                Duration.ofSeconds(fixedDelay)
-            ) {
+        if (initial.isNegative) {
+            scheduler.scheduleWithFixedDelay(initial, fixedDelay) {
                 ProxyUtils.invoke(this, method, arrayOf())
             }
         } else {
-            if (fixedRate > 0) {
-                scheduler.scheduleAtFixedRate(
-                    Duration.ofSeconds(initial),
-                    Duration.ofSeconds(fixedRate)
-                ) {
+            if (fixedRate.isNegative) {
+                scheduler.scheduleAtFixedRate(initial, fixedDelay) {
                     ProxyUtils.invoke(this, method, arrayOf())
                 }
             } else {
-                scheduler.schedule(Duration.ofSeconds(initial)) {
+                scheduler.schedule(initial) {
                     ProxyUtils.invoke(this, method, arrayOf())
                 }
             }

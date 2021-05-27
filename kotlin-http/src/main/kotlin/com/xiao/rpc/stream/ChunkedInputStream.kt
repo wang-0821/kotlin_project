@@ -1,5 +1,6 @@
 package com.xiao.rpc.stream
 
+import com.xiao.base.CommonConstants
 import com.xiao.base.util.IoUtils
 import java.io.InputStream
 import java.nio.ByteBuffer
@@ -8,9 +9,8 @@ import java.nio.ByteBuffer
  *
  * @author lix wang
  */
-class ChunkedInputStream : InputStream {
-    private val inputStream: InputStream
-    private val byteBuffer: ByteBuffer = ByteBuffer.allocate(IoUtils.BUFFER_SIZE)
+class ChunkedInputStream(private val inputStream: InputStream) : InputStream() {
+    private val byteBuffer: ByteBuffer = ByteBuffer.allocate(CommonConstants.BUFFER_SIZE)
     private var pos: Int = 0
     private var chunkSize: Int = 0
     private var eof = false
@@ -21,8 +21,7 @@ class ChunkedInputStream : InputStream {
         CHUNK_LENGTH, CHUNK_LINE_FEED
     }
 
-    constructor(inputStream: InputStream) {
-        this.inputStream = inputStream
+    init {
         byteBuffer.flip()
     }
 
