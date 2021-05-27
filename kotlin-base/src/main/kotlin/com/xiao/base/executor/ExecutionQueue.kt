@@ -11,19 +11,17 @@ import java.util.concurrent.locks.ReentrantLock
  *
  * @author lix wang
  */
-class ExecutionQueue : AbstractExecutor {
+class ExecutionQueue(
+    name: String,
+    executorService: ExecutorService,
+    private val taskMaxCount: Int = Int.MAX_VALUE
+) : AbstractExecutor(name, executorService) {
     private val lock = ReentrantLock()
     private val queueIsFull = lock.newCondition()
-    private val taskMaxCount: Int
     private var taskCount = 0
 
-    constructor(
-        executionQueueName: String,
-        executorService: ExecutorService,
-        taskMaxCount: Int = Int.MAX_VALUE
-    ) : super(executionQueueName, executorService) {
+    init {
         check(taskMaxCount > 0)
-        this.taskMaxCount = taskMaxCount
     }
 
     fun <T : Any?> submit(taskName: String, task: () -> T): CompletableFuture<T> {

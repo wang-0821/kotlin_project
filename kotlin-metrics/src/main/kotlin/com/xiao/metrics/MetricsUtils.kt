@@ -17,6 +17,7 @@ object MetricsUtils {
     const val TYPE_DB = "DB"
     const val TYPE_RPC = "RPC"
 
+    private const val LEGACY_LAST_MILLS = 30 * 60 * 1000
     private val metricsBufferMap = ConcurrentHashMap<MetricsEvent, MetricsBuffer>()
     private val metricsSummaryMap = ConcurrentHashMap<MetricsEvent, MetricsSummary>()
 
@@ -39,12 +40,16 @@ object MetricsUtils {
         return metricsSummaryMap.entries
             .associate {
                 it.key to it.value
+            }.also {
+                cleanLegacyMetricsBuffers()
             }
     }
 
     @ThreadUnsafe
     @JvmStatic
     fun updateSummary() {
+        cleanLegacyMetricsBuffers()
+
         val bufferMap = mutableMapOf<MetricsEvent, MetricsBuffer>()
         metricsBufferMap.forEach { (metricsEvent, metricsBuffer) ->
             bufferMap[metricsEvent] = metricsBuffer
@@ -59,6 +64,14 @@ object MetricsUtils {
                     metricsSummaryMap[metricsEvent] = buffer
                 }
                 buffer.update(metricsBuffer.toList())
+            }
+        }
+    }
+
+    private fun cleanLegacyMetricsBuffers() {
+        metricsBufferMap.forEach { (event, buffer) ->
+            if (System.currentTimeMillis() - buffer.lastUpdateTime > LEGACY_LAST_MILLS) {
+                metricsBufferMap.remove(event)
             }
         }
     }

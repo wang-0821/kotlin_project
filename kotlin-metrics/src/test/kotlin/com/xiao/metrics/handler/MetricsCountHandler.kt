@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * @author lix wang
  */
-class MetricsCalculationHandler(private val counter: AtomicInteger) : MetricsHandler {
+class MetricsCountHandler(private val counter: AtomicInteger) : MetricsHandler {
     override fun handle(
         oldSummary: Map<MetricsEvent, MetricsSummary>,
         newSummary: Map<MetricsEvent, MetricsSummary>
