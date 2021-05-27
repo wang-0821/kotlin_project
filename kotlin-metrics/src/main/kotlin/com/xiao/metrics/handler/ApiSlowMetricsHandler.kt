@@ -5,7 +5,7 @@ import com.xiao.base.logging.LoggerType
 import com.xiao.base.logging.Logging
 import com.xiao.metrics.MetricsEvent
 import com.xiao.metrics.MetricsSummary
-import com.xiao.metrics.MetricsType
+import com.xiao.metrics.MetricsUtils
 
 /**
  *
@@ -16,10 +16,13 @@ class ApiSlowMetricsHandler : MetricsHandler {
         oldSummary: Map<MetricsEvent, MetricsSummary>,
         newSummary: Map<MetricsEvent, MetricsSummary>
     ) {
-        val apiSlowEvents: List<MetricsEvent> = newSummary.keys.filter { it.type == MetricsType.API_SLOW }
-        if (apiSlowEvents.isNotEmpty()) {
-            log.warn("Api slow: ${apiSlowEvents.joinToString { it.name() }}.")
-        }
+        newSummary.keys.asSequence()
+            .filter {
+                it.type == MetricsUtils.TYPE_API && it.state == MetricsUtils.STATE_SLOW
+            }.toSet()
+            .forEach {
+                log.warn("Api slow: ${it.name}.")
+            }
     }
 
     @KtLogger(LoggerType.METRICS)

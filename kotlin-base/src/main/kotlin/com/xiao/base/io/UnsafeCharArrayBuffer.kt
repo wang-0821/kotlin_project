@@ -8,21 +8,21 @@ import java.nio.CharBuffer
  */
 class UnsafeCharArrayBuffer(private val capacity: Int) : AutoCloseable {
     private var index = 0
-    private var unsafeCharArrayBuf: UnsafeCharArrayBuf? = null
+    private var unsafeCharArrayBuf: UnsafeCharArray? = null
 
-    fun copy(charBuffer: CharBuffer): Int {
+    fun append(charBuffer: CharBuffer): Int {
         val charBufferRemaining = charBuffer.remaining()
         if (charBufferRemaining <= 0) {
             return 0
         }
-        unsafeCharArrayBuf = unsafeCharArrayBuf ?: UnsafeCharArrayBuf(capacity)
+        unsafeCharArrayBuf = unsafeCharArrayBuf ?: UnsafeCharArray(capacity)
         val currentRemaining = remaining()
         return if (charBufferRemaining <= currentRemaining) {
-            unsafeCharArrayBuf!!.copyFrom(charBuffer.array(), charBuffer.position(), index, charBufferRemaining)
+            unsafeCharArrayBuf!!.readFrom(charBuffer.array(), charBuffer.position(), index, charBufferRemaining)
             index += charBufferRemaining
             0
         } else {
-            unsafeCharArrayBuf!!.copyFrom(charBuffer.array(), charBuffer.position(), index, currentRemaining)
+            unsafeCharArrayBuf!!.readFrom(charBuffer.array(), charBuffer.position(), index, currentRemaining)
             charBuffer.position(charBuffer.position() + currentRemaining)
             index += currentRemaining
             charBuffer.remaining()

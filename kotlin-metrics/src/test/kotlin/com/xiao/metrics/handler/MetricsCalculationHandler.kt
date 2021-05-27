@@ -14,7 +14,7 @@ class MetricsCalculationHandler(private val counter: AtomicInteger) : MetricsHan
         newSummary: Map<MetricsEvent, MetricsSummary>
     ) {
         val current = counter.get()
-        val increment = newSummary.entries.sumBy {
+        val increment = newSummary.entries.sumOf {
             it.value.times - (oldSummary[it.key]?.times ?: 0)
         }
         counter.set(current + increment)

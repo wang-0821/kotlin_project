@@ -4,40 +4,21 @@ package com.xiao.metrics
  *
  * @author lix wang
  */
-class MetricsEvent(
-    val type: MetricsType,
-    val prefixName: String? = null,
-    val suffixName: String? = null
+data class MetricsEvent(
+    val type: String,
+    val state: String,
+    val prefix: String? = null,
+    val suffix: String? = null
 ) {
-    fun name(): String {
-        return if (!prefixName.isNullOrEmpty()) {
-            if (!suffixName.isNullOrEmpty()) {
-                "$prefixName.$suffixName"
-            } else {
-                prefixName
-            }
+    val name = concat(prefix, suffix)
+
+    val fullName = concat(concat(state, name), state)
+
+    private fun concat(value1: String?, value2: String?): String {
+        return if (value1 != null && value2 != null) {
+            "$value1.$value2"
         } else {
-            suffixName ?: ""
-        }
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as MetricsEvent
-
-        if (type != other.type) return false
-        if (prefixName != other.prefixName) return false
-        if (suffixName != other.suffixName) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = type.hashCode()
-        result = 31 * result + (prefixName?.hashCode() ?: 0)
-        result = 31 * result + (suffixName?.hashCode() ?: 0)
-        return result
+            value1 ?: value2
+        } ?: ""
     }
 }

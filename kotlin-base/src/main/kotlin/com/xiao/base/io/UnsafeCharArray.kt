@@ -7,7 +7,7 @@ import sun.misc.Unsafe
  *
  * @author lix wang
  */
-class UnsafeCharArrayBuf(private val capacity: Int) : UnsafeBuf<Char>(capacity, Unsafe.ARRAY_CHAR_INDEX_SCALE) {
+class UnsafeCharArray(private val capacity: Int) : UnsafeArray<Char>(capacity, Unsafe.ARRAY_CHAR_INDEX_SCALE) {
     override fun get(index: Int): Char {
         check(index < capacity)
         return UnsafeUtils.UNSAFE.getChar(address + getOffset(index))
@@ -18,7 +18,7 @@ class UnsafeCharArrayBuf(private val capacity: Int) : UnsafeBuf<Char>(capacity, 
         UnsafeUtils.UNSAFE.putChar(address + getOffset(index), value)
     }
 
-    fun copyFrom(src: CharArray, srcIndex: Int, destIndex: Int, length: Int) {
+    fun readFrom(src: CharArray, srcIndex: Int, destIndex: Int, length: Int) {
         check(destIndex + length <= capacity)
         UnsafeUtils.UNSAFE.copyMemory(
             src,

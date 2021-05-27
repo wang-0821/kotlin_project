@@ -4,6 +4,7 @@ import com.xiao.base.executor.ExecutorServiceFactory
 import com.xiao.base.scheduler.CronScheduler
 import com.xiao.base.scheduler.ScheduledTask
 import com.xiao.metrics.handler.MetricsHandler
+import java.util.concurrent.TimeUnit
 
 /**
  *
@@ -17,10 +18,10 @@ class MetricsScheduler(
     name,
     executorServiceFactory.newScheduledExecutorService(name, 2)
 ) {
-    @ScheduledTask(initial = 5, fixedDelay = 5)
+    @ScheduledTask(initial = 5, fixedDelay = 5, timeUnit = TimeUnit.SECONDS)
     fun executeMetrics() {
         val oldSummary = MetricsUtils.metricsSummary()
-        MetricsUtils.resetSummary()
+        MetricsUtils.updateSummary()
         val newSummary = MetricsUtils.metricsSummary()
 
         metricsHandlers.forEach {

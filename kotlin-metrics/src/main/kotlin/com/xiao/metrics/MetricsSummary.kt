@@ -1,34 +1,26 @@
 package com.xiao.metrics
 
-import com.xiao.base.thread.ThreadUnsafe
-
 /**
  *
  * @author lix wang
  */
 class MetricsSummary {
+    var total: Long = 0
     var times: Int = 0
-        private set
     var min: Int = Int.MIN_VALUE
-        private set
     var max: Int = Int.MAX_VALUE
-        private set
     var avg: Int = -1
-        private set
-    private var latencies: List<Int>? = null
+    var lastUpdateTime: Long? = null
 
-    @ThreadUnsafe
-    fun calculateSummary(latencies: List<Int>): MetricsSummary {
+    fun update(latencies: List<Int>) {
         if (latencies.isNotEmpty()) {
-            val latencyList = latencies.sorted()
-            this.latencies = latencyList
-            val size = latencyList.size
-            times = latencyList.size
-            min = latencyList[0]
-            max = latencyList[size - 1]
-            avg = latencyList[size / 2]
+            val orderList = latencies.sorted()
+            times = orderList.size
+            total += times
+            min = orderList[0]
+            max = orderList[times - 1]
+            avg = orderList[times / 2]
+            lastUpdateTime = System.currentTimeMillis()
         }
-
-        return this
     }
 }

@@ -6,7 +6,7 @@ import com.xiao.base.util.UnsafeUtils
  *
  * @author lix wang
  */
-abstract class UnsafeBuf<T>(
+abstract class UnsafeArray<T>(
     capacity: Int,
     private val elementBytes: Int
 ) : AutoCloseable {
@@ -15,18 +15,6 @@ abstract class UnsafeBuf<T>(
     abstract fun get(index: Int): T
 
     abstract fun set(index: Int, value: T)
-
-    protected fun copy(srcAddress: Long, destAddress: Long, length: Int) {
-        UnsafeUtils.UNSAFE.copyMemory(srcAddress, destAddress, getOffset(length))
-    }
-
-    protected fun copy(src: UnsafeBuf<T>, srcIndex: Int, descIndex: Int, length: Int) {
-        UnsafeUtils.UNSAFE.copyMemory(
-            src.address + getOffset(srcIndex),
-            address + getOffset(descIndex),
-            getOffset(length)
-        )
-    }
 
     override fun close() {
         UnsafeUtils.UNSAFE.freeMemory(address)

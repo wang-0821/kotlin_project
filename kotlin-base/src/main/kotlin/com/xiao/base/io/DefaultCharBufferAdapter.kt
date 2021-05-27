@@ -1,6 +1,6 @@
 package com.xiao.base.io
 
-import com.xiao.base.util.IoUtils
+import com.xiao.base.CommonConstants
 import java.nio.CharBuffer
 
 /**
@@ -8,27 +8,27 @@ import java.nio.CharBuffer
  * @author lix wang
  */
 class DefaultCharBufferAdapter(
-    private val bufferSize: Int = IoUtils.BUFFER_SIZE
+    private val bufferSize: Int = CommonConstants.BUFFER_SIZE
 ) : CharBufferAdapter {
     private val buffers = mutableListOf<UnsafeCharArrayBuffer>()
-    private var currentBuffer: UnsafeCharArrayBuffer
+    private var currentBuf: UnsafeCharArrayBuffer
 
     init {
-        this.currentBuffer = UnsafeCharArrayBuffer(this.bufferSize)
-        buffers.add(currentBuffer)
+        this.currentBuf = UnsafeCharArrayBuffer(this.bufferSize)
+        buffers.add(currentBuf)
     }
 
     override fun appendCharBuffer(charBuffer: CharBuffer) {
         while (true) {
             val buffer = ensureCurrentBuffer()
-            if (buffer.copy(charBuffer) <= 0) {
+            if (buffer.append(charBuffer) <= 0) {
                 return
             }
         }
     }
 
     override fun size(): Int {
-        return (buffers.size - 1) * bufferSize + currentBuffer.size()
+        return (buffers.size - 1) * bufferSize + currentBuf.size()
     }
 
     override fun asString(): String {
@@ -56,10 +56,10 @@ class DefaultCharBufferAdapter(
     }
 
     private fun ensureCurrentBuffer(): UnsafeCharArrayBuffer {
-        if (currentBuffer.remaining() <= 0) {
-            currentBuffer = UnsafeCharArrayBuffer(this.bufferSize)
-            buffers.add(currentBuffer)
+        if (currentBuf.remaining() <= 0) {
+            currentBuf = UnsafeCharArrayBuffer(this.bufferSize)
+            buffers.add(currentBuf)
         }
-        return currentBuffer
+        return currentBuf
     }
 }
