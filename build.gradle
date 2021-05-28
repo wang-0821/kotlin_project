@@ -58,6 +58,12 @@ subprojects {
 		options.encoding = "UTF-8"
 	}
 
+	compileKotlin {
+		kotlinOptions {
+			jvmTarget = "$jvmVersion"
+		}
+	}
+
 	// 配置所有单元测试的任务信息打印到Console
 	tasks.test {
 		useJUnitPlatform()
@@ -74,12 +80,6 @@ subprojects {
 							"${result.skippedTestCount} skipped)"
 				}
 			}
-		}
-	}
-
-	tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-		kotlinOptions {
-			jvmTarget = "$jvmVersion"
 		}
 	}
 }

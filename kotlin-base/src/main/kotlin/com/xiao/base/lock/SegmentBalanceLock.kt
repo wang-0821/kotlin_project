@@ -6,7 +6,7 @@ package com.xiao.base.lock
  * @author lix wang
  */
 class SegmentBalanceLock(size: Int) : SegmentLock(size) {
-    private var nextIndex = 0
+    @Volatile private var nextIndex = 0
 
     override fun lock(): Int {
         var index = nextIndex % size
