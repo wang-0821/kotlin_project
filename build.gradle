@@ -1,18 +1,18 @@
 buildscript {
 	repositories {
-		jcenter()
+		mavenCentral()
 	}
 
 	dependencies {
 		classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
 		classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlinVersion"
+		classpath "io.spring.gradle:dependency-management-plugin:$dependencyManagement"
 	}
 }
 
 allprojects {
 	group "$projectGroup"
-	version "$projectMavenVersion"
-	apply from: rootProject.file("gradle/dependency.gradle")
+	version "$projectVersion"
 }
 
 // 子模块通用配置
@@ -21,8 +21,9 @@ subprojects {
 	apply plugin: 'idea'
 	apply plugin: 'kotlin'
 
-	apply from: rootProject.file("gradle/maven_publish.gradle")
 	apply from: rootProject.file("gradle/ktlint.gradle")
+	apply from: rootProject.file("gradle/maven_publish.gradle")
+	apply from: rootProject.file("gradle/dependency.gradle")
 
 	buildDir = "out/output"
 
@@ -32,7 +33,7 @@ subprojects {
 
 	repositories {
 		mavenLocal()
-		jcenter()
+		mavenCentral()
 	}
 
 	// idea 插件会默认下载source和doc文件
@@ -46,10 +47,10 @@ subprojects {
 	}
 
 	dependencies {
-		api libs['kotlin-reflect']
-		api libs['kotlin-stdlib-jdk8']
-		api libs['slf4j-api']
-		api libs['junit-jupiter']
+		api "org.jetbrains.kotlin:kotlin-reflect"
+		api "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+		api "org.slf4j:slf4j-api"
+		api "org.junit.jupiter:junit-jupiter"
 	}
 
 	// set encoding

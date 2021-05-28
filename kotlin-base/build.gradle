@@ -1,10 +1,10 @@
 dependencies {
-    api libs["jackson-databind"]
-    api libs['kotlinx-coroutines-core']
-    api libs['disruptor']
-    api libs['log4j-slf4j-impl']
-    api libs['joda-time']
-    api libs['netty-handler']
-    api libs['netty-transport-native-epoll_x86_64']
-    api libs['netty-transport-native-kqueue_x86_64']
+    api "com.fasterxml.jackson.core:jackson-databind"
+    api "org.jetbrains.kotlinx:kotlinx-coroutines-core"
+    api "com.lmax:disruptor"
+    api "org.apache.logging.log4j:log4j-slf4j-impl"
+    api "joda-time:joda-time"
+    api "io.netty:netty-handler"
+    api (group: "io.netty", name: "netty-transport-native-epoll", classifier: "linux-x86_64")
+    api (group: "io.netty", name: "netty-transport-native-kqueue", classifier: "osx-x86_64")
 }

@@ -1,67 +1,54 @@
-// 新建一个dependency的时候，gradle不会下载文件
-// 只会在module 的build.gradle使用dependency的时候，才会下载文件构建项目
-ext {
-    version = [
-            kotlinx: '1.4.2',
-            jackson: '2.11.2',
-            slf4j: '1.7.30',
-            log4j2: '2.13.3',
-            disruptor: '3.4.2',
-            junit: '5.7.0',
-            mybatis: '3.5.5',
-            flyway: '7.0.2',
-            mysqlConnectorJava: '8.0.21',
-            hikariCP: '3.4.5',
-            ktlint: '0.40.0',
-            netty: '4.1.56.Final',
-            lettuce: '6.0.2.RELEASE',
-            jodaTime: '2.10.10',
-            caffeine: '3.0.0'
-    ]
+apply plugin: 'io.spring.dependency-management'
 
-    libs = [
+dependencyManagement {
+    dependencies {
+        dependencySet(group: "org.jetbrains.kotlin", version: "$kotlinVersion") {
             // kotlin-reflect used to implement KClass methods
-            "kotlin-reflect": "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion",
+            entry "kotlin-reflect"
             // kotlin jdk8
-            "kotlin-stdlib-jdk8": "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion",
-            // kotlin coroutines
-            "kotlinx-coroutines-core": "org.jetbrains.kotlinx:kotlinx-coroutines-core:$version.kotlinx",
+            entry "kotlin-stdlib-jdk8"
+        }
+        // kotlin coroutines
+        dependency "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2"
 
-            // tools
-            // jackson
-            "jackson-databind": "com.fasterxml.jackson.core:jackson-databind:$version.jackson",
-            "joda-time": "joda-time:joda-time:$version.jodaTime",
-            "caffeine": "com.github.ben-manes.caffeine:caffeine:$version.caffeine",
+        // tools
+        // jackson
+        dependency "com.fasterxml.jackson.core:jackson-databind:2.11.2"
+        dependency "joda-time:joda-time:2.10.10"
+        // caffeine
+        dependency "com.github.ben-manes.caffeine:caffeine:3.0.0"
+        // logging
+        dependency "org.slf4j:slf4j-api:1.7.30"
+        dependency "com.lmax:disruptor:3.4.2"
+        dependencySet(group: "org.apache.logging.log4j", version: "2.13.3") {
+            entry "log4j-core"
+            entry "log4j-slf4j-impl"
+        }
 
-            // logging
-            "slf4j-api": "org.slf4j:slf4j-api:$version.slf4j",
-            "log4j-core": "org.apache.logging.log4j:log4j-core:$version.log4j2",
-            "log4j-slf4j-impl": "org.apache.logging.log4j:log4j-slf4j-impl:$version.log4j2",
-            "disruptor": "com.lmax:disruptor:$version.disruptor",
+        // junit
+        dependency "org.junit.jupiter:junit-jupiter:5.7.0"
+        // kotlin format
+        dependency "com.pinterest:ktlint:0.40.0"
 
-            // junit
-            "junit-jupiter": "org.junit.jupiter:junit-jupiter:$version.junit",
+        // database
+        // mybatis
+        dependency "org.mybatis:mybatis:3.5.5"
+        // flyway
+        dependency "org.flywaydb:flyway-core:$flywayVersion"
+        // mysql
+        dependency "mysql:mysql-connector-java:8.0.21"
+        // datasource
+        dependency "com.zaxxer:HikariCP:3.4.5"
 
-            // database
-            // mybatis
-            "mybatis": "org.mybatis:mybatis:$version.mybatis",
-            // flyway
-            "flyway-core": "org.flywaydb:flyway-core:$version.flyway",
-            // mysql
-            "mysql-connector-java": "mysql:mysql-connector-java:$version.mysqlConnectorJava",
-            // datasource
-            "HikariCP": "com.zaxxer:HikariCP:$version.hikariCP",
+        // netty
+        dependencySet(group: "io.netty", version: "4.1.56.Final") {
+            entry "netty-handler"
+            entry "netty-buffer"
+            entry "netty-transport-native-epoll"
+            entry "netty-transport-native-kqueue"
+        }
 
-            // kotlin format
-            "ktlint": "com.pinterest:ktlint:$version.ktlint",
-
-            // netty
-            "netty-handler": "io.netty:netty-handler:$version.netty",
-            "netty-buffer": "io.netty:netty-buffer:$version.netty",
-            "netty-transport-native-epoll_x86_64": "io.netty:netty-transport-native-epoll:$version.netty:linux-x86_64",
-            "netty-transport-native-kqueue_x86_64": "io.netty:netty-transport-native-kqueue:$version.netty:osx-x86_64",
-
-            //redis client
-            "lettuce-core": "io.lettuce:lettuce-core:$version.lettuce"
-    ]
+        //redis
+        dependency "io.lettuce:lettuce-core:6.0.2.RELEASE"
+    }
 }
