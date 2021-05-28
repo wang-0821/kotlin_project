@@ -13,7 +13,7 @@ class SegmentBalanceLock(size: Int) : SegmentLock(size) {
         while (true) {
             while (index < size) {
                 if (casStateAt(index, UNUSE, INUSE)) {
-                    nextIndex = (nextIndex + 1) % size
+                    nextIndex = (index + 1) % size
                     return index
                 }
                 index++
