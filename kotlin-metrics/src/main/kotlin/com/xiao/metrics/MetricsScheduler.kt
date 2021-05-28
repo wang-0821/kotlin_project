@@ -16,9 +16,9 @@ class MetricsScheduler(
     private val metricsHandlers: List<MetricsHandler>
 ) : CronScheduler(
     name,
-    executorServiceFactory.newScheduledExecutorService(name, 2)
+    executorServiceFactory.newScheduledExecutorService(name, 1)
 ) {
-    @ScheduledTask(initial = 5, fixedDelay = 5, timeUnit = TimeUnit.SECONDS)
+    @ScheduledTask(initial = 5, fixedDelay = 30, timeUnit = TimeUnit.SECONDS)
     fun executeMetrics() {
         val oldSummary = MetricsUtils.metricsSummary()
         MetricsUtils.updateSummary()

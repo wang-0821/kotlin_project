@@ -1,7 +1,7 @@
 package com.xiao.metrics
 
 import com.xiao.base.io.UnsafeChunkedIntArray
-import com.xiao.base.lock.SegmentRandomLock
+import com.xiao.base.lock.SegmentBalanceLock
 import kotlin.math.max
 import kotlin.math.min
 
@@ -14,8 +14,8 @@ class MetricsBuffer(
     private val capacity: Int = MAX_CAPACITY
 ) : AutoCloseable {
     private var buffers = Array(size) { UnsafeChunkedIntArray(MAX_TOTAL_CAPACITY, capacity) }
-    private val lock = SegmentRandomLock(size)
-    var lastUpdateTime: Long? = null
+    private val lock = SegmentBalanceLock(size)
+    var lastUpdateTime: Long = System.currentTimeMillis()
         private set
 
     fun add(mills: Int): Boolean {
@@ -61,10 +61,11 @@ class MetricsBuffer(
     fun toList(): List<Int> {
         val totalSize = buffers.sumOf { it.size() }
         val list = MutableList(totalSize) { 0 }
+        var index = 0
         buffers.forEach {
             it.resetReadIndex()
             while (it.isReadable()) {
-                list.add(it.read())
+                list[index++] = it.read()
             }
         }
         return list
