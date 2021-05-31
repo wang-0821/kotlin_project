@@ -21,11 +21,11 @@ abstract class AbstractScheduler(
     /**
      * Execute once when delay end.
      */
-    open fun <T : Any?> schedule(
+    open fun schedule(
         delay: Duration,
-        command: () -> T
-    ): SafeScheduledFuture<T> {
-        val safeScheduledFuture = SafeScheduledFuture<T>()
+        command: () -> Unit
+    ): SafeScheduledFuture<Unit> {
+        val safeScheduledFuture = SafeScheduledFuture<Unit>()
         val future = scheduledExecutorService.schedule(
             toRunnable(command, safeScheduledFuture),
             delay.toNanos(),
@@ -90,9 +90,9 @@ abstract class AbstractScheduler(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T : Any?> toRunnable(
-        command: () -> T,
-        future: CompletableFuture<T>
+    private fun toRunnable(
+        command: () -> Unit,
+        future: CompletableFuture<*>
     ): Runnable {
         return Runnable {
             CompletableCallback(command, future as CompletableFuture<Any?>).run()

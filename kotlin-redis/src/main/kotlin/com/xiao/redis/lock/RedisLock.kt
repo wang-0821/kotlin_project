@@ -36,19 +36,6 @@ class RedisLock(
         }
     }
 
-    fun tryLock(expire: Duration, waitTimeout: Duration): Boolean {
-        val deadline = System.nanoTime() + waitTimeout.toNanos()
-        while (true) {
-            if (tryLock(expire)) {
-                return true
-            } else {
-                if (System.nanoTime() >= deadline) {
-                    return false
-                }
-            }
-        }
-    }
-
     fun isLocked(): Boolean {
         return redisService.get(lockName) == lockValue
     }
