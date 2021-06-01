@@ -6,7 +6,7 @@ buildscript {
 	dependencies {
 		classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
 		classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlinVersion"
-		classpath "io.spring.gradle:dependency-management-plugin:$dependencyManagement"
+		classpath "io.spring.gradle:dependency-management-plugin:$dependencyManagementVersion"
 	}
 }
 
