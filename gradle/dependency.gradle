@@ -3,20 +3,17 @@ apply plugin: 'io.spring.dependency-management'
 dependencyManagement {
     dependencies {
         dependencySet(group: "org.jetbrains.kotlin", version: "$kotlinVersion") {
-            // kotlin-reflect used to implement KClass methods
             entry "kotlin-reflect"
-            // kotlin jdk8
             entry "kotlin-stdlib-jdk8"
         }
         // kotlin coroutines
         dependency "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2"
 
         // tools
-        // jackson
         dependency "com.fasterxml.jackson.core:jackson-databind:2.11.2"
         dependency "joda-time:joda-time:2.10.10"
-        // caffeine
         dependency "com.github.ben-manes.caffeine:caffeine:3.0.0"
+
         // logging
         dependency "org.slf4j:slf4j-api:1.7.30"
         dependency "com.lmax:disruptor:3.4.2"
@@ -31,13 +28,9 @@ dependencyManagement {
         dependency "com.pinterest:ktlint:0.40.0"
 
         // database
-        // mybatis
         dependency "org.mybatis:mybatis:3.5.5"
-        // flyway
         dependency "org.flywaydb:flyway-core:$flywayVersion"
-        // mysql
         dependency "mysql:mysql-connector-java:8.0.21"
-        // datasource
         dependency "com.zaxxer:HikariCP:3.4.5"
 
         // netty
@@ -50,5 +43,10 @@ dependencyManagement {
 
         //redis
         dependency "io.lettuce:lettuce-core:6.0.2.RELEASE"
+
+        //spring
+        dependencySet(group: "org.springframework.boot", version: "2.5.0") {
+            entry "spring-boot-starter"
+        }
     }
 }

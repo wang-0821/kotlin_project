@@ -1,11 +1,13 @@
 package com.xiao.redis.scheduler
 
 import com.xiao.base.scheduler.AbstractScheduler
-import com.xiao.base.scheduler.SafeScheduledFuture
 import com.xiao.redis.lock.RedisLock
 import java.time.Duration
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 /**
  * [RedisLockScheduler] 是分布式[ScheduledExecutorService]
@@ -17,32 +19,38 @@ class RedisLockScheduler(
     name: String,
     private val redisLock: RedisLock,
     scheduledExecutorService: ScheduledExecutorService,
-    redisRetryDuration: Duration = Duration.ofMinutes(5),
-    private val taskMaxCount: Int = Int.MAX_VALUE
+    redisRetryDuration: Duration = Duration.ofMinutes(5)
 ) : AbstractScheduler(name, scheduledExecutorService) {
-    private var taskCount: Int = 0
     private val lockDuration: Duration = redisRetryDuration
-    private val lock = ReentrantLock()
-    private val isFullCondition = lock.newCondition()
-    private val taskFutures = mutableMapOf<Runnable, SafeScheduledFuture<*>>()
 
     /**
-     * [command] will skip while tryLock failed.
+     * After delay duration, [command] will allow to execute.
+     * If [command] try lock failed before execution, [command] will be thrown away.
      */
-    override fun schedule(delay: Duration, command: () -> Unit): SafeScheduledFuture<Unit> {
-        return execWithLock {
-            val runnable = toRunnable(command)
-            val future = super.schedule(delay) {
-                runnable.run()
-            }
-
-            taskFutures[runnable] = future
-            future.whenComplete { _, _ ->
-                taskFutures.remove(runnable)
-            }
-
-            return@execWithLock future
+    override fun schedule(delay: Duration, command: () -> Unit): ScheduledFuture<Unit> {
+        val runnable = Runnable {
+            use(command)
         }
+        return super.schedule(delay) {
+            runnable.run()
+        }
+    }
+
+    /**
+     * After delay duration，[command] will allow to execute.
+     * If [command] try lock failed before execution, [command] will retry till succeed.
+     */
+    fun execute(
+        name: String,
+        delay: Duration,
+        timeout: Duration,
+        command: () -> Unit
+    ): CompletableFuture<Unit> {
+        check(timeout > Duration.ZERO)
+        val future = CompletableFuture<Unit>()
+        val task = RunnableTask(name, command, timeout, future)
+        doExecute(task, delay)
+        return future
     }
 
     /**
@@ -52,19 +60,12 @@ class RedisLockScheduler(
         initialDelay: Duration,
         period: Duration,
         command: () -> Unit
-    ): SafeScheduledFuture<Unit> {
-        return execWithLock {
-            val runnable = toRunnable(command)
-            val future = super.scheduleAtFixedRate(initialDelay, period) {
-                runnable.run()
-            }
-
-            taskFutures[runnable] = future
-            future.whenComplete { _, _ ->
-                taskFutures.remove(runnable)
-            }
-
-            return@execWithLock future
+    ): ScheduledFuture<Unit> {
+        val runnable = Runnable {
+            use(command)
+        }
+        return super.scheduleAtFixedRate(initialDelay, period) {
+            runnable.run()
         }
     }
 
@@ -75,69 +76,61 @@ class RedisLockScheduler(
         initialDelay: Duration,
         delay: Duration,
         command: () -> Unit
-    ): SafeScheduledFuture<Unit> {
-        return execWithLock {
-            val runnable = toRunnable(command)
-            val future = super.scheduleWithFixedDelay(initialDelay, delay) {
-                runnable.run()
-            }
-
-            taskFutures[runnable] = future
-            future.whenComplete { _, _ ->
-                taskFutures.remove(runnable)
-            }
-
-            return@execWithLock future
+    ): ScheduledFuture<Unit> {
+        val runnable = Runnable {
+            use(command)
+        }
+        return super.scheduleWithFixedDelay(initialDelay, delay) {
+            runnable.run()
         }
     }
 
-    override fun taskCount(): Int {
-        return taskCount
+    private fun doExecute(runnableTask: RunnableTask<*>, delay: Duration) {
+        scheduledExecutorService.schedule(runnableTask, delay.toMillis(), TimeUnit.MILLISECONDS)
     }
 
-    override fun taskCapacity(): Int {
-        return Int.MAX_VALUE
-    }
-
-    override fun shutdown() {
-        cancelAllScheduledTask()
-        super.shutdown()
-    }
-
-    override fun shutdownNow() {
-        cancelAllScheduledTask()
-        super.shutdownNow()
-    }
-
-    private fun cancelAllScheduledTask() {
-        taskFutures.forEach {
-            it.value.cancel(false)
-        }
-        taskFutures.clear()
-    }
-
-    private fun <T : Any?> execWithLock(block: () -> SafeScheduledFuture<T>): SafeScheduledFuture<T> {
-        lock.lock()
-        try {
-            if (taskCount >= taskMaxCount) {
-                isFullCondition.await()
+    private fun use(task: () -> Unit) {
+        if (tryLock()) {
+            try {
+                task()
+            } finally {
+                redisLock.unlock()
             }
-            val future = block()
-
-            taskCount++
-            return future
-        } finally {
-            lock.unlock()
         }
     }
 
-    private fun toRunnable(task: () -> Unit): Runnable {
-        return Runnable {
-            if (redisLock.tryLock(lockDuration.multipliedBy(2))) {
-                try {
-                    task()
-                } finally {
-                    redisLock.unlock()
+    private fun tryLock(): Boolean {
+        return redisLock.tryLock(lockDuration.multipliedBy(2))
+    }
+
+    private inner class RunnableTask<T>(
+        private val name: String,
+        private val command: () -> T,
+        retryTime: Duration? = null,
+        private val future: CompletableFuture<T>
+    ) : Runnable {
+        private var executed: Boolean = false
+        private val deadline = retryTime?.let { System.currentTimeMillis() + it.toMillis() } ?: -1
+
+        override fun run() {
+            val toExecute = !executed || System.currentTimeMillis() <= deadline
+            if (toExecute) {
+                if (tryLock()) {
+                    try {
+                        command()
+                        future.complete(null)
+                    } catch (throwable: Throwable) {
+                        future.completeExceptionally(throwable)
+                    } finally {
+                        redisLock.unlock()
+                    }
+                } else {
+                    doExecute(this, Duration.ZERO)
+                }
+                executed = true
+            } else {
+                if (!future.isDone) {
+                    future.completeExceptionally(TimeoutException("Task $name timeout cancelled."))
                 }
             }
         }
