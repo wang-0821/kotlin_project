@@ -1,10 +1,10 @@
 dependencies {
+    api "org.slf4j:slf4j-api"
     api "com.fasterxml.jackson.core:jackson-databind"
     api "org.jetbrains.kotlinx:kotlinx-coroutines-core"
-    api "com.lmax:disruptor"
-    api "org.apache.logging.log4j:log4j-slf4j-impl"
     api "joda-time:joda-time"
     api "io.netty:netty-handler"
     api (group: "io.netty", name: "netty-transport-native-epoll", classifier: "linux-x86_64")
     api (group: "io.netty", name: "netty-transport-native-kqueue", classifier: "osx-x86_64")
+    api project(":kotlin-log4j2")
 }
