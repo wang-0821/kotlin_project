@@ -9,8 +9,6 @@ import com.xiao.rpc.io.Response
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import org.apache.logging.log4j.ThreadContext
-import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -57,9 +55,7 @@ object Http {
 
     private fun doRequest(request: Request): Response {
         started.getAndIncrement()
-        ThreadContext.put("X-RequestId", UUID.randomUUID().toString())
         val result = client.newCall(request).execute()
-        ThreadContext.clearMap()
         started.getAndDecrement()
         return result
     }
