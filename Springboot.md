@@ -126,3 +126,6 @@ bannerMode属性上。
     筛选出的ApplicationListener集合有6种：EnvironmentPostProcessorApplicationListener、AnsiOutputApplicationListener、
     	LoggingApplicationListener、BackgroundPreinitializer、DelegatingApplicationListener、
 	FileEncodingApplicationListener。这6种ApplicationListener都会执行。
+
+### 5，打印Banner
+&emsp;&emsp; 
