@@ -56,14 +56,35 @@ listeners。最后根据异常栈的mian方法，获取到当前SpringApplicatio
                 EnvironmentPostProcessorApplicationListener
           
 ### 2，创建ConfigurableBootstrapContext
-&emsp;&emsp;首先创建ConfigurableBootstrapContext，具体类型为DefaultBootstrapContext。
+&emsp;&emsp; 首先创建ConfigurableBootstrapContext，具体类型为DefaultBootstrapContext。
 然后使用SpringApplication中的bootstrapRegistryInitializers初始化该ConfigurableBootstrapContext。
 SpringBoot中并没有配置bootstrapRegistryInitializers，因此实际不会执行initialize。
     
     private DefaultBootstrapContext createBootstrapContext() {
-        DefaultBootstrapContext bootstrapContext = new DefaultBootstrapContext();
-        this.bootstrapRegistryInitializers.forEach((initializer) -> initializer.initialize(bootstrapContext));
-        return bootstrapContext;
-	  }
+    	DefaultBootstrapContext bootstrapContext = new DefaultBootstrapContext();
+    	this.bootstrapRegistryInitializers.forEach((initializer) -> initializer.initialize(bootstrapContext));
+    	return bootstrapContext;
+    }
+    
+    // 在执行listeners.starting时，会先筛选出目标ApplicationListener，执行ApplicationStartingEvent事件，
+    // 这里会筛选出三个listener： LoggingApplicationListener、BackgroundPreinitializer、DelegatingApplicationListener，
+    // 其中只有LoggingApplicationListener会真实执行，其他的不会执行。
+    DefaultBootstrapContext bootstrapContext = createBootstrapContext();
+    ConfigurableApplicationContext context = null;
+    configureHeadlessProperty();
+    SpringApplicationRunListeners listeners = getRunListeners(args);
+    listeners.starting(bootstrapContext, this.mainApplicationClass);
         
-### 3，
+### 3，获取SpringApplicationRunListeners
+&emsp;&emsp; 这一步会去获取spring.factories中获取org.springframework.boot.SpringApplicationRunListener，
+SpringBoot项目中只配置了一种SpringApplicationRunListener：EventPublishingRunListener。
+这个类主要用来分发各种事件给目标ApplicationListener，让目标ApplicationListener来处理事件。
+
+    private SpringApplicationRunListeners getRunListeners(String[] args) {
+	Class<?>[] types = new Class<?>[] { SpringApplication.class, String[].class };
+	return new SpringApplicationRunListeners(logger,
+		getSpringFactoriesInstances(SpringApplicationRunListener.class, types, this, args),
+		this.applicationStartup);
+    }
+
+### 4，环境准备
