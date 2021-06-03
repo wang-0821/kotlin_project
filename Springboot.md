@@ -66,7 +66,7 @@ SpringBoot中并没有配置bootstrapRegistryInitializers，因此实际不会�
     	return bootstrapContext;
     }
     
-    // 在执行listeners.starting时，会先筛选出目标ApplicationListener，执行ApplicationStartingEvent事件，
+    // 在执行listeners.starting时，实际是用筛选出目标ApplicationListener，执行ApplicationStartingEvent事件，
     // 这里会筛选出三个listener： LoggingApplicationListener、BackgroundPreinitializer、DelegatingApplicationListener，
     // 其中只有LoggingApplicationListener会真实执行，其他的不会执行。
     DefaultBootstrapContext bootstrapContext = createBootstrapContext();
@@ -75,7 +75,7 @@ SpringBoot中并没有配置bootstrapRegistryInitializers，因此实际不会�
     SpringApplicationRunListeners listeners = getRunListeners(args);
     listeners.starting(bootstrapContext, this.mainApplicationClass);
         
-### 3，获取SpringApplicationRunListeners
+### 3，SpringApplicationRunListeners对ApplicationEvent事件的分发
 &emsp;&emsp; 这一步会去获取spring.factories中获取org.springframework.boot.SpringApplicationRunListener，
 SpringBoot项目中只配置了一种SpringApplicationRunListener：EventPublishingRunListener。
 这个类主要用来分发各种事件给目标ApplicationListener，让目标ApplicationListener来处理事件。
@@ -86,5 +86,43 @@ SpringBoot项目中只配置了一种SpringApplicationRunListener：EventPublish
 		getSpringFactoriesInstances(SpringApplicationRunListener.class, types, this, args),
 		this.applicationStartup);
     }
-
+    
+    在处理ApplicationEvent时，会先获取支持该ApplicationEvent的ApplicationListener集合，
+    然后依次执行listener.onApplicationEvent(E extends ApplicationEvent)。
+    获取listener代码如下，实际上这里的listeners就是前面SpringApplication中的listeners属性。
+    for (ApplicationListener<?> listener : listeners) {
+    	if (supportsEvent(listener, eventType, sourceType)) {
+	    if (retriever != null) {
+		filteredListeners.add(listener);		
+	    }
+	    allListeners.add(listener);
+	}
+    }
+    
+    listener必须同时满足支持该ApplicationEvent并且支持该ApplicationEvent的来源，
+    那么该ApplicationListener才能处理该ApplicationEvent。
+    判断是否支持event类型：1，如果该listener是GenericApplicationListener类型，那么直接执行listener.supportsEventType(eventType)。
+    	2，如果listener是SmartApplicationListener类型，执行listener.supportsEventType(eventClass)来判断。
+	3，如果该listener声明的ApplicationEvent类型为空或者是该event的父类或同类，那么就支持该ApplicationEvent。
+    判断是否支持event来源：1，该listener不是SmartApplicationListener。2，该listener是SmartApplicationListener，
+    	执行listener.supportsSourceType(sourceType)判断。
+    protected boolean supportsEvent(
+	    ApplicationListener<?> listener, ResolvableType eventType, @Nullable Class<?> sourceType) {
+	GenericApplicationListener smartListener = (listener instanceof GenericApplicationListener ?
+		(GenericApplicationListener) listener : new GenericApplicationListenerAdapter(listener));
+	return (smartListener.supportsEventType(eventType) && smartListener.supportsSourceType(sourceType));
+    }
+    
 ### 4，环境准备
+&emsp;&emsp; 1，根据webApplicationType创建ConfigurableEnvironment，创建StandardEnvironment时，
+会自动读取System properties和System env。2，配置环境，根据main函数的args和SpringApplication的defaultProperties，
+来配置Environment中的propertySources属性。3，Environment除了systemEnvironment、systemProperties
+新增configurationProperties。4，使用SpringApplicationRunListeners执行ApplicationEnvironmentPreparedEvent任务。
+5，将spring.main下面的配置绑定到SpringApplication同名属性下，例如将spring.main.banner-mode绑定到SpringApplication
+bannerMode属性上。
+        
+    执行SpringApplicationRunListeners.environmentPrepared(ConfigurableBootstrapContext, ConfigurableEnvironment)时，
+    会分发ApplicationEnvironmentPreparedEvent事件，根据ApplicationEnvironmentPreparedEvent事件，
+    筛选出的ApplicationListener集合有6种：EnvironmentPostProcessorApplicationListener、AnsiOutputApplicationListener、
+    	LoggingApplicationListener、BackgroundPreinitializer、DelegatingApplicationListener、
+	FileEncodingApplicationListener。这6种ApplicationListener都会执行。
