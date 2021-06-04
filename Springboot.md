@@ -113,15 +113,18 @@ SpringBoot项目中只配置了一种SpringApplicationRunListener：EventPublish
 	return (smartListener.supportsEventType(eventType) && smartListener.supportsSourceType(sourceType));
     }
     
-### 4，环境准备
+### 4，ConfigurableEnvironment准备
 &emsp;&emsp; 1，根据webApplicationType创建ConfigurableEnvironment，创建StandardEnvironment时，
 会自动读取System properties和System env。2，配置环境，根据main函数的args和SpringApplication的defaultProperties，
 来配置Environment中的propertySources属性。3，Environment除了systemEnvironment、systemProperties
 新增configurationProperties。4，使用SpringApplicationRunListeners执行ApplicationEnvironmentPreparedEvent任务。
 5，将spring.main下面的配置绑定到SpringApplication同名属性下，例如将spring.main.banner-mode绑定到SpringApplication
 bannerMode属性上。
-        
-    执行SpringApplicationRunListeners.environmentPrepared(ConfigurableBootstrapContext, ConfigurableEnvironment)时，
+    
+    1，webApplicationType不同对应的ConfigurableEnvironment不同，SERVLET对应ApplicationServletEnvironment，
+    REACTIVE对应ApplicationReactiveWebEnvironment，其他默认为ApplicationEnvironment。
+    
+    4，执行SpringApplicationRunListeners.environmentPrepared(ConfigurableBootstrapContext, ConfigurableEnvironment)时，
     会分发ApplicationEnvironmentPreparedEvent事件，根据ApplicationEnvironmentPreparedEvent事件，
     筛选出的ApplicationListener集合有6种：EnvironmentPostProcessorApplicationListener、AnsiOutputApplicationListener、
     	LoggingApplicationListener、BackgroundPreinitializer、DelegatingApplicationListener、
@@ -132,3 +135,59 @@ bannerMode属性上。
 Banner可以为image或者txt，可以通过spring.banner.image.location设置image Banner位置，通过spring.banner.location
 设置txt Banner的位置。默认的banner位置为：banner.${suffix}，suffix可以为：gif、jpg、png、txt。3，获取到Banner列表后，
 会打印出所有的Banner。
+
+### 6，ConfigurableApplicationContext准备
+&emsp;&emsp; 1，根据webApplicationType创建ConfigurableApplicationContext，context中包含beanFactory属性。
+2，准备ConfigurableApplicationContext，先将准备好的environment赋值给context。3，使用SpringApplication 
+initializers执行初始化。4，使用SpringApplicationRunListener执行ApplicationContextInitializedEvent任务。
+5，注册部分Bean，包括springApplicationArguments、springBootBanner、SpringApplication中的primarySources和sources。
+6，使用SpringApplicationRunListener执行contextLoaded。
+
+    1，不同的webApplicationType对应不同的ConfigurableApplicationContext：
+    	SERVLET对应AnnotationConfigServletWebServerApplicationContext。
+    	REACTIVE对应AnnotationConfigReactiveWebServerApplicationContext。
+	默认为AnnotationConfigApplicationContext。所有context中的beanFactory默认都是DefaultListableBeanFactory。
+    
+    3，使用initializers执行初始化，依次使用initializer.initialize(context)执行初始化。如果initializer实现了
+    	ApplicationContextInitializer<T>，但T不是context的父类或者同类，那么将抛异常。
+	
+    6，获取SpringApplication中的listeners，给实现了ApplicationContextAware接口的listener设置ApplicationContext，
+    	将SpringApplication中的listeners都添加到ApplicationContext中。然后使用SpringApplicationRunListener执行
+	ApplicationPreparedEvent。
+	
+	筛选出4中listener执行ApplicationPreparedEvent：EnvironmentPostProcessorApplicationListener、
+	    LoggingApplicationListener、BackgroundPreinitializer、DelegatingApplicationListener。
+	    其中只有EnvironmentPostProcessorApplicationListener、LoggingApplicationListener会执行。
+	
+	public void contextLoaded(ConfigurableApplicationContext context) {
+	    for (ApplicationListener<?> listener : this.application.getListeners()) {
+		if (listener instanceof ApplicationContextAware) {
+		    ((ApplicationContextAware) listener).setApplicationContext(context);
+		}
+		context.addApplicationListener(listener);
+	    }
+	    this.initialMulticaster.multicastEvent(new ApplicationPreparedEvent(this.application, this.args, context));
+	}
+	
+### 7，refresh ConfigurableApplicationContext
+&emsp;&emsp; 这一步将会执行ConfigurableApplicationContext.refresh方法来刷新context。1，准备刷新，先初始化配置源，检查environment中
+需要的配置是否都准备好。2，让具体的context执行refreshBeanFactory。3，准备beanFactory，这一步会设置beanFactory的classLoader，
+设置EL表达式解析器，设置属性注册解析器，设置忽略自动装配的接口，注册可以解析的自动装配，注册environment Bean，注册systemProperties Bean，
+注册systemEnvironment Bean，注册applicationStartup Bean。4，使用postProcessBeanFactory方法让具体的context来处理beanFactory。
+5，执行context、beanFactory中的BeanDefinitionRegistryPostProcessor和BeanFactoryPostProcessor。6，注册messageSource Bean。
+7，注册applicationEventMulticaster Bean。8，由具体的context执行onRefresh方法来初始化一些特殊的Bean。9，向context中注册ApplicationListener，
+包括beanFactory中的ApplicationListener，然后利用context的ApplicationEventMulticaster发布所有的earlyApplicationEvents，
+默认earlyApplicationEvents为空。10，完成beanFactory的初始化，冻结所有的beanDefinition，初始化所有的单例Bean。
+
+    5，执行顺序：context.beanFactoryPostProcessors[BeanDefinitionRegistryPostProcessor].postProcessBeanDefinitionRegistry() ->
+    	beanFactory[BeanDefinitionRegistryPostProcessor](PriorityOrdered、Ordered、else).postProcessBeanDefinitionRegistry() ->
+	(context + beanFactory)[BeanDefinitionRegistryPostProcessor].postProcessBeanFactory() ->
+	context[!BeanDefinitionRegistryPostProcessor].postProcessBeanFactory() ->
+	beanFactory[BeanFactoryPostProcessor](PriorityOrdered、Ordered、else).postProcessBeanFactory()
+	
+    10，在创建Bean时：1，如果beanFactory instantiationAware中有InstantiationAwareBeanPostProcessor，
+    	那么会先执行所有InstantiationAwareBeanPostProcessor.postProcessBeforeInstantiation用来创建Bean，
+	再执行所有beanFactory beanPostProcessors中BeanPostProcessor.postProcessAfterInitialization。
+	2，如果前一步没能创建Bean，那么首先判断该BeanDefinition有没有Supplier，如果有则从Supplier中获取Bean，
+	3，如果没有Supplier，那么会判断是否有factoryMethodName，如果有factoryMethodName那么会根据factoryMethodName和
+	factoryBeanName来创建Bean。
