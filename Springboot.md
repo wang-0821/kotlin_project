@@ -128,4 +128,7 @@ bannerMode属性上。
 	FileEncodingApplicationListener。这6种ApplicationListener都会执行。
 
 ### 5，打印Banner
-&emsp;&emsp; 
+&emsp;&emsp; 1，如果SpringApplication bannerMode为OFF，则不会处理Banner。2，会根据environment的属性来获取banner位置，
+Banner可以为image或者txt，可以通过spring.banner.image.location设置image Banner位置，通过spring.banner.location
+设置txt Banner的位置。默认的banner位置为：banner.${suffix}，suffix可以为：gif、jpg、png、txt。3，获取到Banner列表后，
+会打印出所有的Banner。
