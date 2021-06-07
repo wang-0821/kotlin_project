@@ -2,6 +2,7 @@ package com.xiao.redis.scheduler
 
 import com.xiao.base.executor.DefaultExecutorServiceFactory
 import com.xiao.base.scheduler.AbstractScheduler
+import com.xiao.base.testing.KtTestBase
 import com.xiao.base.util.ThreadUtils
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -13,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * @author lix wang
  */
-class BaseSchedulerTest {
+class BaseSchedulerTest : KtTestBase() {
     private lateinit var scheduler: AbstractScheduler
 
     @BeforeEach

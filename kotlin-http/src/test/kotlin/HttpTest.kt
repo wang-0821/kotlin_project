@@ -1,3 +1,4 @@
+import com.xiao.base.testing.KtTestBase
 import com.xiao.base.util.ThreadUtils
 import com.xiao.rpc.Http
 import com.xiao.rpc.util.UrlParser
@@ -11,7 +12,7 @@ import java.util.concurrent.TimeUnit
  *
  * @author lix wang
  */
-class HttpTest {
+class HttpTest : KtTestBase() {
     @Test
     fun `test http sync`() {
         val response = Http.sync(request)

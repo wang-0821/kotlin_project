@@ -1,5 +1,6 @@
 package com.xiao.redis.client
 
+import com.xiao.base.testing.KtTestBase
 import com.xiao.base.util.ThreadUtils
 import com.xiao.redis.client.service.RedisAsyncService
 import com.xiao.redis.client.service.RedisService
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test
  *
  * @author lix wang
  */
-class FakeRedisClientTest {
+class FakeRedisClientTest : KtTestBase() {
     private lateinit var redisService: RedisService
     private lateinit var redisAsyncService: RedisAsyncService
 
