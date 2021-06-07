@@ -81,7 +81,7 @@ SpringBoot项目中只配置了一种SpringApplicationRunListener：EventPublish
 这个类主要用来分发各种事件给目标ApplicationListener，让目标ApplicationListener来处理事件。
 
     private SpringApplicationRunListeners getRunListeners(String[] args) {
-	Class<?>[] types = new Class<?>[] { SpringApplication.class, String[].class };
+    	Class<?>[] types = new Class<?>[] { SpringApplication.class, String[].class };
 	return new SpringApplicationRunListeners(logger,
 		getSpringFactoriesInstances(SpringApplicationRunListener.class, types, this, args),
 		this.applicationStartup);
@@ -177,7 +177,9 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
 5，执行context、beanFactory中的BeanDefinitionRegistryPostProcessor和BeanFactoryPostProcessor。6，注册messageSource Bean。
 7，注册applicationEventMulticaster Bean。8，由具体的context执行onRefresh方法来初始化一些特殊的Bean。9，向context中注册ApplicationListener，
 包括beanFactory中的ApplicationListener，然后利用context的ApplicationEventMulticaster发布所有的earlyApplicationEvents，
-默认earlyApplicationEvents为空。10，完成beanFactory的初始化，冻结所有的beanDefinition，初始化所有的单例Bean。
+默认earlyApplicationEvents为空。10，完成beanFactory的初始化，冻结所有的beanDefinition，初始化所有剩余的非lazy的单例Bean。
+11，完成context的刷新，这一步会先清理context层级的资源缓存，然后初始化LifecycleProcessor并执行lifecycleProcessor的刷新，
+接着会发布ContextRefreshedEvent。
 
     5，执行顺序：context.beanFactoryPostProcessors[BeanDefinitionRegistryPostProcessor].postProcessBeanDefinitionRegistry() ->
     	beanFactory[BeanDefinitionRegistryPostProcessor](PriorityOrdered、Ordered、else).postProcessBeanDefinitionRegistry() ->
@@ -185,9 +187,28 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
 	context[!BeanDefinitionRegistryPostProcessor].postProcessBeanFactory() ->
 	beanFactory[BeanFactoryPostProcessor](PriorityOrdered、Ordered、else).postProcessBeanFactory()
 	
-    10，在创建Bean时：1，如果beanFactory instantiationAware中有InstantiationAwareBeanPostProcessor，
-    	那么会先执行所有InstantiationAwareBeanPostProcessor.postProcessBeforeInstantiation用来创建Bean，
-	再执行所有beanFactory beanPostProcessors中BeanPostProcessor.postProcessAfterInitialization。
-	2，如果前一步没能创建Bean，那么首先判断该BeanDefinition有没有Supplier，如果有则从Supplier中获取Bean，
+    10，在创建Bean时：
+    	1，如果beanFactory instantiationAware中有InstantiationAwareBeanPostProcessor，那么会先执行所
+	    InstantiationAwareBeanPostProcessor.postProcessBeforeInstantiation用来创建Bean，
+	    再执行所有beanFactory beanPostProcessors中BeanPostProcessor.postProcessAfterInitialization。
+	2，如果前一步没能创建Bean，那么首先判断该BeanDefinition有没有Supplier，如果有则从Supplier中获取Bean。
 	3，如果没有Supplier，那么会判断是否有factoryMethodName，如果有factoryMethodName那么会根据factoryMethodName和
-	factoryBeanName来创建Bean。
+	    factoryBeanName来创建Bean。
+	4，如果beanFactory有instantiationAware(List<InstantiationAwareBeanPostProcessor>)，
+	    并且smartInstantiationAware(List<SmartInstantiationAwareBeanPostProcessor>)不为空，那么会依次
+	    调用SmartInstantiationAwareBeanPostProcessor.determineCandidateConstructors(beanClass, beanName)，
+	    直到第一个返回的Constructors[]不为空，以此结果作为beanClass的构造器集合。然后根据构造器和传入的构造参数创建Bean。
+	    创建完Bean后会根据beanFactory mergedDefinition(List<MergedBeanDefinitionPostProcessor>)，依次执行
+	    MergedBeanDefinitionPostProcessor.postProcessMergedBeanDefinition(mbd, beanType, beanName)。
+    	5，Bean创建完后会根据name或者type来进行AutoWire赋值，然后对当前Bean执行aware方法，包括：BeanNameAware.setBeanName、
+	    BeanClassLoaderAware.setBeanClassLoader、BeanFactoryAware.setBeanFactory。 
+	6，然后根据beanFactory的beanPostProcessors，执行BeanPostProcessor.postProcessBeforeInitialization(bean, beanName)。
+	7，执行Bean的InitializingBean.afterPropertiesSet()方法，也可以在BeanDefinition中自定义initMethodName。
+	8，执行beanFactory的BeanPostProcessor.postProcessAfterInitialization(bean, beanName)方法。
+	9，创建完Bean后，如果bean是FactoryBean，那么通过factoryBean.getObject()来获取真正的Bean。
+	10，在创建完所有的Bean后，依次执行Bean的SmartInitializingSingleton.afterSingletonsInstantiated方法。
+
+### 8，启动完成
+&emsp;&emsp; 在ConfigurableApplicationContext refresh完成后，会先发布一条ApplicationStartedEvent，
+然后会获取所有ApplicationRunner、CommandLineRunner类型的Bean，并执行这些runners。最后会发布一条ApplicationReadyEvent。
+
