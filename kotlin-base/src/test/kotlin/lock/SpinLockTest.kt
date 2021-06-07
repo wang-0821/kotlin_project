@@ -3,16 +3,15 @@ package lock
 import com.xiao.base.executor.DefaultExecutorServiceFactory
 import com.xiao.base.executor.ExecutionQueue
 import com.xiao.base.lock.SpinLock
+import com.xiao.base.testing.KtTestBase
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
 
 /**
  *
  * @author lix wang
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class SpinLockTest {
+class SpinLockTest : KtTestBase() {
     @Test
     fun `test atomic lock`() {
         val lock = SpinLock()

@@ -1,6 +1,7 @@
 package com.xiao.redis.client
 
 import com.xiao.base.CommonConstants
+import com.xiao.base.testing.KtTestBase
 import io.lettuce.core.LettuceFutures
 import io.lettuce.core.codec.StringCodec
 import io.lettuce.core.output.ValueOutput
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeUnit
  *
  * @author lix wang
  */
-class RedisClientTest {
+class RedisClientTest : KtTestBase() {
     @Test
     fun `test redis sync commands`() {
         val redisSyncCommands = RedisHelper.getRedisService(REDIS_URL)

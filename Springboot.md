@@ -82,9 +82,9 @@ SpringBoot项目中只配置了一种SpringApplicationRunListener：EventPublish
 
     private SpringApplicationRunListeners getRunListeners(String[] args) {
     	Class<?>[] types = new Class<?>[] { SpringApplication.class, String[].class };
-	return new SpringApplicationRunListeners(logger,
-		getSpringFactoriesInstances(SpringApplicationRunListener.class, types, this, args),
-		this.applicationStartup);
+	    return new SpringApplicationRunListeners(logger,
+		    getSpringFactoriesInstances(SpringApplicationRunListener.class, types, this, args),
+		    this.applicationStartup);
     }
     
     在处理ApplicationEvent时，会先获取支持该ApplicationEvent的ApplicationListener集合，
@@ -92,25 +92,27 @@ SpringBoot项目中只配置了一种SpringApplicationRunListener：EventPublish
     获取listener代码如下，实际上这里的listeners就是前面SpringApplication中的listeners属性。
     for (ApplicationListener<?> listener : listeners) {
     	if (supportsEvent(listener, eventType, sourceType)) {
-	    if (retriever != null) {
-		filteredListeners.add(listener);		
+	        if (retriever != null) {
+		        filteredListeners.add(listener);		
+	        }
+	        allListeners.add(listener);
 	    }
-	    allListeners.add(listener);
-	}
     }
     
     listener必须同时满足支持该ApplicationEvent并且支持该ApplicationEvent的来源，
     那么该ApplicationListener才能处理该ApplicationEvent。
-    判断是否支持event类型：1，如果该listener是GenericApplicationListener类型，那么直接执行listener.supportsEventType(eventType)。
+    判断是否支持event类型：
+        1，如果该listener是GenericApplicationListener类型，那么直接执行listener.supportsEventType(eventType)。
     	2，如果listener是SmartApplicationListener类型，执行listener.supportsEventType(eventClass)来判断。
-	3，如果该listener声明的ApplicationEvent类型为空或者是该event的父类或同类，那么就支持该ApplicationEvent。
-    判断是否支持event来源：1，该listener不是SmartApplicationListener。2，该listener是SmartApplicationListener，
-    	执行listener.supportsSourceType(sourceType)判断。
+	    3，如果该listener声明的ApplicationEvent类型为空或者是该event的父类或同类，那么就支持该ApplicationEvent。
+    判断是否支持event来源：
+        1，该listener不是SmartApplicationListener。
+        2，该listener是SmartApplicationListener，执行listener.supportsSourceType(sourceType)判断。
     protected boolean supportsEvent(
 	    ApplicationListener<?> listener, ResolvableType eventType, @Nullable Class<?> sourceType) {
-	GenericApplicationListener smartListener = (listener instanceof GenericApplicationListener ?
-		(GenericApplicationListener) listener : new GenericApplicationListenerAdapter(listener));
-	return (smartListener.supportsEventType(eventType) && smartListener.supportsSourceType(sourceType));
+	    GenericApplicationListener smartListener = (listener instanceof GenericApplicationListener ?
+		    (GenericApplicationListener) listener : new GenericApplicationListenerAdapter(listener));
+	    return (smartListener.supportsEventType(eventType) && smartListener.supportsSourceType(sourceType));
     }
     
 ### 4，ConfigurableEnvironment准备
@@ -122,13 +124,17 @@ SpringBoot项目中只配置了一种SpringApplicationRunListener：EventPublish
 bannerMode属性上。
     
     1，webApplicationType不同对应的ConfigurableEnvironment不同，SERVLET对应ApplicationServletEnvironment，
-    REACTIVE对应ApplicationReactiveWebEnvironment，其他默认为ApplicationEnvironment。
+        REACTIVE对应ApplicationReactiveWebEnvironment，其他默认为ApplicationEnvironment。
     
     4，执行SpringApplicationRunListeners.environmentPrepared(ConfigurableBootstrapContext, ConfigurableEnvironment)时，
-    会分发ApplicationEnvironmentPreparedEvent事件，根据ApplicationEnvironmentPreparedEvent事件，
-    筛选出的ApplicationListener集合有6种：EnvironmentPostProcessorApplicationListener、AnsiOutputApplicationListener、
-    	LoggingApplicationListener、BackgroundPreinitializer、DelegatingApplicationListener、
-	FileEncodingApplicationListener。这6种ApplicationListener都会执行。
+        会分发ApplicationEnvironmentPreparedEvent事件，根据ApplicationEnvironmentPreparedEvent事件，
+        筛选出的ApplicationListener集合有6种，这6种ApplicationListener都会执行：
+            EnvironmentPostProcessorApplicationListener、
+            AnsiOutputApplicationListener、
+    	    LoggingApplicationListener、
+            BackgroundPreinitializer、
+            DelegatingApplicationListener、
+	        FileEncodingApplicationListener。
 
 ### 5，打印Banner
 &emsp;&emsp; 1，如果SpringApplication bannerMode为OFF，则不会处理Banner。2，会根据environment的属性来获取banner位置，
@@ -146,14 +152,14 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
     1，不同的webApplicationType对应不同的ConfigurableApplicationContext：
     	SERVLET对应AnnotationConfigServletWebServerApplicationContext。
     	REACTIVE对应AnnotationConfigReactiveWebServerApplicationContext。
-	默认为AnnotationConfigApplicationContext。所有context中的beanFactory默认都是DefaultListableBeanFactory。
+	    默认为AnnotationConfigApplicationContext。所有context中的beanFactory默认都是DefaultListableBeanFactory。
     
     3，使用initializers执行初始化，依次使用initializer.initialize(context)执行初始化。如果initializer实现了
     	ApplicationContextInitializer<T>，但T不是context的父类或者同类，那么将抛异常。
 	
     6，获取SpringApplication中的listeners，给实现了ApplicationContextAware接口的listener设置ApplicationContext，
     	将SpringApplication中的listeners都添加到ApplicationContext中。然后使用SpringApplicationRunListener执行
-	ApplicationPreparedEvent。
+	    ApplicationPreparedEvent。
 	
 	筛选出4中listener执行ApplicationPreparedEvent：EnvironmentPostProcessorApplicationListener、
 	    LoggingApplicationListener、BackgroundPreinitializer、DelegatingApplicationListener。
@@ -161,10 +167,10 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
 	
 	public void contextLoaded(ConfigurableApplicationContext context) {
 	    for (ApplicationListener<?> listener : this.application.getListeners()) {
-		if (listener instanceof ApplicationContextAware) {
-		    ((ApplicationContextAware) listener).setApplicationContext(context);
-		}
-		context.addApplicationListener(listener);
+		    if (listener instanceof ApplicationContextAware) {
+		        ((ApplicationContextAware) listener).setApplicationContext(context);
+		    }
+		    context.addApplicationListener(listener);
 	    }
 	    this.initialMulticaster.multicastEvent(new ApplicationPreparedEvent(this.application, this.args, context));
 	}
@@ -181,32 +187,33 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
 11，完成context的刷新，这一步会先清理context层级的资源缓存，然后初始化LifecycleProcessor并执行lifecycleProcessor的刷新，
 接着会发布ContextRefreshedEvent。
 
-    5，执行顺序：context.beanFactoryPostProcessors[BeanDefinitionRegistryPostProcessor].postProcessBeanDefinitionRegistry() ->
+    5，执行顺序：
+        context.beanFactoryPostProcessors[BeanDefinitionRegistryPostProcessor].postProcessBeanDefinitionRegistry() ->
     	beanFactory[BeanDefinitionRegistryPostProcessor](PriorityOrdered、Ordered、else).postProcessBeanDefinitionRegistry() ->
-	(context + beanFactory)[BeanDefinitionRegistryPostProcessor].postProcessBeanFactory() ->
-	context[!BeanDefinitionRegistryPostProcessor].postProcessBeanFactory() ->
-	beanFactory[BeanFactoryPostProcessor](PriorityOrdered、Ordered、else).postProcessBeanFactory()
+	    (context + beanFactory)[BeanDefinitionRegistryPostProcessor].postProcessBeanFactory() ->
+	    context[!BeanDefinitionRegistryPostProcessor].postProcessBeanFactory() ->
+	    beanFactory[BeanFactoryPostProcessor](PriorityOrdered、Ordered、else).postProcessBeanFactory()
 	
     10，在创建Bean时：
     	1，如果beanFactory instantiationAware中有InstantiationAwareBeanPostProcessor，那么会先执行所
-	    InstantiationAwareBeanPostProcessor.postProcessBeforeInstantiation用来创建Bean，
-	    再执行所有beanFactory beanPostProcessors中BeanPostProcessor.postProcessAfterInitialization。
-	2，如果前一步没能创建Bean，那么首先判断该BeanDefinition有没有Supplier，如果有则从Supplier中获取Bean。
-	3，如果没有Supplier，那么会判断是否有factoryMethodName，如果有factoryMethodName那么会根据factoryMethodName和
-	    factoryBeanName来创建Bean。
-	4，如果beanFactory有instantiationAware(List<InstantiationAwareBeanPostProcessor>)，
-	    并且smartInstantiationAware(List<SmartInstantiationAwareBeanPostProcessor>)不为空，那么会依次
-	    调用SmartInstantiationAwareBeanPostProcessor.determineCandidateConstructors(beanClass, beanName)，
-	    直到第一个返回的Constructors[]不为空，以此结果作为beanClass的构造器集合。然后根据构造器和传入的构造参数创建Bean。
-	    创建完Bean后会根据beanFactory mergedDefinition(List<MergedBeanDefinitionPostProcessor>)，依次执行
-	    MergedBeanDefinitionPostProcessor.postProcessMergedBeanDefinition(mbd, beanType, beanName)。
+	        InstantiationAwareBeanPostProcessor.postProcessBeforeInstantiation用来创建Bean，
+	        再执行所有beanFactory beanPostProcessors中BeanPostProcessor.postProcessAfterInitialization。
+	    2，如果前一步没能创建Bean，那么首先判断该BeanDefinition有没有Supplier，如果有则从Supplier中获取Bean。
+	    3，如果没有Supplier，那么会判断是否有factoryMethodName，如果有factoryMethodName那么会根据factoryMethodName和
+	        factoryBeanName来创建Bean。
+	    4，如果beanFactory有instantiationAware(List<InstantiationAwareBeanPostProcessor>)，
+	        并且smartInstantiationAware(List<SmartInstantiationAwareBeanPostProcessor>)不为空，那么会依次
+	        调用SmartInstantiationAwareBeanPostProcessor.determineCandidateConstructors(beanClass, beanName)，
+	        直到第一个返回的Constructors[]不为空，以此结果作为beanClass的构造器集合。然后根据构造器和传入的构造参数创建Bean。
+	        创建完Bean后会根据beanFactory mergedDefinition(List<MergedBeanDefinitionPostProcessor>)，依次执行
+	        MergedBeanDefinitionPostProcessor.postProcessMergedBeanDefinition(mbd, beanType, beanName)。
     	5，Bean创建完后会根据name或者type来进行AutoWire赋值，然后对当前Bean执行aware方法，包括：BeanNameAware.setBeanName、
-	    BeanClassLoaderAware.setBeanClassLoader、BeanFactoryAware.setBeanFactory。 
-	6，然后根据beanFactory的beanPostProcessors，执行BeanPostProcessor.postProcessBeforeInitialization(bean, beanName)。
-	7，执行Bean的InitializingBean.afterPropertiesSet()方法，也可以在BeanDefinition中自定义initMethodName。
-	8，执行beanFactory的BeanPostProcessor.postProcessAfterInitialization(bean, beanName)方法。
-	9，创建完Bean后，如果bean是FactoryBean，那么通过factoryBean.getObject()来获取真正的Bean。
-	10，在创建完所有的Bean后，依次执行Bean的SmartInitializingSingleton.afterSingletonsInstantiated方法。
+	        BeanClassLoaderAware.setBeanClassLoader、BeanFactoryAware.setBeanFactory。 
+	    6，然后根据beanFactory的beanPostProcessors，执行BeanPostProcessor.postProcessBeforeInitialization(bean, beanName)。
+	    7，执行Bean的InitializingBean.afterPropertiesSet()方法，也可以在BeanDefinition中自定义initMethodName。
+	    8，执行beanFactory的BeanPostProcessor.postProcessAfterInitialization(bean, beanName)方法。
+	    9，创建完Bean后，如果bean是FactoryBean，那么通过factoryBean.getObject()来获取真正的Bean。
+	    10，在创建完所有的Bean后，依次执行Bean的SmartInitializingSingleton.afterSingletonsInstantiated方法。
 
 ### 8，启动完成
 &emsp;&emsp; 在ConfigurableApplicationContext refresh完成后，会先发布一条ApplicationStartedEvent，

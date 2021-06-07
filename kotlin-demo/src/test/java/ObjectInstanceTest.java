@@ -1,3 +1,4 @@
+import com.xiao.base.testing.KtTestBase;
 import com.xiao.base.util.UnsafeUtils;
 import model.UnsafeInstanceObject;
 import org.junit.jupiter.api.Assertions;
@@ -10,7 +11,7 @@ import java.io.*;
 /**
  * @author lix wang
  */
-public class ObjectInstanceTest implements Serializable {
+public class ObjectInstanceTest extends KtTestBase implements Serializable {
     @Test
     void testObjectClone() {
         CopyObject originObject = new CopyObject();
