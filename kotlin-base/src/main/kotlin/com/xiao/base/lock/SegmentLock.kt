@@ -11,6 +11,10 @@ abstract class SegmentLock(protected val size: Int) {
 
     abstract fun lock(): Int
 
+    open fun unlock(segmentId: Int) {
+        casStateAt(segmentId, INUSE, UNUSE)
+    }
+
     fun <T> use(func: (Int) -> T): T {
         val segmentId = lock()
         try {
@@ -18,10 +22,6 @@ abstract class SegmentLock(protected val size: Int) {
         } finally {
             unlock(segmentId)
         }
-    }
-
-    open fun unlock(segmentId: Int) {
-        casStateAt(segmentId, INUSE, UNUSE)
     }
 
     protected fun casStateAt(index: Int, oldVal: Int, newVal: Int): Boolean {

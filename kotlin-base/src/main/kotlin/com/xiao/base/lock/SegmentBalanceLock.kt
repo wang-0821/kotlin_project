@@ -9,11 +9,11 @@ class SegmentBalanceLock(size: Int) : SegmentLock(size) {
     @Volatile private var nextIndex = 0
 
     override fun lock(): Int {
-        var index = nextIndex % size
+        var index = nextIndex
         while (true) {
             while (index < size) {
                 if (casStateAt(index, UNUSE, INUSE)) {
-                    nextIndex = (index + 1) % size
+                    nextIndex = (nextIndex + 1) % size
                     return index
                 }
                 index++

@@ -20,7 +20,7 @@ class SegmentBalanceLockTest : KtTestBase() {
         )
         val segmentLock = SegmentBalanceLock(4)
         val summary = IntArray(4)
-        val futures = (0..999).map { _ ->
+        val futures = (0..9999).map { _ ->
             executionQueue.submit {
                 segmentLock.use {
                     summary[it]++
@@ -31,8 +31,10 @@ class SegmentBalanceLockTest : KtTestBase() {
         futures.forEach {
             it.get()
         }
+
+        println(summary.joinToString())
         // assert lock is spread to each segment.
-        Assertions.assertTrue(summary.all { it > 200 }) {
+        Assertions.assertTrue(summary.all { it > 2300 }) {
             summary.joinToString()
         }
     }
