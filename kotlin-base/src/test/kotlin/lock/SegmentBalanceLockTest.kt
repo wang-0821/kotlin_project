@@ -32,10 +32,8 @@ class SegmentBalanceLockTest : KtTestBase() {
             it.get()
         }
         // assert lock is spread to each segment.
-        Assertions.assertTrue {
-            summary.all {
-                it > 200
-            }
+        Assertions.assertTrue(summary.all { it > 200 }) {
+            summary.joinToString()
         }
     }
 }
