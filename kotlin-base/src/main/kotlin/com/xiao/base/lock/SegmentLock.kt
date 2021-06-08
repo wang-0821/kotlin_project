@@ -6,12 +6,22 @@ import com.xiao.base.util.UnsafeUtils
  *
  * @author lix wang
  */
-abstract class SegmentLock(protected val size: Int) {
+class SegmentLock(private val size: Int) {
     private val segments = IntArray(size)
 
-    abstract fun lock(): Int
+    fun lock(): Int {
+        while (true) {
+            var i = 0
+            while (i < size) {
+                if (casStateAt(i, UNUSE, INUSE)) {
+                    return i
+                }
+                i++
+            }
+        }
+    }
 
-    open fun unlock(segmentId: Int) {
+    fun unlock(segmentId: Int) {
         casStateAt(segmentId, INUSE, UNUSE)
     }
 
@@ -24,7 +34,7 @@ abstract class SegmentLock(protected val size: Int) {
         }
     }
 
-    protected fun casStateAt(index: Int, oldVal: Int, newVal: Int): Boolean {
+    private fun casStateAt(index: Int, oldVal: Int, newVal: Int): Boolean {
         return UnsafeUtils.UNSAFE.compareAndSwapInt(segments, (index.toLong() shl ASHIFT) + ABASE, oldVal, newVal)
     }
 
