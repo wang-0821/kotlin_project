@@ -39,48 +39,48 @@ listeners。最后根据异常栈的mian方法，获取到当前SpringApplicatio
         initializers = org.springframework.context.ApplicationContextInitializer(来自spring.factories)
             SpringBoot项目中ApplicationContextInitializer有8种：
             spring-boot-autoconfigure中：
-	    	SharedMetadataReaderFactoryContextInitializer：创建一个在ConfigurationClassPostProcessor和SpringBoot之间
-		    共享的CachingMetaDataReaderfactory。
+	    	    SharedMetadataReaderFactoryContextInitializer：创建一个在ConfigurationClassPostProcessor和SpringBoot之间
+		            共享的CachingMetaDataReaderfactory。
                 ConditionEvaluationReportLoggingListener：将ConditionEvaluationReport写入到日志。
             spring-boot中：
-	    	ConfigurationWarningsApplicationContextInitializer：用来报告Spring容器的一些常见的错误配置。
+	    	    ConfigurationWarningsApplicationContextInitializer：用来报告Spring容器的一些常见的错误配置。
                 ContextIdApplicationContextInitializer：根据spring.application.name配置项作为context的id。
-		DelegatingApplicationContextInitializer：根据context.initializer.classes配置项，
-		    获取ApplicationContextInitializer集合，然后使用配置的initializers执行initialize方法。
+		        DelegatingApplicationContextInitializer：根据context.initializer.classes配置项，
+		            获取ApplicationContextInitializer集合，然后使用配置的initializers执行initialize方法。
                 RSocketPortInfoApplicationContextInitializer：注册一个RSocketServerInitializedEvent事件listener，
-		    用来向environment server.ports配置源中添加local.rsocket.server.port配置。
-		ServerPortInfoApplicationContextInitializer：注册一个WebServerInitializedEvent ApplicationListener，
-		    用来向environment server.ports配置源中添加web server port配置。
+		            用来向environment server.ports配置源中添加local.rsocket.server.port配置。
+		        ServerPortInfoApplicationContextInitializer：注册一个WebServerInitializedEvent ApplicationListener，
+		            用来向environment server.ports配置源中添加web server port配置。
             spring-boot-devtools中：
 	    	RestartScopeInitializer：向beanFactory中注册restart scope。
         
         listeners = org.springframework.context.ApplicationListener(来自spring.factories)
             SpringBoot项目中有11种ApplicationListener：
             spring-boot-autoconfigure中：
-	    	BackgroundPreinitializer：用一个并行线程来执行一些耗时的初始化任务，当收到ApplicationReadyEvent或者
-		    ApplicationFailedEvent时，会阻塞当前并行线程等待完成。包括执行类型转换初始化器、验证初始化器、
-		    消息转换初始化器、jackson初始化器、字符集初始化器。
+	    	    BackgroundPreinitializer：用一个并行线程来执行一些耗时的初始化任务，当收到ApplicationReadyEvent或者
+		            ApplicationFailedEvent时，会阻塞当前并行线程等待完成。包括执行类型转换初始化器、验证初始化器、
+		            消息转换初始化器、jackson初始化器、字符集初始化器。
             spring-boot-properties-migrator中：
-	    	PropertiesMigrationListener：接收ApplicationPreparedEvent处理配置项转换，
-		当接收到ApplicationReadyEvent或者ApplicationFailedEvent时打印出过期的配置报告。
+	    	    PropertiesMigrationListener：接收ApplicationPreparedEvent处理配置项转换，
+		            当接收到ApplicationReadyEvent或者ApplicationFailedEvent时打印出过期的配置报告。
             spring-boot-devtools中：
-	    	RestartApplicationListener：用来初始化Restarter。
-		DevToolsLogFactory.Listener：接收ApplicationPreparedEvent，转换log。
+	    	    RestartApplicationListener：用来初始化Restarter。
+                DevToolsLogFactory.Listener：接收ApplicationPreparedEvent，转换log。
             spring-boot中：
-	    	ClearCachesApplicationListener：接收ContextRefreshedEvent，清理ClassLoader缓存。
-		ParentContextCloserApplicationListener：监听ParentContextAvailableEvent，
-		    注册ContextClosedEvent listener，如果listener监听到事件，表明listener当前的context对应
-		    的父类context已经关闭，此时需要关闭当前listener context。
+	    	    ClearCachesApplicationListener：接收ContextRefreshedEvent，清理ClassLoader缓存。
+		        ParentContextCloserApplicationListener：监听ParentContextAvailableEvent，
+		            注册ContextClosedEvent listener，如果listener监听到事件，表明listener当前的context对应
+		            的父类context已经关闭，此时需要关闭当前listener context。
                 FileEncodingApplicationListener：监听ApplicationEnvironmentPreparedEvent，如果environment
-		    中的spring.mandatory-file-encoding配置项和系统中file.encoding配置项不同，将抛异常。
-		AnsiOutputApplicationListener：监听ApplicationEnvironmentPreparedEvent，
-		    将spring.output.ansi.enabled配置项绑定到AnsiOutput.Enabled中，并设置consoleAvailable属性。
+		            中的spring.mandatory-file-encoding配置项和系统中file.encoding配置项不同，将抛异常。
+		        AnsiOutputApplicationListener：监听ApplicationEnvironmentPreparedEvent，
+		            将spring.output.ansi.enabled配置项绑定到AnsiOutput.Enabled中，并设置consoleAvailable属性。
                 DelegatingApplicationListener：监听ApplicationEnvironmentPreparedEvent，
-		    根据context.listener.classes配置项找到ApplicationListener集合，并添加到multicaster中。
-		LoggingApplicationListener：配置日志系统。
+		            根据context.listener.classes配置项找到ApplicationListener集合，并添加到multicaster中。
+		        LoggingApplicationListener：配置日志系统。
                 EnvironmentPostProcessorApplicationListener：监听ApplicationEnvironmentPreparedEvent
-		    从spring.factories中获取EnvironmentPostProcessor集合，processor.postProcessEnvironment，
-		    并且监听ApplicationPreparedEvent和ApplicationFailedEvent。
+		            从spring.factories中获取EnvironmentPostProcessor集合，processor.postProcessEnvironment，
+		            并且监听ApplicationPreparedEvent和ApplicationFailedEvent。
           
 ### 2，创建ConfigurableBootstrapContext
 &emsp;&emsp; 首先创建ConfigurableBootstrapContext，具体类型为DefaultBootstrapContext。
@@ -131,7 +131,7 @@ SpringBoot项目中只配置了一种SpringApplicationRunListener：EventPublish
     判断是否支持event类型：
         1，如果该listener是GenericApplicationListener类型，那么直接执行listener.supportsEventType(eventType)。
     	2，如果listener是SmartApplicationListener类型，执行listener.supportsEventType(eventClass)来判断。
-	3，如果该listener声明的ApplicationEvent类型为空或者是该event的父类或同类，那么就支持该ApplicationEvent。
+	    3，如果该listener声明的ApplicationEvent类型为空或者是该event的父类或同类，那么就支持该ApplicationEvent。
     判断是否支持event来源：
         1，该listener不是SmartApplicationListener。
         2，该listener是SmartApplicationListener，执行listener.supportsSourceType(sourceType)判断。
