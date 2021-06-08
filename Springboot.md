@@ -35,53 +35,71 @@ listeners。最后根据异常栈的mian方法，获取到当前SpringApplicatio
     SpringApplication属性：
         bootstrapRegistryInitializers = org.springframework.boot.Bootstrapper 
             + org.springframework.boot.BootstrapRegistryInitializer(来自spring.factories) SpringBoot中没有配置。
-            
-        initializers = org.springframework.context.ApplicationContextInitializer(来自spring.factories)
-            SpringBoot项目中ApplicationContextInitializer有8种：
-            spring-boot-autoconfigure中：
-	    	    SharedMetadataReaderFactoryContextInitializer：创建一个在ConfigurationClassPostProcessor和SpringBoot之间
-		            共享的CachingMetaDataReaderfactory。
-                ConditionEvaluationReportLoggingListener：将ConditionEvaluationReport写入到日志。
-            spring-boot中：
-	    	    ConfigurationWarningsApplicationContextInitializer：用来报告Spring容器的一些常见的错误配置。
-                ContextIdApplicationContextInitializer：根据spring.application.name配置项作为context的id。
-		        DelegatingApplicationContextInitializer：根据context.initializer.classes配置项，
-		            获取ApplicationContextInitializer集合，然后使用配置的initializers执行initialize方法。
-                RSocketPortInfoApplicationContextInitializer：注册一个RSocketServerInitializedEvent事件listener，
-		            用来向environment server.ports配置源中添加local.rsocket.server.port配置。
-		        ServerPortInfoApplicationContextInitializer：注册一个WebServerInitializedEvent ApplicationListener，
-		            用来向environment server.ports配置源中添加web server port配置。
-            spring-boot-devtools中：
-	    	RestartScopeInitializer：向beanFactory中注册restart scope。
+	    
+#### ApplicationContextInitializer
+&emsp;&emsp; 在spring.factories中，共配置了8种ApplicationContextInitializer。
+
+    spring-boot-autoconfigure中：
+    	SharedMetadataReaderFactoryContextInitializer：创建一个在ConfigurationClassPostProcessor和SpringBoot之间共享的CachingMetaDataReaderfactory。
+        ConditionEvaluationReportLoggingListener：将ConditionEvaluationReport写入到日志。
+
+    spring-boot中：
+	ConfigurationWarningsApplicationContextInitializer：用来报告Spring容器的一些常见的错误配置。
+        ContextIdApplicationContextInitializer：根据spring.application.name配置项作为context的id。
+        DelegatingApplicationContextInitializer：根据context.initializer.classes配置项，获取ApplicationContextInitializer集合，
+	    然后使用配置的initializers执行initialize方法。
+        RSocketPortInfoApplicationContextInitializer：注册一个RSocketServerInitializedEvent事件listener，
+	    用来向environment server.ports配置源中添加local.rsocket.server.port配置。
+        ServerPortInfoApplicationContextInitializer：注册一个WebServerInitializedEvent ApplicationListener，
+	    用来向environment server.ports配置源中添加web server port配置。
+       
+    spring-boot-devtools中：
+	estartScopeInitializer：向beanFactory中注册restart scope。
         
-        listeners = org.springframework.context.ApplicationListener(来自spring.factories)
-            SpringBoot项目中有11种ApplicationListener：
-            spring-boot-autoconfigure中：
-	    	    BackgroundPreinitializer：用一个并行线程来执行一些耗时的初始化任务，当收到ApplicationReadyEvent或者
-		            ApplicationFailedEvent时，会阻塞当前并行线程等待完成。包括执行类型转换初始化器、验证初始化器、
-		            消息转换初始化器、jackson初始化器、字符集初始化器。
-            spring-boot-properties-migrator中：
-	    	    PropertiesMigrationListener：接收ApplicationPreparedEvent处理配置项转换，
-		            当接收到ApplicationReadyEvent或者ApplicationFailedEvent时打印出过期的配置报告。
-            spring-boot-devtools中：
-	    	    RestartApplicationListener：用来初始化Restarter。
-                DevToolsLogFactory.Listener：接收ApplicationPreparedEvent，转换log。
-            spring-boot中：
-	    	    ClearCachesApplicationListener：接收ContextRefreshedEvent，清理ClassLoader缓存。
-		        ParentContextCloserApplicationListener：监听ParentContextAvailableEvent，
-		            注册ContextClosedEvent listener，如果listener监听到事件，表明listener当前的context对应
-		            的父类context已经关闭，此时需要关闭当前listener context。
-                FileEncodingApplicationListener：监听ApplicationEnvironmentPreparedEvent，如果environment
-		            中的spring.mandatory-file-encoding配置项和系统中file.encoding配置项不同，将抛异常。
-		        AnsiOutputApplicationListener：监听ApplicationEnvironmentPreparedEvent，
-		            将spring.output.ansi.enabled配置项绑定到AnsiOutput.Enabled中，并设置consoleAvailable属性。
-                DelegatingApplicationListener：监听ApplicationEnvironmentPreparedEvent，
-		            根据context.listener.classes配置项找到ApplicationListener集合，并添加到multicaster中。
-		        LoggingApplicationListener：配置日志系统。
-                EnvironmentPostProcessorApplicationListener：监听ApplicationEnvironmentPreparedEvent
-		            从spring.factories中获取EnvironmentPostProcessor集合，processor.postProcessEnvironment，
-		            并且监听ApplicationPreparedEvent和ApplicationFailedEvent。
-          
+#### ApplicationListener
+&emsp;&emsp; 在各个模块的spring.factories中，共配置了11中ApplicationListener。
+
+    spring-boot-autoconfigure中：
+        BackgroundPreinitializer：用一个并行线程来执行一些耗时的初始化任务，当收到ApplicationReadyEvent或者
+	    ApplicationFailedEvent时，会阻塞当前并行线程等待完成。包括执行类型转换初始化器、验证初始化器、消息转换初始化器、jackson初始化器、字符集初始化器。
+            
+    spring-boot-properties-migrator中：
+        PropertiesMigrationListener：接收ApplicationPreparedEvent处理配置项转换，当接收到ApplicationReadyEvent或者ApplicationFailedEvent时打印出过期的配置报告。
+            
+    spring-boot-devtools中：
+	RestartApplicationListener：用来初始化Restarter。
+        DevToolsLogFactory.Listener：接收ApplicationPreparedEvent，转换log。
+            
+    spring-boot中：
+	ClearCachesApplicationListener：接收ContextRefreshedEvent，清理ClassLoader缓存。
+	ParentContextCloserApplicationListener：监听ParentContextAvailableEvent，注册ContextClosedEvent listener，如果listener监听到事件，
+	    表明listener当前的context对应的父类context已经关闭，此时需要关闭当前listener context。
+        FileEncodingApplicationListener：监听ApplicationEnvironmentPreparedEvent，如果environment中的spring.mandatory-file-encoding配置项
+	    和系统中file.encoding配置项不同，将抛异常。
+	AnsiOutputApplicationListener：监听ApplicationEnvironmentPreparedEvent，将spring.output.ansi.enabled配置项绑定到AnsiOutput.Enabled中，
+	    并设置consoleAvailable属性。
+        DelegatingApplicationListener：监听ApplicationEnvironmentPreparedEvent，根据context.listener.classes配置项找到ApplicationListener集合，并添加到multicaster中。
+        LoggingApplicationListener：配置日志系统。
+        EnvironmentPostProcessorApplicationListener：监听ApplicationEnvironmentPreparedEvent，执行spring.factories中的EnvironmentPostProcessor。
+
+#### EnvironmentPostProcessor
+&emsp;&emsp; 在SpringBoot各模块spring.factories中，配置了9种EnvironmentPostProcessor。
+
+    spring-boot-autoconfigure中：
+    	IntegrationPropertiesEnvironmentPostProcessor：向environment中添加配置META-INF/spring.integration.properties。
+    
+    spring-boot-devtools中：
+        DevToolsHomePropertiesPostProcessor：向environment中添加开发工具配置项。
+	DevToolsPropertyDefaultsPostProcessor：开发时，向environment中添加配置。
+	
+    spring-boot中：
+        CloudFoundryVcapEnvironmentPostProcessor：用于设置CloudFoundry框架vcap配置，没有开启不会执行。
+	ConfigDataEnvironmentPostProcessor：用来解析application.properties。
+	RandomValuePropertySourceEnvironmentPostProcessor：向environment中添加RandomValuePropertySource。
+	SpringApplicationJsonEnvironmentPostProcessor：根据spring.application.json或者SPRING_APPLICATION_JSON，解析json并向environment中设置配置。
+	SystemEnvironmentPropertySourceEnvironmentPostProcessor：对systemEnvironment环境配置做一个修正。
+	DebugAgentEnvironmentPostProcessor：如果没有显式的disable配置项spring.reactor.debug-agent.enabled，那么执行ReactorDebugAgent.init方法。
+	
 ### 2，创建ConfigurableBootstrapContext
 &emsp;&emsp; 首先创建ConfigurableBootstrapContext，具体类型为DefaultBootstrapContext。
 然后使用SpringApplication中的bootstrapRegistryInitializers初始化该ConfigurableBootstrapContext。
@@ -161,7 +179,7 @@ bannerMode属性上。
     	    LoggingApplicationListener、
             BackgroundPreinitializer、
             DelegatingApplicationListener、
-	        FileEncodingApplicationListener。
+	    FileEncodingApplicationListener。
 
 ### 5，打印Banner
 &emsp;&emsp; 1，如果SpringApplication bannerMode为OFF，则不会处理Banner。2，会根据environment的属性来获取banner位置，
@@ -217,30 +235,30 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
     5，执行顺序：
         context.beanFactoryPostProcessors[BeanDefinitionRegistryPostProcessor].postProcessBeanDefinitionRegistry() ->
     	beanFactory[BeanDefinitionRegistryPostProcessor](PriorityOrdered、Ordered、else).postProcessBeanDefinitionRegistry() ->
-	    (context + beanFactory)[BeanDefinitionRegistryPostProcessor].postProcessBeanFactory() ->
-	    context[!BeanDefinitionRegistryPostProcessor].postProcessBeanFactory() ->
-	    beanFactory[BeanFactoryPostProcessor](PriorityOrdered、Ordered、else).postProcessBeanFactory()
+	(context + beanFactory)[BeanDefinitionRegistryPostProcessor].postProcessBeanFactory() ->
+	context[!BeanDefinitionRegistryPostProcessor].postProcessBeanFactory() ->
+	beanFactory[BeanFactoryPostProcessor](PriorityOrdered、Ordered、else).postProcessBeanFactory()
 	
     10，在创建Bean时：
     	1，如果beanFactory instantiationAware中有InstantiationAwareBeanPostProcessor，那么会先执行所
-	        InstantiationAwareBeanPostProcessor.postProcessBeforeInstantiation用来创建Bean，
-	        再执行所有beanFactory beanPostProcessors中BeanPostProcessor.postProcessAfterInitialization。
-	    2，如果前一步没能创建Bean，那么首先判断该BeanDefinition有没有Supplier，如果有则从Supplier中获取Bean。
-	    3，如果没有Supplier，那么会判断是否有factoryMethodName，如果有factoryMethodName那么会根据factoryMethodName和
-	        factoryBeanName来创建Bean。
-	    4，如果beanFactory有instantiationAware(List<InstantiationAwareBeanPostProcessor>)，
-	        并且smartInstantiationAware(List<SmartInstantiationAwareBeanPostProcessor>)不为空，那么会依次
-	        调用SmartInstantiationAwareBeanPostProcessor.determineCandidateConstructors(beanClass, beanName)，
-	        直到第一个返回的Constructors[]不为空，以此结果作为beanClass的构造器集合。然后根据构造器和传入的构造参数创建Bean。
-	        创建完Bean后会根据beanFactory mergedDefinition(List<MergedBeanDefinitionPostProcessor>)，依次执行
-	        MergedBeanDefinitionPostProcessor.postProcessMergedBeanDefinition(mbd, beanType, beanName)。
+	    InstantiationAwareBeanPostProcessor.postProcessBeforeInstantiation用来创建Bean，
+	    再执行所有beanFactory beanPostProcessors中BeanPostProcessor.postProcessAfterInitialization。
+	2，如果前一步没能创建Bean，那么首先判断该BeanDefinition有没有Supplier，如果有则从Supplier中获取Bean。
+	3，如果没有Supplier，那么会判断是否有factoryMethodName，如果有factoryMethodName那么会根据factoryMethodName和
+	    factoryBeanName来创建Bean。
+	4，如果beanFactory有instantiationAware(List<InstantiationAwareBeanPostProcessor>)，
+	    并且smartInstantiationAware(List<SmartInstantiationAwareBeanPostProcessor>)不为空，那么会依次
+	    调用SmartInstantiationAwareBeanPostProcessor.determineCandidateConstructors(beanClass, beanName)，
+	    直到第一个返回的Constructors[]不为空，以此结果作为beanClass的构造器集合。然后根据构造器和传入的构造参数创建Bean。
+	    创建完Bean后会根据beanFactory mergedDefinition(List<MergedBeanDefinitionPostProcessor>)，依次执行
+	    MergedBeanDefinitionPostProcessor.postProcessMergedBeanDefinition(mbd, beanType, beanName)。
     	5，Bean创建完后会根据name或者type来进行AutoWire赋值，然后对当前Bean执行aware方法，包括：BeanNameAware.setBeanName、
-	        BeanClassLoaderAware.setBeanClassLoader、BeanFactoryAware.setBeanFactory。 
-	    6，然后根据beanFactory的beanPostProcessors，执行BeanPostProcessor.postProcessBeforeInitialization(bean, beanName)。
-	    7，执行Bean的InitializingBean.afterPropertiesSet()方法，也可以在BeanDefinition中自定义initMethodName。
-	    8，执行beanFactory的BeanPostProcessor.postProcessAfterInitialization(bean, beanName)方法。
-	    9，创建完Bean后，如果bean是FactoryBean，那么通过factoryBean.getObject()来获取真正的Bean。
-	    10，在创建完所有的Bean后，依次执行Bean的SmartInitializingSingleton.afterSingletonsInstantiated方法。
+	    BeanClassLoaderAware.setBeanClassLoader、BeanFactoryAware.setBeanFactory。 
+	6，然后根据beanFactory的beanPostProcessors，执行BeanPostProcessor.postProcessBeforeInitialization(bean, beanName)。
+	7，执行Bean的InitializingBean.afterPropertiesSet()方法，也可以在BeanDefinition中自定义initMethodName。
+	8，执行beanFactory的BeanPostProcessor.postProcessAfterInitialization(bean, beanName)方法。
+	9，创建完Bean后，如果bean是FactoryBean，那么通过factoryBean.getObject()来获取真正的Bean。
+	10，在创建完所有的Bean后，依次执行Bean的SmartInitializingSingleton.afterSingletonsInstantiated方法。
 
 ### 8，启动完成
 &emsp;&emsp; 在ConfigurableApplicationContext refresh完成后，会先发布一条ApplicationStartedEvent，
