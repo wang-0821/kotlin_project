@@ -263,3 +263,76 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
 ### 8，启动完成
 &emsp;&emsp; 在ConfigurableApplicationContext refresh完成后，会先发布一条ApplicationStartedEvent，
 然后会获取所有ApplicationRunner、CommandLineRunner类型的Bean，并执行这些runners。最后会发布一条ApplicationReadyEvent。
+
+### SpringBoot启动流程图
+&emsp;&emsp; 包括SpringBoot启动时主要执行的逻辑及。
+
+					SpringApplication初始化
+	(加载spring.factories BootstrapRegistryInitializer、ApplicationListener、ApplicationContextInitializer)
+						|
+						V
+				 创建ConfigurableBootstrapContext
+						|
+						V
+		   执行[BootstrapRegistryInitializer].initialize(bootstrapContext)
+		   				|
+						V
+			根据spring.factories加载[SpringApplicationRunListener]
+						|
+						V
+		   		  发布ApplicationStartingEvent事件
+		   				|
+						V
+				   创建ConfigurableEnvironment
+				   		|
+						V
+				   配置ConfigurableEnvironment
+				  		|
+						V
+			    发布ApplicationEnvironmentPreparedEvent事件
+			   			|
+						V
+			     绑定spring.main配置到SpringApplication中
+			     			|
+						V
+					   打印Banner
+					   	|
+						V
+			      创建ConfigurableApplicationContext
+			      			|
+						V
+				    context设置environment
+				    		|
+						V
+		      执行[ApplicationContextInitializer].initialize(context)
+		    				|
+						V
+			    发布ApplicationContextInitializedEvent事件
+			   			|
+						V
+			      发布BootstrapContextClosedEvent事件
+				   		|
+						V
+	   注册springApplicationArguments、springBootBanner Bean, sources BeanDefinistion
+		 				|
+						V
+				发布ApplicationPreparedEvent事件
+						|
+						V
+			     预处理ConfigurableListableBeanFactory
+			     			|
+						V
+    执行beanFactory[BeanDefinitionRegistryPostProcessor].postProcessBeanDefinitionRegistry(registry)
+    						|
+						V
+	执行beanFactory[BeanFactoryPostProcessor].postProcessBeanFactory(beanFactory)
+						|
+						V
+			  向beanFactory中注册[BeanPostProcessor] Beans
+			  			|
+						V
+					       ...
+				   
+						
+### ApplicationStartingEvent
+&emsp;&emsp; 被3种ApplicationListener监听：LoggingApplicationListener、BackgroundPreinitializer、DelegatingApplicationListener。
