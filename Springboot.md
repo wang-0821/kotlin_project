@@ -329,10 +329,64 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
 						|
 						V
 			  向beanFactory中注册[BeanPostProcessor] Beans
-			  			|
-						V
-					       ...
-				   
+	 -------------------------------------->| finishBeanFactoryInitialization(beanFactory)开始，创建所有Beans。LABEL(getBean)
+	|	        loop(创建失败)	     V 循环执行LABEL(getBean - getBeanEnd)
+	 -beanFactory[InstantiationAwareBeanPostProcessor].postProcessBeforeInstantiation(beanClass, beanName)创建Bean --------------
+						| 创建Bean失败									 | 任一创建成功
+						V										    V
+			  执行BeanDefinition.Supplier.get()创建Bean		执行beanFactory[BeanPostProcessor].postProcessAfterInitialization(bean, beanName)
+						| 创建Bean失败									 |
+						V										    
+		  根据BeanDefinition factoryBeanName、factoryMethod创建Bean								|
+		  				| 创建Bean失败									 
+						V										   |
+	beanFactory[SmartInstantiationAwareBeanPostProcessor].determineCandidateConstructors(beanClass, beanName)确定构造器		
+		  				|										   |
+				    -----------------------------								   |
+			没有构造参数 |			    | 有构造参数							    
+				   V				V								   |
+			直接newInstance创建Bean	  先解析构造参数值，再创建Bean						
+				   |				|								   |
+				    ----------------------------								   |
+				    		| 这三种创建Bean方式只执行一种							   |
+						V										   |
+	执行beanFactory[MergedBeanDefinitionPostProcessor].postProcessMergedBeanDefinition(mbd, beanType, beanName)		  
+						|										   |
+						V										   |
+			    向SingletonBeanRegistry中添加ObjectFactory								
+			    			|										   |
+						V										   |
+	执行beanFactory[InstantiationAwareBeanPostProcessor].postProcessAfterInstantiation(bean, beanName)			  
+						|										   |
+						V										   |
+					解析Bean中属性的注入								
+						|										   |
+						V										   |
+	执行beanFactory[InstantiationAwareBeanPostProcessor].postProcessProperties(pvs, bean, beanName)				  
+						| (如果前一步返回为空才会执行下一步，否则跳过下一步)					   |
+						V										   |
+	执行beanFactory[InstantiationAwareBeanPostProcessor].postProcessPropertyValues(pvs, pds, bean, beanName)			  
+						|										   |
+						V										   |
+		根据Bean类型，执行BeanNameAware、BeanClassLoaderAware、BeanFactoryAware						     |
+						|										   |
+						V										   |
+	  执行beanFactory[BeanPostProcessor].postProcessBeforeInitialization(bean, beanName)					
+	  					| 										   |
+						V										   |
+		执行Bean(InitializingBean).afterPropertiesSet() 或自定义的init方法						     |
+						|										   
+						V										   |
+	执行beanFactory[BeanPostProcessor].postProcessAfterInitialization(bean, beanName)						  
+						|										   |
+						 --------------------------------						   |
+										|						   |
+										V						   V
+							如果Bean是FactoryBean，且不以"&"开头，那么从FactoryBean.getObject()获取真正的Bean。LABEL(getBeanEnd)
+										| 此时循环 LABEL(getBean - getBeanEnd)结束 
+										V
+						
+			
 						
 ### ApplicationStartingEvent
 &emsp;&emsp; 被3种ApplicationListener监听：LoggingApplicationListener、BackgroundPreinitializer、DelegatingApplicationListener。
