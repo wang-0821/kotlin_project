@@ -385,8 +385,24 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
 							如果Bean是FactoryBean，且不以"&"开头，那么从FactoryBean.getObject()获取真正的Bean。LABEL(getBeanEnd)
 										| 此时循环 LABEL(getBean - getBeanEnd)结束 
 										V
-						
-			
+					根据Bean类型执行 SmartInitializingSingleton.afterSingletonsInstantiated()
+										|
+										V
+							    执行context.LifecycleProcessor.onRefresh()
+							    			|
+										V
+								发布ContextRefreshedEvent事件
+										|
+										V
+								发布ApplicationStartedEvent事件
+										|
+										V
+							执行context中ApplicationRunner、CommandLineRunner Beans
+										|
+										V
+								发布ApplicationReadyEvent事件
+										
+
 						
 ### ApplicationStartingEvent
 &emsp;&emsp; 被3种ApplicationListener监听：LoggingApplicationListener、BackgroundPreinitializer、DelegatingApplicationListener。
