@@ -89,7 +89,7 @@ listeners。最后根据异常栈的mian方法，获取到当前SpringApplicatio
 &emsp;&emsp; 在SpringBoot各模块spring.factories中，配置了9种EnvironmentPostProcessor。
 
     spring-boot-autoconfigure中：
-    	IntegrationPropertiesEnvironmentPostProcessor：向environment中添加配置META-INF/spring.integration.properties。
+        IntegrationPropertiesEnvironmentPostProcessor：向environment中添加配置META-INF/spring.integration.properties。
     
     spring-boot-devtools中：
         DevToolsHomePropertiesPostProcessor：向environment中添加开发工具配置项。
@@ -111,9 +111,9 @@ listeners。最后根据异常栈的mian方法，获取到当前SpringApplicatio
 SpringBoot中并没有配置bootstrapRegistryInitializers，因此实际不会执行initialize。
     
     private DefaultBootstrapContext createBootstrapContext() {
-    	DefaultBootstrapContext bootstrapContext = new DefaultBootstrapContext();
-    	this.bootstrapRegistryInitializers.forEach((initializer) -> initializer.initialize(bootstrapContext));
-    	return bootstrapContext;
+        DefaultBootstrapContext bootstrapContext = new DefaultBootstrapContext();
+        this.bootstrapRegistryInitializers.forEach((initializer) -> initializer.initialize(bootstrapContext));
+        return bootstrapContext;
     }
     
     // 在执行listeners.starting时，实际是用筛选出目标ApplicationListener，执行ApplicationStartingEvent事件，
@@ -332,7 +332,7 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
                         V
     执行beanFactory[BeanDefinitionRegistryPostProcessor].postProcessBeanDefinitionRegistry(registry)
                         |
-						V
+                        V
     执行beanFactory[BeanFactoryPostProcessor].postProcessBeanFactory(beanFactory)
                         |
                         V
