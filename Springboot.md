@@ -1,5 +1,6 @@
 * [1.SpringBoot模块结构](#1)
 * [2.SpringBoot启动过程](#2)
+* [3.Spring Bean的扫描与注册](#3)
 
 <h2 id="1">1.SpringBoot模块结构</h2>
 &emsp;&emsp; SpringBoot项目下主要有：buildSrc、spring-boot-project、spring-boot-tests三大模块。
@@ -330,7 +331,7 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
         预处理ConfigurableListableBeanFactory
                         |
                         V
-    执行beanFactory[BeanDefinitionRegistryPostProcessor].postProcessBeanDefinitionRegistry(registry)
+    执行beanFactory[BeanDefinitionRegistryPostProcessor].postProcessBeanDefinitionRegistry(registry) 这一步会扫描出BeanDefinition
                         |
                         V
     执行beanFactory[BeanFactoryPostProcessor].postProcessBeanFactory(beanFactory)
@@ -412,3 +413,10 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
 
 ### ApplicationStartingEvent
 &emsp;&emsp; 被3种ApplicationListener监听：LoggingApplicationListener、BackgroundPreinitializer、DelegatingApplicationListener。
+
+<h2 id="3">3.Spring Bean的扫描与注册</h2>
+&emsp;&emsp; SpringBoot扫描BeanDefinition的方式：1，类注解，@Configuration、@Controller、@Repository、
+@Service、@Component。2，方法注解，@Bean。3.@Import注册。
+
+### ConfigurationClassPostProcessor
+&emsp;&emsp; ConfigurationClassPostProcessor会扫描出所有的BeanDefinition。
