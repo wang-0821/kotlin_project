@@ -3,7 +3,7 @@ package com.xiao.databse.testing
 import com.xiao.base.logging.KtLogger
 import com.xiao.base.logging.LoggerType
 import com.xiao.base.logging.Logging
-import com.xiao.base.resource.PathResourceScanner
+import com.xiao.beans.resource.PathResourceScanner
 import com.xiao.databse.BaseDatabase
 import com.xiao.databse.annotation.KtMapperTables
 import org.apache.ibatis.jdbc.ScriptRunner

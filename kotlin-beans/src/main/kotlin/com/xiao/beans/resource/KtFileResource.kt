@@ -1,4 +1,4 @@
-package com.xiao.base.resource
+package com.xiao.beans.resource
 
 import java.io.File
 

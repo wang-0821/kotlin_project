@@ -1,9 +1,9 @@
 package com.xiao.beans.annotation
 
-import com.xiao.base.resource.AnnotatedKtResource
 import com.xiao.beans.context.BeanHelper
 import com.xiao.beans.context.BeanRegistryAware
 import com.xiao.beans.context.Context
+import com.xiao.beans.resource.AnnotatedKtResource
 
 /**
  *
