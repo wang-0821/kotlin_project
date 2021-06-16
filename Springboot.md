@@ -419,4 +419,68 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
 @Service、@Component。2，方法注解，@Bean。3.@Import注册。
 
 ### ConfigurationClassPostProcessor
-&emsp;&emsp; ConfigurationClassPostProcessor会扫描出所有的BeanDefinition。
+&emsp;&emsp; ConfigurationClassPostProcessor.postProcessBeanDefinitionRegistry(registry)这一步会扫描出所有的BeanDefinition。
+在根据@ComponentScan获取basePackages时，会先根据basePackages、basePackageClasses注解参数获取，如果都没有设置，那么会根据@ComponentScan
+注解类所在的package作为backagePackages，并以basePackages作为BeanDefinition扫描包。
+
+    sao扫描BeanDefinition时，会根据includeFilters和excludeFilters来筛选，在ClassPathScanningCandidateComponentProvider中，
+    默认的includeFilters包括：
+    	AnnotationTypeFilter(Component.class)、
+	AnnotationTypeFilter(ManagedBean.class)、
+	AnnotationTypeFilter(Named.class)
+	
+    在Spring中判断一个类是不是Configuration类：
+    	1，类被@Configuration注解。
+	2，类被@Component、@ComponentScan、@Import、@ImportResource任一个所注解。
+	3，类中含有被@Bean注解的方法。
+
+    ConfigurationClassPostProcessor.postProcessBeanDefinitionRegistry(registry)执行顺序如下:
+    		解析registry中所有Configuration类型的BeanDefinition集合----------------
+     --------------------------------->	| 有Configuration类型类			 | 没有Configuration类型类
+    |					V					    V
+    |			  获取配置类的@ComponentScan注解集合			   执行完毕
+    |					|
+    |					V
+    |		根据@ComponentScan构建ComponentScanAnnotationParser
+    |					|
+    |					V
+    |	执行ClassPathBeanDefinitionScanner.doScan(basePackages)扫描BeanDefinition
+    |	 -----------------------------> |
+    |	|				V
+    |	|	解析BeanDefinition Lazy、Primary、DependsOn、Role、Description
+    |	|				|
+    |	|				V
+    |	|		注册BeanDefinition(@Component)
+    |	|		loop		| loop end
+    |	-------------------------------	V
+    |		扫描出当前@ComponentScan中全部BeanDefinition集合
+    |					|
+    |	     				V
+    |	loop	解析上一步扫描出的所有Configuration类型的BeanDefinition集合
+     ----------------------------------	| loop end
+	 ----------------------------->	V
+	|	处理Configuration类型的BeanDefinition的@Import注解
+	|				|
+	|				V
+	|	处理Configuration类型的BeanDefinition的@ImportResource注解
+	|				|
+	|				V
+	| loop	处理Configuration类型的BeanDefinition的@Bean方法注解
+	 -------------------------------| loop end
+					V
+		完成所有Configuration类型的BeanDefinition的处理
+     ---------------------------------> |
+    |					V
+    |		注册Configuration @Import注解的对象为BeanDefinition
+    |					|
+    |					V
+    |		注册Configuration @Bean注解的方法为BeanDefinition
+    |					|
+    |					V
+    |		注册Configuration @ImportResource注解对象为BeanDefinition
+    |					|
+    |					V
+    |	注册 Configuration @Import加载的ImportBeanDefinitionRegistrar目标对象为BeanDefinition
+     -----------------------------------| loop end
+					V
+			    完成BeanDefinition的注册
