@@ -1,6 +1,6 @@
 package com.xiao.beans.annotation
 
-import com.xiao.base.resource.KtClassResource
+import com.xiao.beans.resource.KtClassResource
 
 /**
  *

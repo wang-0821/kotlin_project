@@ -1,4 +1,4 @@
-package com.xiao.base.resource
+package com.xiao.beans.resource
 
 import com.xiao.base.CommonConstants
 import com.xiao.base.logging.Logging

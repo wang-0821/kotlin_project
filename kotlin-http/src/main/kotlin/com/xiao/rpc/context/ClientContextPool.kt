@@ -3,11 +3,11 @@ package com.xiao.rpc.context
 import com.xiao.base.logging.KtLogger
 import com.xiao.base.logging.LoggerType
 import com.xiao.base.logging.Logging
-import com.xiao.base.resource.AnnotatedKtResource
 import com.xiao.beans.context.BeanHelper
 import com.xiao.beans.context.BeanRegistry
 import com.xiao.beans.context.Context
 import com.xiao.beans.context.ContextAware
+import com.xiao.beans.resource.AnnotatedKtResource
 import com.xiao.rpc.Cleaner
 import com.xiao.rpc.Client
 import com.xiao.rpc.RunningState

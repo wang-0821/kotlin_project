@@ -1,12 +1,12 @@
 package com.xiao.beans.context
 
-import com.xiao.base.resource.AnnotatedKtResource
-import com.xiao.base.resource.KtClassResource
-import com.xiao.base.resource.PathResourceScanner
 import com.xiao.base.util.extractAnnotations
 import com.xiao.beans.annotation.AnnotationScan
 import com.xiao.beans.annotation.ContextInject
 import com.xiao.beans.annotation.KtComponent
+import com.xiao.beans.resource.AnnotatedKtResource
+import com.xiao.beans.resource.KtClassResource
+import com.xiao.beans.resource.PathResourceScanner
 
 /**
  *
@@ -30,7 +30,7 @@ object ContextScanner : BeanRegistryAware {
         }
     }
 
-    private fun handleContextInject(annotatedKtResources: List<AnnotatedKtResource>): List<AnnotatedKtResource>? {
+    private fun handleContextInject(annotatedKtResources: List<AnnotatedKtResource>): List<AnnotatedKtResource> {
         val contextInjectResources = annotatedKtResources.filter { it.isAnnotated(ContextInject::class) }
         for (resource in contextInjectResources) {
             val contextInject = resource.annotationsByType(ContextInject::class).first()

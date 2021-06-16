@@ -1,6 +1,6 @@
 package com.xiao.databse
 
-import com.xiao.base.resource.PathResourceScanner
+import com.xiao.beans.resource.PathResourceScanner
 import com.xiao.databse.annotation.KtDatabase
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
