@@ -30,14 +30,14 @@ abstract class BaseDatabase(
         val config = javaClass.getAnnotation(KtDatabase::class.java)
             ?: throw IllegalArgumentException("${javaClass.simpleName} must annotated by $annotationName")
 
-        if (config.mapperPath.isEmpty() && config.mapperXmlPath.isEmpty()) {
+        if (config.mapperBasePackages.isEmpty() && config.mapperXmlLocation.isEmpty()) {
             throw IllegalArgumentException("$annotationName mapperPath and mapperXmlPath can't be both empty.")
         }
         this.config = config
     }
 
     fun datasetPath(): String {
-        return config.dataSetPath
+        return config.dataSetLocation
     }
 
     fun name(): String {
@@ -64,8 +64,8 @@ abstract class BaseDatabase(
     private fun createSqlSessionFactory(): SqlSessionFactory {
         val configuration = createConfiguration()
         // scan mappers
-        scanXmlMappers(configuration, config.mapperXmlPath)
-        scanInterfaceMappers(configuration, config.mapperPath)
+        scanXmlMappers(configuration, config.mapperXmlLocation)
+        scanInterfaceMappers(configuration, config.mapperBasePackages)
 
         setEnvironment(config.name + ENVIRONMENT_NAME_SUFFIX, configuration, url, username, password)
         return KtManagedSqlSessionFactory(configuration)

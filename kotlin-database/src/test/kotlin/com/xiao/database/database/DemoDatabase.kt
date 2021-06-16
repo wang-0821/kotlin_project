@@ -9,9 +9,9 @@ import com.xiao.databse.annotation.KtDatabase
  */
 @KtDatabase(
     name = DemoDatabase.NAME,
-    mapperPath = DemoDatabase.MAPPER_PATH,
-    mapperXmlPath = DemoDatabase.MAPPER_XML_PATH,
-    dataSetPath = DemoDatabase.DATASET_PATH
+    mapperBasePackages = DemoDatabase.MAPPER_PATH,
+    mapperXmlLocation = DemoDatabase.MAPPER_XML_PATH,
+    dataSetLocation = DemoDatabase.DATASET_PATH
 )
 class DemoDatabase : BaseDatabase(URL, USERNAME, PASSWORD) {
     companion object {

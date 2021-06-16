@@ -9,7 +9,7 @@ package com.xiao.databse.annotation
 @Target(AnnotationTarget.CLASS)
 annotation class KtDatabase(
     val name: String,
-    val mapperPath: String,
-    val mapperXmlPath: String,
-    val dataSetPath: String
+    val mapperBasePackages: String,
+    val mapperXmlLocation: String,
+    val dataSetLocation: String
 )
