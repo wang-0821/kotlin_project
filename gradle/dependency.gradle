@@ -47,6 +47,7 @@ dependencyManagement {
         //spring
         dependencySet(group: "org.springframework.boot", version: "2.5.0") {
             entry "spring-boot-starter"
+            entry "spring-boot-starter-json"
         }
     }
 }

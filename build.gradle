@@ -17,70 +17,7 @@ allprojects {
 
 // 子模块通用配置
 subprojects {
-	apply plugin: 'java'
-	apply plugin: 'idea'
-	apply plugin: 'kotlin'
-
-	apply from: rootProject.file("gradle/ktlint.gradle")
-	apply from: rootProject.file("gradle/maven_publish.gradle")
-	apply from: rootProject.file("gradle/dependency.gradle")
-
-	buildDir = "out/output"
-
-	// jvm 版本号要求
-	sourceCompatibility = "$jvmVersion"
-	targetCompatibility = "$jvmVersion"
-
-	repositories {
-		mavenLocal()
-		mavenCentral()
-	}
-
-	// idea 插件会默认下载source和doc文件
-	idea {
-		module {
-			downloadJavadoc = true
-			downloadSources = true
-			inheritOutputDirs = false
-			outputDir = file("$buildDir/classes/main/")
-		}
-	}
-
-	dependencies {
-		api "org.jetbrains.kotlin:kotlin-reflect"
-		api "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-		api "org.junit.jupiter:junit-jupiter"
-	}
-
-	// set encoding
-	compileJava {
-		options.encoding = "UTF-8"
-	}
-
-	// 配置所有单元测试的任务信息打印到Console
-	tasks.test {
-		useJUnitPlatform()
-		testLogging {
-			displayGranularity = 0
-			events "passed", "skipped", "failed", "standardOut", "standardError"
-			exceptionFormat "full"
-
-			// print test result
-			afterSuite { desc, result ->
-				if (!desc.parent) {
-					println "Test results: ${result.resultType} (${result.testCount} tests, " +
-							"${result.successfulTestCount} succeed, ${result.failedTestCount} failed, " +
-							"${result.skippedTestCount} skipped)"
-				}
-			}
-		}
-	}
-
-	tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-		kotlinOptions {
-			jvmTarget = "$jvmVersion"
-		}
-	}
+	apply from: rootProject.file("gradle/project_dependency.gradle")
 }
 
 // 执行自定义gradle wrapper task 自动生成gradlew脚本及配置，这里指定下载的Gradle版本
