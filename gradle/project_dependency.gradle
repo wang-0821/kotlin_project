@@ -1,0 +1,69 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'kotlin'
+
+apply from: rootProject.file("gradle/ktlint.gradle")
+apply from: rootProject.file("gradle/dependency.gradle")
+apply from: rootProject.file("gradle/maven_publish.gradle")
+
+buildDir = "out/output"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+// idea 插件会默认下载source和doc文件
+idea {
+    module {
+        downloadJavadoc = true
+        downloadSources = true
+        inheritOutputDirs = false
+        outputDir = file("$buildDir/classes/main/")
+    }
+}
+
+dependencies {
+    api "org.jetbrains.kotlin:kotlin-reflect"
+    api "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    api "org.junit.jupiter:junit-jupiter"
+}
+
+// set encoding
+compileJava {
+    sourceCompatibility = "$jvmVersion"
+    targetCompatibility = "$jvmVersion"
+    options.encoding = "UTF-8"
+}
+
+compileKotlin {
+    sourceCompatibility = "$jvmVersion"
+    targetCompatibility = "$jvmVersion"
+    kotlinOptions {
+        jvmTarget = "$jvmVersion"
+    }
+}
+
+configurations.all {
+    exclude group: "org.springframework.boot", module: "spring-boot-starter-logging"
+}
+
+// 配置所有单元测试的任务信息打印到Console
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        displayGranularity = 0
+        events "passed", "skipped", "failed", "standardOut", "standardError"
+        exceptionFormat "full"
+
+        // print test result
+        afterSuite { desc, result ->
+            if (!desc.parent) {
+                println "Test results: ${result.resultType} (${result.testCount} tests, " +
+                        "${result.successfulTestCount} succeed, ${result.failedTestCount} failed, " +
+                        "${result.skippedTestCount} skipped)"
+            }
+        }
+    }
+}
+

@@ -1,5 +1,0 @@
-dependencies {
-    api("org.springframework.boot:spring-boot-starter") {
-        exclude module: "spring-boot-starter-logging"
-    }
-}

@@ -492,6 +492,6 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
 在ConfigurationClassPostProcessor.postProcessBeanDefinitionRegistry(registry)执行过程中，会处理@Import加载的Bean。
 
     ConfigurationClassPostProcessor.postProcessBeanDefinitionRegistry(registry)处理@Import：
-    	执行DeferredImportSelector.Group.process(AnnptationMetadata, DeferredImportSelector)方法，
-	这个方式就会获取所有spring.factories中org.springframework.boot.autoconfigure.EnableAutoConfiguration配置项，
-	并把扫描出来的所有非ImportSelector、ImportBeanDefinitionRegistrar类型的类当作@Configuration类处理。
+        执行DeferredImportSelector.Group.process(AnnptationMetadata, DeferredImportSelector)方法，
+        这个方式就会获取所有spring.factories中org.springframework.boot.autoconfigure.EnableAutoConfiguration配置项，
+        并把扫描出来的所有非ImportSelector、ImportBeanDefinitionRegistrar类型的类当作@Configuration类处理。
