@@ -1,6 +1,7 @@
 * [1.SpringBoot模块结构](#1)
 * [2.SpringBoot启动过程](#2)
 * [3.Spring Bean的扫描与注册](#3)
+* [4.SpringBoot自动配置](#4)
 
 <h2 id="1">1.SpringBoot模块结构</h2>
 &emsp;&emsp; SpringBoot项目下主要有：buildSrc、spring-boot-project、spring-boot-tests三大模块。
@@ -484,3 +485,13 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
     |  loop                             | loop end
      ---------------------------------- V
                                 完成BeanDefinition的注册
+
+<h2 id="4">4.SpringBoot自动配置</h2>
+&emsp;&emsp; SpringBoot应用都会被@SpringBootApplication所注解，@SpringBootApplication注解被@EnableAutoConfiguration注解，
+@EnableAutoConfiguration注解被@Import(AutoConfigurationImportSelector.class)所注解，因此在SpringBootApplication启动时，
+在ConfigurationClassPostProcessor.postProcessBeanDefinitionRegistry(registry)执行过程中，会处理@Import加载的Bean。
+
+    ConfigurationClassPostProcessor.postProcessBeanDefinitionRegistry(registry)处理@Import：
+    	执行DeferredImportSelector.Group.process(AnnptationMetadata, DeferredImportSelector)方法，
+	这个方式就会获取所有spring.factories中org.springframework.boot.autoconfigure.EnableAutoConfiguration配置项，
+	并把扫描出来的所有非ImportSelector、ImportBeanDefinitionRegistrar类型的类当作@Configuration类处理。
