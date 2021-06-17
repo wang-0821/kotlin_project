@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.xiao.boot.env.ktConfigurationPostProcessor,\
+com.xiao.boot.env.EnvironmentResolverAutoConfiguration
