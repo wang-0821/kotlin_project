@@ -11,7 +11,6 @@ object EnvConstants {
     const val ENV_STAGING = "staging"
     const val ENV_PRODUCTION = "production"
 
-    const val ENV_VALUE_SEPERATOR = ","
-
+    const val DEFAULT_SERVER_PORT = 8080
     const val ENV_ENCRYPT_KEY = "spring.boot.encrypt.key"
 }
