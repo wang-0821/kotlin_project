@@ -13,7 +13,6 @@ class EnvPropertyValueParser(
     private val type: Class<*>,
     private val value: String
 ) {
-    
     fun parse(): Any {
         return when (type) {
             Boolean::class.java -> value.toBoolean()
