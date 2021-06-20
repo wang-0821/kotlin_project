@@ -15,5 +15,16 @@ enum class ProfileType(val profileName: String) {
     DEV(ENV_DEVELOP),
     BETA(ENV_BETA),
     STAGING(ENV_STAGING),
-    PRODUCTION(ENV_PRODUCTION)
+    PRODUCTION(ENV_PRODUCTION);
+
+    companion object {
+        fun match(profileName: String): ProfileType? {
+            for (profile in values()) {
+                if (profile.profileName == profileName) {
+                    return profile
+                }
+            }
+            return null
+        }
+    }
 }

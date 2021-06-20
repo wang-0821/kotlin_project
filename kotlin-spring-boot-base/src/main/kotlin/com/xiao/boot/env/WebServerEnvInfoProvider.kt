@@ -4,7 +4,7 @@ package com.xiao.boot.env
  *
  * @author lix wang
  */
-class EnvInfoProviderImpl(
+class WebServerEnvInfoProvider(
     private val ip: String,
     private val host: String,
     private val port: Int,
