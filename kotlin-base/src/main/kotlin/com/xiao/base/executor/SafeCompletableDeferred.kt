@@ -11,7 +11,7 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  * @author lix wang
  */
-class SafeCompletableDeferred<T : Any?>(
+class SafeCompletableDeferred<T>(
     private val deferred: CompletableDeferred<T>
 ) : SafeDeferred<T> {
     private lateinit var job: Job

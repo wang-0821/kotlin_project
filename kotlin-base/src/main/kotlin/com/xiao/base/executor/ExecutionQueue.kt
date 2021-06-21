@@ -24,11 +24,11 @@ class ExecutionQueue(
         check(taskMaxCount > 0)
     }
 
-    fun <T : Any?> submit(taskName: String, task: () -> T): CompletableFuture<T> {
+    fun <T> submit(taskName: String, task: () -> T): CompletableFuture<T> {
         return submitTask(taskName, task)
     }
 
-    fun <T : Any?> submit(task: () -> T): CompletableFuture<T> {
+    fun <T> submit(task: () -> T): CompletableFuture<T> {
         return submitTask(null, task)
     }
 
@@ -66,7 +66,7 @@ class ExecutionQueue(
         }
     }
 
-    private fun <T : Any?> submitTask(taskName: String?, task: () -> T): CompletableFuture<T> {
+    private fun <T> submitTask(taskName: String?, task: () -> T): CompletableFuture<T> {
         lock.lock()
         val realTaskName = taskName ?: ""
         try {

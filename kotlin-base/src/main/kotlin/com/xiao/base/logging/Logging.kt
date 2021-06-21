@@ -23,7 +23,7 @@ abstract class Logging {
 
     private fun loggerName(): String {
         val annotation = this::class.java.getAnnotation(KtLogger::class.java) ?: return this::class.java.name
-        if (annotation.value != LoggerType.NULL) {
+        if (annotation.value != LoggerType.UNDEFINED) {
             return annotation.value.text
         }
         if (annotation.name.isNotBlank()) {

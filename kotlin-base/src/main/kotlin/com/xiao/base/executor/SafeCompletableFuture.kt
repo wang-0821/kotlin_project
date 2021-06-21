@@ -10,7 +10,7 @@ import java.util.concurrent.TimeoutException
  *
  * @author lix wang
  */
-open class SafeCompletableFuture<T : Any?> : CompletableFuture<T>() {
+open class SafeCompletableFuture<T> : CompletableFuture<T>() {
     protected lateinit var future: Future<*>
 
     open fun putFuture(future: Future<*>) {
