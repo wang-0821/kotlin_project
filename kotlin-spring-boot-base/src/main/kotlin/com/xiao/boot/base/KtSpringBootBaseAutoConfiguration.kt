@@ -1,0 +1,10 @@
+package com.xiao.boot.base
+
+import org.springframework.context.annotation.Configuration
+
+/**
+ *
+ * @author lix wang
+ */
+@Configuration
+class KtSpringBootBaseAutoConfiguration

@@ -18,19 +18,20 @@ object JsonUtils {
         }
 
     @JvmStatic
-    fun <T : Any?> serialize(obj: T): String {
+    fun <T> serialize(obj: T): String {
         return objectMapper.writeValueAsString(obj)
     }
 
     @JvmStatic
-    fun <T : Any?> deserialize(content: String, clazz: Class<T>): T {
+    fun <T> deserialize(content: String, clazz: Class<T>): T {
         return objectMapper.readValue(content, clazz)
     }
 
     @JvmStatic
-    fun <T : Any> deserializeList(content: String, clazz: Class<T>): List<T> {
-        val typeReference = objectMapper.typeFactory.constructCollectionType(List::class.java, clazz)
-        return objectMapper.readValue(content, typeReference)
+    fun <T> deserializeList(content: String, clazz: Class<T>): List<T> {
+        return objectMapper.readValue(
+            content, objectMapper.typeFactory.constructCollectionType(List::class.java, clazz)
+        )
     }
 
     @JvmStatic

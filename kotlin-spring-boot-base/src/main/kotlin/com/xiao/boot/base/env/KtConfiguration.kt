@@ -1,4 +1,4 @@
-package com.xiao.boot.env
+package com.xiao.boot.base.env
 
 import org.springframework.context.annotation.Configuration
 

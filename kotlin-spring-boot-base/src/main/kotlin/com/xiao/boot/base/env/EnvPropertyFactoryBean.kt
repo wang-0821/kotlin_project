@@ -1,6 +1,7 @@
-package com.xiao.boot.env
+package com.xiao.boot.base.env
 
-import com.xiao.boot.util.SecureUtils
+import com.xiao.boot.base.parser.StringValueParseResolver
+import com.xiao.boot.base.util.SecureUtils
 import org.springframework.beans.factory.FactoryBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -51,14 +52,18 @@ class EnvPropertyFactoryBean<T : Any>(
                         "Class ${clazz.name} property ${kProperty.name}, " +
                             "need have exact one value in ${profile.profileName} env."
                     }
-                    val value = decryptValue(javaField, realEnvProperties.first())
-                    val parser = EnvPropertyValueParser(applicationContext, javaField.type, value)
-                    javaField.set(instance, parser.parse())
+
+                    val value = prepareValue(javaField, realEnvProperties.first())
+                    val resolvedValue = StringValueParseResolver.resolve(javaField.genericType, value)
+                    check(resolvedValue == null && !kProperty.returnType.isMarkedNullable) {
+                        "Not allowed null value set for ${kProperty.name}."
+                    }
+                    javaField.set(instance, resolvedValue)
                 }
             }
     }
 
-    private fun decryptValue(filed: Field, envProperty: EnvProperty): String {
+    private fun prepareValue(filed: Field, envProperty: EnvProperty): String {
         return if (envProperty.value.isEmpty()) {
             if (envProperty.allowEmpty) {
                 envProperty.value

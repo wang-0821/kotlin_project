@@ -1,4 +1,4 @@
-package com.xiao.boot.util
+package com.xiao.boot.base.util
 
 import java.util.Base64
 import javax.crypto.Cipher

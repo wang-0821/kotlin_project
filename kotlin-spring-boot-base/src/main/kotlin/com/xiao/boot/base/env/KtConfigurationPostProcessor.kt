@@ -1,20 +1,20 @@
-package com.xiao.boot.env
+package com.xiao.boot.base.env
 
-import com.xiao.boot.util.className
+import com.xiao.boot.base.util.className
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
 import org.springframework.beans.factory.config.ConstructorArgumentValues
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor
 import org.springframework.beans.factory.support.GenericBeanDefinition
-import org.springframework.context.annotation.Configuration
+import org.springframework.stereotype.Component
 import org.springframework.util.ClassUtils
 
 /**
  *
  * @author lix wang
  */
-@Configuration
+@Component
 class KtConfigurationPostProcessor : BeanDefinitionRegistryPostProcessor {
     override fun postProcessBeanDefinitionRegistry(registry: BeanDefinitionRegistry) {
         registry.beanDefinitionNames.forEach { beanName ->
