@@ -1,4 +1,4 @@
-package com.xiao.boot.util
+package com.xiao.boot.base.util
 
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition
 

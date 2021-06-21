@@ -1,10 +1,10 @@
-package com.xiao.boot.env
+package com.xiao.boot.base.env
 
-import com.xiao.boot.env.EnvConstants.ENV_BETA
-import com.xiao.boot.env.EnvConstants.ENV_DEVELOP
-import com.xiao.boot.env.EnvConstants.ENV_PRODUCTION
-import com.xiao.boot.env.EnvConstants.ENV_STAGING
-import com.xiao.boot.env.EnvConstants.ENV_TEST
+import com.xiao.boot.base.env.EnvConstants.ENV_BETA
+import com.xiao.boot.base.env.EnvConstants.ENV_DEVELOP
+import com.xiao.boot.base.env.EnvConstants.ENV_PRODUCTION
+import com.xiao.boot.base.env.EnvConstants.ENV_STAGING
+import com.xiao.boot.base.env.EnvConstants.ENV_TEST
 
 /**
  *

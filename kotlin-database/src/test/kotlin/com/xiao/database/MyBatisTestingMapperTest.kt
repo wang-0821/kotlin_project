@@ -17,15 +17,13 @@ import org.junit.jupiter.api.assertThrows
  * @author lix wang
  */
 @KtTestDatabases(
-    [
-        KtTestDatabase(
-            database = DemoDatabase::class,
-            mappers = [
-                UserMapper::class,
-                UserMapperV2::class
-            ]
-        )
-    ]
+    KtTestDatabase(
+        database = DemoDatabase::class,
+        mappers = [
+            UserMapper::class,
+            UserMapperV2::class
+        ]
+    )
 )
 class MyBatisTestingMapperTest : KtTestDataSourceBase() {
     @Test

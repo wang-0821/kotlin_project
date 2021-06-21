@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
  * @author lix wang
  */
 @Suppress("UNCHECKED_CAST")
-fun <T : Any?> CoroutineScope.deferred(block: () -> T): SafeDeferred<T> {
+fun <T> CoroutineScope.deferred(block: () -> T): SafeDeferred<T> {
     val deferred = CompletableDeferred<T>()
     val result = SafeCompletableDeferred(deferred)
     val job = launch {
@@ -23,7 +23,7 @@ fun <T : Any?> CoroutineScope.deferred(block: () -> T): SafeDeferred<T> {
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <T : Any?> CoroutineScope.deferredSuspend(suspendBlock: suspend () -> T): SafeDeferred<T> {
+fun <T> CoroutineScope.deferredSuspend(suspendBlock: suspend () -> T): SafeDeferred<T> {
     val deferred = CompletableDeferred<T>()
     val result = SafeCompletableDeferred(deferred)
     val job = launch {

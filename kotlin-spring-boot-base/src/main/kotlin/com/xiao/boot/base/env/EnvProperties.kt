@@ -1,7 +1,7 @@
-package com.xiao.boot.env
+package com.xiao.boot.base.env
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FIELD)
 annotation class EnvProperties(
-    val value: Array<EnvProperty> = []
+    vararg val value: EnvProperty = []
 )

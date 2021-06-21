@@ -1,6 +1,6 @@
-package com.xiao.boot.env
+package com.xiao.boot.base.env
 
-import com.xiao.boot.env.EnvConstants.ENV_ENCRYPT_KEY
+import com.xiao.boot.base.env.EnvConstants.ENV_ENCRYPT_KEY
 
 /**
  * Target class fileds must be public.

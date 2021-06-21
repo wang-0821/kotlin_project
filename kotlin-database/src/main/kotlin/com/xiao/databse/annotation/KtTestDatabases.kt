@@ -7,5 +7,5 @@ package com.xiao.databse.annotation
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
 annotation class KtTestDatabases(
-    val value: Array<KtTestDatabase>
+    vararg val value: KtTestDatabase = []
 )
