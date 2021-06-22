@@ -93,3 +93,99 @@ DisplayNameGenerator可以设置显示类型：Standard、Simple、ReplaceUnders
 
     // 资源锁可以设置模式，在READ模式下，可以并行执行，但是在READ_WRITE模式时，必须同步执行
     @ResourceLock(value = SYSTEM_PROPERTIES, mode = READ)
+    
+<h2 id="4">4.Junit5 Extension</h2>
+&emsp;&emsp; JUnit5的Extension支持自定义拓展，不同的拓展可以在不同的时间节点来执行。
+
+    DEFAULT_EXTENSIONS包含：
+        DisabledCondition、
+        TempDirectory、
+        TimeoutExtension、
+        RepeatedTestExtension、
+        TestInfoParameterResolver、
+        TestReporterParameterResolver。  
+
+    NodeTestTask属性包含：taskContext、testDescriptor、node、context、parentContext、throwableCollector。
+
+    Junit5各Extension执行顺序：
+        获取rootTestTask(NodeTestTask)，执行rootTestTask
+                           |
+                           V
+                 创建ThrowableCollector
+                           |
+                           V
+         执行Node(JupiterEngineDescriptor).prepare(null)
+                           |
+                           V
+       创建MutableExtensionRegistry，并将DEFAULT_EXTENSIONS注入
+                           |
+                           V
+      创建JupiterEngineExecutionContext(prepare完成，赋值给当前NodeTestTask context)
+                           |
+                           V                                                        isSkipped = true
+    执行Node(JupiterEngineDescriptor).shouldBeSkipped(JupiterEngineExecutionContext) -------------> NodeTestTask执行完毕
+                           | isSkipped = false
+                           V
+    根据NodeTestTask children([ClassTestDescriptor])构建子NodeTestTask集合
+                           |
+                           V
+    执行Node(JupiterEngineDescriptor).before(JupiterEngineExecutionContext)
+                           |
+                           V
+    执行Node(JupiterEngineDescriptor).execute(JupiterEngineExecutionContext, DynamicTestExecutor)
+                           |
+                           V
+    执行Node(ClassTestDescriptor).prepare(JupiterEngineExecutionContext)
+                           |
+                           V
+       根据当前测试类上的@ExtendWith注解获取Extension集合
+                           |
+                           V
+       根据parent MutableExtensionRegistry和当前Extensions集合，创建MutableExtensionRegistry，并注入Extension
+                           |
+                           V
+        根据测试类中被@RegisterExtension注解的静态Field的值，获取Extension集合，并注入到registry
+                           |
+                           V
+         根据registry中已注册的TestInstanceFactory，确定当前ClassTestDescriptor的 testInstanceFactory
+                           |
+                           V
+        将测试类中被@BeforeEach注解的方法，注册为Extension到registry
+                           |
+                           V
+        将测试类中被@AfterEach注解的方法，注册为Extension到registry
+                           |
+                           V
+         找到测试类中被@BeforeAll注解的静态方法，赋值给ClassTestDescriptor beforeAllMethods
+                           |
+                           V
+         找到测试类中被@AfterAll注解的静态方法，赋值给ClassTestDescriptor afterAllMethods
+                           |
+                           V
+         创建JupiterEngineExecutionContext(prepare完成，赋值给当前NodeTestTask context)
+                           |
+                           V                                                        isSkipped = true
+         执行Node(ClassTestDescriptor),shouldBeSkipped(JupiterEngineExecutionContext)---------> NodeTestTask执行完毕
+                           | isSkipped = false
+                           V
+        根据NodeTestTask children([TestMethodTestDescripter])构建子NodeTestTask集合
+                           |
+                           V
+        执行Node(ClassTestDescriptor).before(JupiterEngineExecutionContext)
+                           | is Lifecycle.PER_CLASS
+                           V
+          如果ClassTestDescriptor.testInstanceFactory不为空，则据此创建testInstance
+                           | testInstanceFactory为空
+                           V
+            获取测试类构造器，并根据构造器解析构造参数列表，构造ConstructorInvocation
+                           |
+                           V
+            执行ConstructorInvocation.proceed() 创建testInstance
+                           |
+                           V
+           执行[TestInstancePostProcessor].postProcessTestInstance(instance, ClassExtensionContext)
+                           |
+                           V
+          注册testInstance中被@RegisterExtension注解的Field Extension
+                           |
+                           V
