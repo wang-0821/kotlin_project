@@ -6,7 +6,7 @@ import kotlinx.coroutines.CompletableDeferred
  *
  * @author lix wang
  */
-class CoroutineCompletableCallback<T : Any?>(
+class CoroutineCompletableCallback<T>(
     block: (() -> T)?,
     suspendBlock: (suspend () -> T)?,
     deferred: CompletableDeferred<Any?>

@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
  *
  * @author lix wang
  */
-class CallableFuture<T : Any?>(
+class CallableFuture<T>(
     private val caller: () -> T
 ) : Future<T> {
     private var canceled: Boolean = false
