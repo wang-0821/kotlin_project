@@ -22,6 +22,7 @@ import io.netty.util.internal.PlatformDependent
  * @author lix wang
  */
 object NettyUtils {
+    @JvmStatic
     fun getIoEventLoopGroup(ioThreads: Int): EventLoopGroup {
         var group: EventLoopGroup? = null
         if (PlatformDependent.isOsx()) {
@@ -47,6 +48,7 @@ object NettyUtils {
         )
     }
 
+    @JvmStatic
     @Suppress("UNCHECKED_CAST")
     fun <T : ServerChannel> getServerSocketChannel(): Class<T> {
         var channel: Class<T>? = null
@@ -64,6 +66,7 @@ object NettyUtils {
         return channel ?: NioServerSocketChannel::class.java as Class<T>
     }
 
+    @JvmStatic
     @Suppress("UNCHECKED_CAST")
     fun <T : Channel> getSocketChannel(): Class<T> {
         var channel: Class<T>? = null

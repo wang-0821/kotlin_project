@@ -1,10 +1,12 @@
 package com.xiao.boot.base.env
 
+import com.xiao.base.util.JsonUtils
 import com.xiao.boot.base.parser.StringValueParseResolver
 import com.xiao.boot.base.util.SecureUtils
+import com.xiao.boot.base.util.activeProfileType
 import org.springframework.beans.factory.FactoryBean
-import org.springframework.context.ApplicationContext
-import org.springframework.context.ApplicationContextAware
+import org.springframework.context.EnvironmentAware
+import org.springframework.core.env.Environment
 import java.lang.reflect.Field
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
@@ -15,14 +17,18 @@ import kotlin.reflect.jvm.javaField
  */
 class EnvPropertyFactoryBean<T : Any>(
     private val clazz: Class<T>
-) : FactoryBean<T>, ApplicationContextAware {
-    private lateinit var applicationContext: ApplicationContext
+) : FactoryBean<T>, EnvironmentAware {
+    init {
+        println("init properties factoryBean.")
+    }
+
+    private lateinit var environment: Environment
 
     override fun getObject(): T {
         checkNoArgsConstructorExist(clazz)
         val instance = clazz.newInstance()
-        val envInfoProvider = applicationContext.getBean(EnvInfoProvider::class.java)
-        parseInstanceProperties(instance, envInfoProvider)
+        parseInstanceProperties(instance)
+        println("Create bean ${clazz.name}, ${JsonUtils.serialize(instance)}.")
         return instance
     }
 
@@ -30,8 +36,8 @@ class EnvPropertyFactoryBean<T : Any>(
         return clazz
     }
 
-    override fun setApplicationContext(applicationContext: ApplicationContext) {
-        this.applicationContext = applicationContext
+    override fun setEnvironment(environment: Environment) {
+        this.environment = environment
     }
 
     private fun checkNoArgsConstructorExist(clazz: Class<T>) {
@@ -40,8 +46,8 @@ class EnvPropertyFactoryBean<T : Any>(
         }
     }
 
-    private fun parseInstanceProperties(instance: T, envInfoProvider: EnvInfoProvider) {
-        val profile = envInfoProvider.profile()
+    private fun parseInstanceProperties(instance: T) {
+        val profile = environment.activeProfileType()
         instance::class.memberProperties
             .forEach { kProperty ->
                 val javaField = kProperty.javaField
@@ -75,7 +81,7 @@ class EnvPropertyFactoryBean<T : Any>(
                 check(envProperty.encryptKey.isNotEmpty()) {
                     "Field ${filed.name} encryptKey must not empty."
                 }
-                val encryptKey = applicationContext.environment.getProperty(envProperty.encryptKey)
+                val encryptKey = environment.getProperty(envProperty.encryptKey)
                     ?: throw RuntimeException("Not set environment property of ${envProperty.encryptKey}.")
                 SecureUtils.aesDecrypt(envProperty.value, encryptKey)
             } else {

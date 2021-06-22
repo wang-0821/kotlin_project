@@ -1,4 +1,4 @@
-package com.xiao.boot.base.model
+package com.xiao.boot.base
 
 /**
  *

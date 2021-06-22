@@ -22,6 +22,7 @@ object MetricsUtils {
     private val metricsSummaryMap = ConcurrentHashMap<MetricsEvent, MetricsSummary>()
 
     @ThreadSafe
+    @JvmStatic
     fun recordMetrics(
         type: String,
         state: String,
@@ -72,6 +73,7 @@ object MetricsUtils {
         metricsBufferMap.forEach { (event, buffer) ->
             if (System.currentTimeMillis() - buffer.lastUpdateTime > LEGACY_LAST_MILLS) {
                 metricsBufferMap.remove(event)
+                buffer.close()
             }
         }
     }

@@ -6,6 +6,8 @@ import java.util.concurrent.TimeUnit
  *
  * @author lix wang
  */
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.FUNCTION)
 annotation class ScheduledTask(
     val initialTime: String = "",
     val initial: Long = 0,
