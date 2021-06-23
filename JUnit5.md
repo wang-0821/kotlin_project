@@ -189,3 +189,52 @@ DisplayNameGenerator可以设置显示类型：Standard、Simple、ReplaceUnders
           注册testInstance中被@RegisterExtension注解的Field Extension
                            |
                            V
+            执行[BeforeAllCallback].beforeAll(context)
+                           |
+                           V
+            执行ClassTestDescriptor beforeAllMethods
+                           |
+                           V
+       执行TestMethodTestDescriptor.prepare(JupiterEngineExecutionContext)
+                           |
+                           V
+       根据parent MutableExtensionRegistry和当前TestMethod @ExtendWith，创建MutableExtensionRegistry，并注入Extension
+                           |
+                           V
+       获取testInstance，构建JupiterEngineExecutionContext给NodeTestTask context赋值
+                           |
+                           V
+                       检查是否skip
+                           |
+                           V
+           执行[BeforeEachCallback].beforeEach(context)
+                           |
+                           V
+         执行[BeforeEachMethodAdaptar].invokeBeforeEachMethod(context, registry)
+                           |
+                           V
+         执行[BeforeTestExecutionCallback].beforeTestExecution(context)
+                           |
+                           V
+                    执行testMethod
+                           |
+                           V
+          执行[AfterTestExecutionCallback].afterTestExecution(context)
+                           |
+                           V
+        执行[AfterEachMethodAdaptar].invokeAfterEachMethod(context, registry)
+                           |
+                           V
+            执行[AfterEachCallback].afterEach(context)
+                           |
+                           V
+            执行ClassTestDescriptor afterAllMethods
+                           |
+                           V
+           执行[AfterAllCallback].afterAll(context)
+                           |
+                           V
+       执行[TestInstancePreDestroyCallback].preDestroyTestInstance(context)
+                           |
+                           V
+                           
