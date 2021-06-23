@@ -8,6 +8,7 @@ import javax.net.ssl.SSLSocket
  *
  * @author lix wang
  */
+@FunctionalInterface
 interface SslSocketFactory {
     fun createSSLSocket(socket: Socket, route: Route): SSLSocket
 }

@@ -9,6 +9,7 @@ import java.net.Socket
  *
  * @author lix wang
  */
+@FunctionalInterface
 interface ConnectionFactory {
     fun create(socket: Socket, route: Route, protocol: Protocol = Protocol.HTTP_1_1): Connection
 }

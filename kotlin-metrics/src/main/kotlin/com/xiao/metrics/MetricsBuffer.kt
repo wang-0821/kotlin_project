@@ -56,7 +56,9 @@ class MetricsBuffer(
     }
 
     override fun close() {
-        buffer.close()
+        lock.use {
+            buffer.close()
+        }
     }
 
     companion object {

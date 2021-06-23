@@ -1,6 +1,7 @@
 package com.xiao.boot.base.env
 
 import com.xiao.boot.base.env.EnvConstants.DEFAULT_SERVER_PORT
+import com.xiao.boot.base.util.activeProfileType
 import org.springframework.context.EnvironmentAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -16,8 +17,8 @@ class EnvInfoConfiguration : EnvironmentAware {
     private lateinit var environment: Environment
 
     @Bean
-    fun envConstants(): com.xiao.boot.base.env.EnvInfoProvider {
-        return com.xiao.boot.base.env.WebServerEnvInfoProvider(getIp(), getHost(), getPort(), getProfile())
+    fun envInfoProvider(): EnvInfoProvider {
+        return WebServerEnvInfoProvider(getIp(), getHost(), getPort(), environment.activeProfileType())
     }
 
     override fun setEnvironment(environment: Environment) {
@@ -34,17 +35,5 @@ class EnvInfoConfiguration : EnvironmentAware {
 
     private fun getPort(): Int {
         return environment.getProperty("server.port", Int::class.java) ?: DEFAULT_SERVER_PORT
-    }
-
-    private fun getProfile(): com.xiao.boot.base.env.ProfileType {
-        val profiles = environment.activeProfiles
-            .mapNotNullTo(HashSet()) {
-                com.xiao.boot.base.env.ProfileType.Companion.match(it)
-            }
-        assert(profiles.size == 1) {
-            "Environment must have only one activate profile, " +
-                "current found ${profiles.joinToString { it.profileName } }."
-        }
-        return profiles.first()
     }
 }

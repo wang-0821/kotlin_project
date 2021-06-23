@@ -40,7 +40,7 @@ object IoUtils {
     @JvmStatic
     fun asString(
         inputStream: InputStream,
-        charset: Charset,
+        charset: Charset = Charsets.UTF_8,
         length: Long = -1,
         byteArray: ByteArray? = null,
         charArray: CharArray? = null,

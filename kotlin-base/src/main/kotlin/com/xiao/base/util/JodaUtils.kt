@@ -15,10 +15,12 @@ object JodaTimeUtils {
     @JvmField
     val CST_TIME_ZONE: DateTimeZone = DateTimeZone.forID("Asia/Shanghai")
 
+    @JvmStatic
     fun fromUtcString(timeString: String): DateTime {
         return DateTime.parse(timeString).withZone(DateTimeZone.UTC)
     }
 
+    @JvmStatic
     fun fromCstString(timeString: String): DateTime {
         return DateTime.parse(timeString).withZone(CST_TIME_ZONE)
     }

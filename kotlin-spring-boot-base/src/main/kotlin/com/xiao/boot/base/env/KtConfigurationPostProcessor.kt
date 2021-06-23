@@ -41,7 +41,7 @@ class KtConfigurationPostProcessor : BeanDefinitionRegistryPostProcessor {
         val newBeanDefinition = GenericBeanDefinition()
             .apply {
                 isPrimary = true
-                factoryBeanName = EnvPropertyFactoryBean::class.java.name
+                beanClass = EnvPropertyFactoryBean::class.java
                 constructorArgumentValues = ConstructorArgumentValues()
                     .apply {
                         addGenericArgumentValue(clazz)
