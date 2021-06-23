@@ -6,10 +6,8 @@ import com.xiao.base.util.JsonUtils
  *
  * @author lix wang
  */
-class ObjectJsonKtParser<T>(
-    private val clazz: Class<T>
-) : KtParser<T> {
-    override fun parse(value: String): T {
+object JsonKtObjectParser : KtObjectParser {
+    override fun <T> parse(value: String, clazz: Class<T>): T {
         return JsonUtils.deserialize(value, clazz)
     }
 }

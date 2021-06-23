@@ -1,7 +1,5 @@
 package com.xiao.boot.base.env
 
-import com.xiao.base.util.JsonUtils
-import com.xiao.boot.base.DemoEnvConfig
 import com.xiao.boot.base.env.EnvConstants.DEFAULT_SERVER_PORT
 import com.xiao.boot.base.util.activeProfileType
 import org.springframework.context.EnvironmentAware
@@ -19,8 +17,7 @@ class EnvInfoConfiguration : EnvironmentAware {
     private lateinit var environment: Environment
 
     @Bean
-    fun envInfoProvider(demoEnvConfig: DemoEnvConfig): EnvInfoProvider {
-        println(JsonUtils.serialize(demoEnvConfig))
+    fun envInfoProvider(): EnvInfoProvider {
         return WebServerEnvInfoProvider(getIp(), getHost(), getPort(), environment.activeProfileType())
     }
 

@@ -30,36 +30,40 @@ object StringValueParseResolver {
 
     private fun parseValue(type: Type, value: String): Any {
         return if (type.isBoolean()) {
-            BooleanKtParser.parse(value)
+            value.toBoolean()
         } else if (type.isByte()) {
-            ByteKtParser.parse(value)
+            value.toByte()
         } else if (type.isShort()) {
-            ShortKtParser.parse(value)
+            value.toShort()
         } else if (type.isInt()) {
-            IntKtParser.parse(value)
+            value.toInt()
         } else if (type.isLong()) {
-            LongKtParser.parse(value)
+            value.toLong()
         } else if (type.isFloat()) {
-            FloatKtParser.parse(value)
+            value.toFloat()
         } else if (type.isDouble()) {
-            DoubleKtParser.parse(value)
+            value.toDouble()
         } else if (type.isMap()) {
             if (type is ParameterizedType) {
-                MapJsonKtParser(
+                MapJsonKtParser.parse(
+                    value,
                     type.actualTypeArguments[0] as Class<*>,
                     type.actualTypeArguments[1] as Class<*>
-                ).parse(value)
+                )
             } else {
-                MapJsonKtParser(Any::class.java, Any::class.java).parse(value)
+                MapJsonKtParser.parse(value, Any::class.java, Any::class.java)
             }
         } else if (type.isList()) {
             if (type is ParameterizedType) {
-                ListJsonKtParser(type.actualTypeArguments[0] as Class<*>).parse(value)
+                ListJsonKtParser.parse(value, type.actualTypeArguments[0] as Class<*>)
             } else {
-                ListJsonKtParser(Any::class.java).parse(value)
+                ListJsonKtParser.parse(value, Any::class.java)
             }
         } else {
-            throw UnsupportedOperationException("Unsupported envProperty parser for ${type.typeName}.")
+            (type as? Class<*>)
+                ?.let {
+                    JsonKtObjectParser.parse(value, it)
+                } ?: throw UnsupportedOperationException("Unsupported parse type ${type.typeName}.")
         }
     }
 }
