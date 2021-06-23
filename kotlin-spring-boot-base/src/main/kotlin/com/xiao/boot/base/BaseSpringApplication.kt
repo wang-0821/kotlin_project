@@ -9,13 +9,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
  */
 @SpringBootApplication
 abstract class BaseSpringApplication {
-    fun init() {
-        // Set text banner location, default location is "banner.txt".
-        System.setProperty("spring.banner.location", "lix-banner.txt")
-    }
-
-    fun start(clazz: Class<*>, vararg args: String) {
-        init()
-        SpringApplication.run(clazz, *args)
+    companion object {
+        fun start(clazz: Class<*>, vararg args: String) {
+            SpringApplication.run(clazz, *args)
+        }
     }
 }
