@@ -1,4 +1,4 @@
-package com.xiao.boot.base.env
+package com.xiao.boot.base.property
 
 import com.xiao.boot.base.util.className
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition
