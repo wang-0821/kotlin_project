@@ -1,7 +1,7 @@
 * [1.JUnit5组成](#1)
 * [2.注解](#2)
 * [3.测试类与测试方法](#3)
-
+* [4.@SpringBootTest](#4)
 
 <h2 id="1">1.JUnit5组成</h2>
 &emsp;&emsp; JUnit5由JUnit Platform、JUnit Jupiter、JUnit Vintage三部分组成。JUnit Platform提供了运行单元测试的能力，定义了TestEngine API，
@@ -232,3 +232,98 @@ DisplayNameGenerator可以设置显示类型：Standard、Simple、ReplaceUnders
         |                                   |
         |    ClassTestDescriptor loop       V
         --------执行[TestInstancePreDestroyCallback].preDestroyTestInstance(context)
+
+<h2 id="4">4.@SpringBootTest</h2>
+&emsp;&emsp; 在SpringBoot框架中使用JUnit5测试时，需要在测试类上添加@SpringBootTest注解。
+使用了@SpringBootTest注解的测试类，执行流程跟普通的测试类是一样的，本质上@SpringBootTest
+被@ExtendWith(SpringExtension.class)所注解，因此@SpringBootTest注解的测试类跟普通的测试类相比，
+只是多了一个SpringExtension。@SpringBootTest中classes属性，是SpringApplication中的primarySources。
+
+### SpringExtension
+&emsp;&emsp; SpringExtension实现了：TestInstancePostProcessor、BeforeAllCallback、AfterAllCallback、
+BeforeEachCallback、AfterEachCallback、BeforeTestExecutionCallback、AfterTestExecutionCallback、ParameterResolver。
+
+    @SpringBootTest被@BootstrapWith(SpringBootTestContextBootstrapper.class)注解。
+
+    1，SpringExtension.postProcessTestInstance(testInstance, extensionContext)：
+        创建BootstrapContext DefaultBootstrapContext(testClass, DefaultCacheAwareContextLoaderDelegate)
+                                                |
+                                                V
+                    根据testClass @BootstrapWith 获取TestContextBootstrapper
+                                                |
+                                                V
+                       构建DefaultTestContext TestContext 并设置activateListener配置的值
+                                                |
+                                                V
+                        根据TestContextBootstrapper创建TestContextManager
+                                                |
+                                                V
+               根据testClass @TestExecutionListeners获取TestExecutionListener集合
+                                                |
+                 --------------------------------------------------------------------
+                | 找到了listeners                                                    | 没有找到listeners
+                V                                                                   V
+     返回listeners[Class<TestExecutionListener>]      查找spring.factories org.springframework.test.context.TestExecutionListener
+                |                                                                   |
+                |                                                                   V
+                |                                         获取spring.factories DefaultTestExecutionListenersPostProcessor
+                |                                                                   |
+                |                                                                   V
+                |                     执行[DefaultTestExecutionListenersPostProcessor].postProcessDefaultTestExecutionListeners(listeners)
+                |                                                                   |
+                |                                                                   V
+                |                                            返回执行结果作为listeners [Class<TestExecutionListener>]
+                |                                                                   |
+                 --------------------------------------------------------------------
+                                                |
+                                                V     
+                                       初始化所有listeners
+                                                |
+                                                V
+                  向TestContextManager中注册listeners对象 (getTestContextManager完成)
+                                                |
+                                                V
+                    执行[TestExecutionListener].prepareTestInstance(testContext)
+                    
+    2，SpringExtension.beforeAll(context): 
+        获取TestContextManager，根据TestContextManager中的testExecutionListeners，
+        执行[TestExecutionListener].beforeTestClass(testContext)。
+        
+    3，SpringExtension.beforeEach(context): 
+        获取TestContextManager，根据TestContextManager中的testExecutionListeners，
+        执行[TestExecutionListener].beforeTestMethod(testContext)。
+        
+    4，SpringExtension.beforeTestExecution(context)：
+        获取TestContextManager，根据TestContextManager中的testExecutionListeners，
+        执行[TestExecutionListener].beforeTestExecution(testContext)。
+        
+    5，SpringExtension.afterTestExecution(context):
+        获取TestContextManager，根据TestContextManager中的testExecutionListeners，
+        执行[TestExecutionListener].afterTestExecution(testContext)。
+        
+    6，SpringExtension.afterEach(context):
+        获取TestContextManager，根据TestContextManager中的testExecutionListeners，
+        执行[TestExecutionListener].afterEach(testContext)。
+        
+    7，SpringExtension.afterAll(context):
+        获取TestContextManager，根据TestContextManager中的testExecutionListeners，
+        执行[TestExecutionListener].afterTestClass(testContext)。
+        
+### TestExecutionListener
+&emsp;&emsp; 使用spring-boot-starter-test，spring.factories中配置了15种TestExecutionListener。
+
+    RestDocsTestExecutionListener
+    MockRestServiceServerResetTestExecutionListener
+    MockMvcPrintOnlyOnFailureTestExecutionListener
+    WebDriverTestExecutionListener
+    MockWebServiceServerTestExecutionListener
+    MockitoTestExecutionListener
+    ResetMocksTestExecutionListener
+    ServletTestExecutionListener
+    DirtiesContextBeforeModesTestExecutionListener
+    ApplicationEventsTestExecutionListener
+    SpringBootDependencyInjectionTestExecutionListener
+    DirtiesContextTestExecutionListener
+    TransactionalTestExecutionListener
+    SqlScriptsTestExecutionListener
+    EventPublishingTestExecutionListener
