@@ -1,2 +1,5 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
 com.xiao.boot.base.KtSpringBootBaseAutoConfiguration
+
+org.springframework.boot.test.context.DefaultTestExecutionListenersPostProcessor=\
+com.xiao.boot.base.testing.TestExecutionListenerFilterPostProcessor
