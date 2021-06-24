@@ -1,5 +1,6 @@
-package com.xiao.boot.base.env
+package com.xiao.boot.base.property
 
+import com.xiao.boot.base.env.ProfileType
 import com.xiao.boot.base.parser.StringValueParseResolver
 import com.xiao.boot.base.util.SecureUtils
 import com.xiao.boot.base.util.activeProfileType

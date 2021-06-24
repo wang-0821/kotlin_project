@@ -18,7 +18,7 @@ class EnvInfoConfiguration : EnvironmentAware {
 
     @Bean
     fun envInfoProvider(): EnvInfoProvider {
-        return WebServerEnvInfoProvider(getIp(), getHost(), getPort(), environment.activeProfileType())
+        return DefaultEnvInfoProvider(getIp(), getHost(), getPort(), environment.activeProfileType())
     }
 
     override fun setEnvironment(environment: Environment) {

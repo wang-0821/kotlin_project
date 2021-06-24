@@ -1,4 +1,4 @@
-package com.xiao.boot.base.env
+package com.xiao.boot.base.property
 
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.FIELD)

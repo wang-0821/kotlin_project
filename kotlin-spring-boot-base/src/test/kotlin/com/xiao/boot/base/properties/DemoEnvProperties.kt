@@ -1,10 +1,10 @@
 package com.xiao.boot.base.properties
 
-import com.xiao.boot.base.env.EnvProperties
-import com.xiao.boot.base.env.EnvProperty
-import com.xiao.boot.base.env.KtConfiguration
 import com.xiao.boot.base.env.ProfileType
 import com.xiao.boot.base.model.EnvConfigModel
+import com.xiao.boot.base.property.EnvProperties
+import com.xiao.boot.base.property.EnvProperty
+import com.xiao.boot.base.property.KtConfiguration
 
 @KtConfiguration
 class DemoEnvProperties {
