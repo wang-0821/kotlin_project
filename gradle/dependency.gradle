@@ -28,7 +28,8 @@ dependencyManagement {
         dependency "com.pinterest:ktlint:0.40.0"
 
         // database
-        dependency "org.mybatis:mybatis:3.5.5"
+        dependency "org.mybatis:mybatis:3.5.7"
+        dependency "org.mybatis:mybatis-spring:2.0.6"
         dependency "org.flywaydb:flyway-core:$flywayVersion"
         dependency "mysql:mysql-connector-java:8.0.21"
         dependency "com.zaxxer:HikariCP:3.4.5"
@@ -44,10 +45,14 @@ dependencyManagement {
         //redis
         dependency "io.lettuce:lettuce-core:6.0.2.RELEASE"
 
-        //spring
+        //spring boot
         dependencySet(group: "org.springframework.boot", version: "2.5.0") {
             entry "spring-boot-starter"
             entry "spring-boot-starter-test"
+        }
+        // spring framework
+        dependencySet(group: "org.springframework", version: "5.3.7") {
+            entry "spring-tx"
         }
     }
 }
