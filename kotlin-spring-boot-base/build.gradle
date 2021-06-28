@@ -1,5 +1,3 @@
-apply plugin: "kotlin-spring"
-
 dependencies {
     api project(":kotlin-base")
     api "org.springframework.boot:spring-boot-starter"

@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Import
  *
  * @author lix wang
  */
-
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
 @Import(KtSpringDatabaseRegistrar::class)

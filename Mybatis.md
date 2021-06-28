@@ -91,9 +91,9 @@ SqlSessionFactoryBuilder可以从XML配置文件或者一个预先配置的Confi
     </dataSource>
     
     // 这个特性默认是关闭的，如果要开启，需要添加特定属性来开启。
-    <properties resource="org/.../config.properties">
+    <com.xiao.boot.mybatis.properties resource="org/.../config.com.xiao.boot.mybatis.properties">
         <property name="org.apache.ibatis.parsing.PropertyParser.enable-default-value" value="true"> <!-- 启用默认值特性 -->
-    </properties>
+    </com.xiao.boot.mybatis.properties>
     
 ### 设置
 &emsp;&emsp; 这是MyBatis中调整设置，会改变MyBatis的运行时行为。
@@ -197,15 +197,15 @@ SqlSessionFactoryBuilder可以从XML配置文件或者一个预先配置的Confi
         @Signature(type= Executor.class, method = "update", args = {MappedStatement.class,Object.class})
     })
     public class ExamplePlugin implements Interceptor {
-      private Properties properties = new Properties();
+      private Properties com.xiao.boot.mybatis.properties = new Properties();
       public Object intercept(Invocation invocation) throws Throwable {
         // implement pre processing if need
         Object returnObject = invocation.proceed();
         // implement post processing if need
         return returnObject;
       }
-      public void setProperties(Properties properties) {
-        this.properties = properties;
+      public void setProperties(Properties com.xiao.boot.mybatis.properties) {
+        this.com.xiao.boot.mybatis.properties = com.xiao.boot.mybatis.properties;
       }
     }
     

@@ -1,8 +1,16 @@
 package com.xiao.boot.mybatis.annotation
 
-import com.xiao.base.logging.Logging
+import com.xiao.boot.mybatis.bean.BaseDatabase.Companion.dataSourceName
+import com.xiao.boot.mybatis.bean.BaseDatabase.Companion.sqlSessionFactoryName
+import com.xiao.boot.mybatis.bean.KtDataSourceFactoryBean
+import com.xiao.boot.mybatis.bean.KtMapperFactoryBean
+import com.xiao.boot.mybatis.bean.KtSqlSessionFactoryBean
 import org.mybatis.spring.mapper.ClassPathMapperScanner
+import org.springframework.beans.factory.config.ConstructorArgumentValues
+import org.springframework.beans.factory.config.RuntimeBeanReference
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
+import org.springframework.beans.factory.support.BeanNameGenerator
+import org.springframework.beans.factory.support.GenericBeanDefinition
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar
 import org.springframework.core.annotation.AnnotationAttributes
@@ -17,7 +25,8 @@ import org.springframework.util.StringUtils
 class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
     override fun registerBeanDefinitions(
         importingClassMetadata: AnnotationMetadata,
-        registry: BeanDefinitionRegistry
+        registry: BeanDefinitionRegistry,
+        importBeanNameGenerator: BeanNameGenerator
     ) {
         AnnotationAttributes.fromMap(
             importingClassMetadata.getAnnotationAttributes(KtSpringDatabase::class.java.name)
@@ -27,33 +36,61 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
     }
 
     private fun registerDatabase(
-        annotationMetadata: AnnotationMetadata,
+        importingClassMetadata: AnnotationMetadata,
         annotationAttributes: AnnotationAttributes,
         registry: BeanDefinitionRegistry
     ) {
         val name = annotationAttributes.getString("name")
         val mapperBasePackage = annotationAttributes.getString("mapperBasePackage")
         val mapperXmlPattern = annotationAttributes.getString("mapperXmlPattern")
-        val dataScriptPattern = annotationAttributes.getString("dataScriptPattern")
         check(!name.isNullOrEmpty() && !mapperBasePackage.isNullOrEmpty())
         val mapperBasePackages = StringUtils.tokenizeToStringArray(
             mapperBasePackage,
             ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS
         )
 
-        val scanner = ClassPathMapperScanner(registry)
-        scanner.registerFilters()
-        val beanDefinitionHolders = scanner.doScan(mapperBasePackage)
-        val xmlMapperResources = (scanner.resourceLoader as ResourcePatternResolver).getResources(mapperXmlPattern)
-        if (beanDefinitionHolders.isNullOrEmpty() && xmlMapperResources.isNullOrEmpty()) {
-            if (log.isInfoEnabled) {
-                log.info("No mapper found for database $name.")
+        // register database bean
+        val beanClassName = importingClassMetadata.className
+        val beanNames = registry.beanDefinitionNames
+            .filter { beanDefinitionName ->
+                registry.getBeanDefinition(beanDefinitionName).beanClassName == beanClassName
             }
-            return
-        }
+        check(beanNames.size == 1)
+        val databaseBeanName = beanNames.first()
 
+        // register mapper beanDefinition
+        val scanner = ClassPathMapperScanner(registry)
+            .apply {
+                setMapperFactoryBeanClass(KtMapperFactoryBean::class.java)
+                setSqlSessionFactoryBeanName(sqlSessionFactoryName(name))
+                registerFilters()
+                doScan(*mapperBasePackages)
+            }
+        val xmlMapperResources = (scanner.resourceLoader as ResourcePatternResolver).getResources(mapperXmlPattern)
 
+        // register dataSource beanDefinition
+        val dataSourceBeanName = dataSourceName(name)
+        registry.registerBeanDefinition(
+            dataSourceBeanName,
+            GenericBeanDefinition()
+                .apply {
+                    beanClass = KtDataSourceFactoryBean::class.java
+                    propertyValues.add("database", RuntimeBeanReference(databaseBeanName))
+                }
+        )
+
+        // register sqlSessionFactory beanDefinition
+        registry.registerBeanDefinition(
+            sqlSessionFactoryName(name),
+            GenericBeanDefinition()
+                .apply {
+                    beanClass = KtSqlSessionFactoryBean::class.java
+                    constructorArgumentValues = ConstructorArgumentValues()
+                        .apply {
+                            addGenericArgumentValue(xmlMapperResources)
+                        }
+                    propertyValues.add("dataSource", RuntimeBeanReference(dataSourceBeanName))
+                }
+        )
     }
-
-    companion object : Logging()
 }
