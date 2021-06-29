@@ -327,3 +327,70 @@ BeforeEachCallback、AfterEachCallback、BeforeTestExecutionCallback、AfterTest
     TransactionalTestExecutionListener
     SqlScriptsTestExecutionListener
     EventPublishingTestExecutionListener
+
+### TestContextManager
+&emsp;&emsp; 在SpringExtension中，上下文信息是放在TestContext中的，而TestContext是从TestContextManager中获取的。
+
+    创建TestContextManager流程：
+                先创建DefaultCacheAwareContextLoaderDelegate对象
+                                    |
+                                    V
+      根据testClass和CacheAwareContextLoaderDelegate创建DefaultBootstrapContext
+                                    |
+                                    V
+    根据testClass上的@BootstrapWith获取TestContextBootstrapper(SpringBootTestContextBootstrapper)
+                                    |
+                                    V
+       创建TestContextBootstrapper对象，并设置其bootstrapContext为之前的DefaultBootstrapContext
+                                    |
+                                    V
+      执行TestContextBootstrapper.buildTestContext()，将其值设置为TestContextManager的testContext
+                 | testClass没有@ContextConfiguration、                              | 有注解
+                 V @ContextHierarchy                                                V                              
+      根据testClass和@SpringBootTest.classes创建ContextConfigurationAttributes  根据注解创建[ContextConfigurationAttributes]
+                    |                                                               |
+                     ---------------------------------------------------------------
+                                    |
+                                    V
+       将@SpringBootTest中的classes添加到每个ContextConfigurationAttributes中的classes中
+                                    |
+                                    V
+       获取任一ContextConfigurationAttributes中的contextLoaderClass，找不到默认SpringBootContextLoader
+                                    |
+                                    V
+                 根据contextLoaderClass创建ContextLoader对象
+                                    |                                         
+                                    V                                                               
+       根据contextLoader类型，执行SmartContextLoader.processContextConfiguration(configAttributes) 或者
+                    ContextLoader.processLocations(clazz, ...locations)
+                                    |
+                                    V
+            从spring.factories中获取[ContextCustomizerFactory]
+                                    |
+                                    V
+      执行[ContextCustomizerFactory].createContextCustomizer(testClass, [ContextConfigurationAttributes])
+                                    |
+                                    V
+      根据testClass上的@TestPropertySource构建MergedTestPropertySources
+                                    |
+                                    V
+             根据testClass的@ActiveProfiles来解析activeProfiles
+                                    |
+                                    V
+        根据[ContextConfigurationAttributes]、testClass、MergedTestPropertySources、
+            activeProfiles、[ContextCustomizer]创建MergedContextConfiguration
+                                    |
+                                    V
+                    处理MergedContextConfiguration
+                                    |
+                                    V
+         使用testClass、MergedContextConfiguration、CacheAwareContextLoaderDelegate 创建DefaultTestContext
+                                    |
+                                    V
+              向TestContextManager中注册[TestExecutionListener]
+                                    |
+                                    V
+                         TestContextManager创建完毕
+                                    
+
+        
