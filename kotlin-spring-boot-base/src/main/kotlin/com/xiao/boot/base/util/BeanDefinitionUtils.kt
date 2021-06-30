@@ -17,9 +17,9 @@ fun Environment.activeProfileType(): ProfileType {
         .mapNotNullTo(HashSet()) {
             ProfileType.match(it)
         }
-    assert(profiles.size == 1) {
-        "Environment must have only one activate profile, " +
-            "current found ${profiles.joinToString { it.profileName } }."
+    check(profiles.size == 1) {
+        "Environment must have only 1 activate profile, " +
+            "current found ${profiles.size}."
     }
     return profiles.first()
 }

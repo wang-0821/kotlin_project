@@ -1,6 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'idea'
 apply plugin: 'kotlin'
+apply plugin: "kotlin-spring"
 
 apply from: rootProject.file("gradle/ktlint.gradle")
 apply from: rootProject.file("gradle/dependency.gradle")

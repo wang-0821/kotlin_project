@@ -205,7 +205,7 @@ SqlSessionFactoryBuilder可以从XML配置文件或者一个预先配置的Confi
         return returnObject;
       }
       public void setProperties(Properties properties) {
-        this.properties = properties;
+        this.com.xiao.boot.mybatis.properties = properties;
       }
     }
     
