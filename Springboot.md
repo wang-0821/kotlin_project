@@ -486,6 +486,65 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
      ---------------------------------- V
                                 完成BeanDefinition的注册
 
+### @Component和@Configuration的区别
+&emsp;&emsp; @Configuration被@Component注解，@Configuration是一种特殊的@Component，
+ConfigurationClassPostProcessor.postProcessBeanDefinitionRegistry(registry)
+会扫描出BeanDefinition，然后会对BeanDefinition集合依次执行checkConfigurationClassCandidate。
+
+    1，如果BeanDefinition的beanClass被@Configuration所注解，并且@Configuration.proxyBeanMethods为true，
+    	那么会给当前BeanDefinition设置attributes：
+	org.springframework.context.annotation.ConfigurationClassPostProcessor.configurationClass = full。
+    2，BeanDefinition是ConfigurationClassCandidate，但不满足条件1，那么会设置attributes：
+    	org.springframework.context.annotation.ConfigurationClassPostProcessor.configurationClass = lite。
+   
+    Map<String, Object> config = metadata.getAnnotationAttributes(Configuration.class.getName());
+    if (config != null && !Boolean.FALSE.equals(config.get("proxyBeanMethods"))) {		
+	beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
+    }
+    else if (config != null || isConfigurationCandidate(metadata)) {
+	beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
+    }
+    else {
+	return false;
+    }
+    
+<br>
+&emsp;&emsp; 在执行ConfigurationClassPostProcessor.postProcessBeanFactory(beanFactory)时，
+会先对所有org.springframework.context.annotation.ConfigurationClassPostProcessor.configurationClass = true
+的BeanDefinition集合，使用ConfigurationClassEnhancer进行CGLIB增强，也就意味着BeanDefinition中的beanClass会被
+CGLIB增强后的class所代替。
+
+    // 下面这个test，由于@Configuration bean使用了CGLIB增强，因此在bean内部调用createClassB时，
+    // 并不会再次创建ClassB对象，而是使用已经存在的ClassB bean对象。如果将@Configuration换成
+    // @Component，那么这个test将会失败。
+    
+    @Configuration
+    class DemoConfiguration {
+        @Bean
+        fun createClassA(): ClassA {
+            return ClassA(createClassB())
+        }
+
+        @Bean
+        fun createClassB(): ClassB {
+            return ClassB()
+        }
+    }
+
+    @SpringBootTest(classes = [KtSpringBootBaseAutoConfiguration::class])
+    class ConfigurationEnhancerTest : KtTestBase() {
+        @Autowired
+        lateinit var classA: ClassA
+
+        @Autowired
+        lateinit var classB: ClassB
+
+        @Test
+        fun `test configuration bean method enhancer`() {
+            Assertions.assertEquals(classA.classB, classB)
+        }
+    }
+
 <h2 id="4">4.SpringBoot自动配置</h2>
 &emsp;&emsp; SpringBoot应用都会被@SpringBootApplication所注解，@SpringBootApplication注解被@EnableAutoConfiguration注解，
 @EnableAutoConfiguration注解被@Import(AutoConfigurationImportSelector.class)所注解，因此在SpringBootApplication启动时，
