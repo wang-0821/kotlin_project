@@ -52,7 +52,7 @@ JUnit Vintage 提供了一个TestEngine用来兼容JUnit 3和JUnit 4。
 ### Display Name Generators
 &emsp;&emsp; Jupiter能够自定义展示名称，通过@DisplayNameGeneration注解配置。通过@DisplayName注解提供值。
 DisplayNameGenerator可以设置显示类型：Standard、Simple、ReplaceUnderscores、IndicativeSentences。
-可以设置默认的DisplayNameGenerator，在/test/resources/junit-platform.com.xiao.boot.mybatis.properties 中设置。
+可以设置默认的DisplayNameGenerator，在/test/resources/junit-platform.properties 中设置。
 
     junit.jupiter.displayname.generator.default = \
         org.junit.jupiter.api.DisplayNameGenerator$ReplaceUnderscores

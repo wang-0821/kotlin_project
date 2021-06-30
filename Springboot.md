@@ -18,7 +18,7 @@ buildSrc主要实现了一些构建工具和插件。spring-boot-tests包含集�
         7，spring-boot-devtools，跟SpringBoot的热部署有关。
         8，spring-boot-docs，SpringBoot文档相关。
         9，spring-boot-parent，在spring-boot-dependencies之外定义了一些依赖。
-        10，spring-boot-com.xiao.boot.mybatis.properties-migrator，高版本很多配置属性已经被重命名或者删除，用这个模块可以打印诊断信息，
+        10，spring-boot-properties-migrator，高版本很多配置属性已经被重命名或者删除，用这个模块可以打印诊断信息，
             并在运行时临时为项目迁移属性，可以用于应用程序升级迁移。
         11，spring-boot-starters，由于spring-boot-autoconfigure包含的依赖都是optional引入的，因此这个模块用来引入依赖。
         12，spring-boot-test，测试相关的模块。
@@ -66,7 +66,7 @@ listeners。最后根据异常栈的mian方法，获取到当前SpringApplicatio
         BackgroundPreinitializer：用一个并行线程来执行一些耗时的初始化任务，当收到ApplicationReadyEvent或者
 	    ApplicationFailedEvent时，会阻塞当前并行线程等待完成。包括执行类型转换初始化器、验证初始化器、消息转换初始化器、jackson初始化器、字符集初始化器。
             
-    spring-boot-com.xiao.boot.mybatis.properties-migrator中：
+    spring-boot-properties-migrator中：
         PropertiesMigrationListener：接收ApplicationPreparedEvent处理配置项转换，当接收到ApplicationReadyEvent或者ApplicationFailedEvent时打印出过期的配置报告。
             
     spring-boot-devtools中：
@@ -91,7 +91,7 @@ listeners。最后根据异常栈的mian方法，获取到当前SpringApplicatio
 &emsp;&emsp; 在SpringBoot各模块spring.factories中，配置了9种EnvironmentPostProcessor。
 
     spring-boot-autoconfigure中：
-        IntegrationPropertiesEnvironmentPostProcessor：向environment中添加配置META-INF/spring.integration.com.xiao.boot.mybatis.properties。
+        IntegrationPropertiesEnvironmentPostProcessor：向environment中添加配置META-INF/spring.integration.properties。
     
     spring-boot-devtools中：
         DevToolsHomePropertiesPostProcessor：向environment中添加开发工具配置项。
@@ -99,7 +99,7 @@ listeners。最后根据异常栈的mian方法，获取到当前SpringApplicatio
 	
     spring-boot中：
         CloudFoundryVcapEnvironmentPostProcessor：用于设置CloudFoundry框架vcap配置，没有开启不会执行。
-	    ConfigDataEnvironmentPostProcessor：用来解析application.com.xiao.boot.mybatis.properties。
+	    ConfigDataEnvironmentPostProcessor：用来解析application.properties。
 	    RandomValuePropertySourceEnvironmentPostProcessor：向environment中添加RandomValuePropertySource。
 	    SpringApplicationJsonEnvironmentPostProcessor：根据spring.application.json或者SPRING_APPLICATION_JSON，
             解析json并向environment中设置配置。
