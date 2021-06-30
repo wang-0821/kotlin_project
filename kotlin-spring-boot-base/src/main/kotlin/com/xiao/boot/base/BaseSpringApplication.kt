@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 @SpringBootApplication
 abstract class BaseSpringApplication {
     companion object {
+        @JvmStatic
         fun start(clazz: Class<*>, vararg args: String) {
             SpringApplication.run(clazz, *args)
         }
