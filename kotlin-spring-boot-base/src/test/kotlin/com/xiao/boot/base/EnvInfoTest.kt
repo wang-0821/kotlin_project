@@ -1,6 +1,7 @@
 package com.xiao.boot.base
 
 import com.xiao.base.testing.KtTestBase
+import com.xiao.boot.base.autoconfiguration.KtSpringBootBaseAutoConfiguration
 import com.xiao.boot.base.env.EnvInfoProvider
 import com.xiao.boot.base.env.ProfileType
 import org.junit.jupiter.api.Assertions

@@ -1,6 +1,7 @@
 package com.xiao.boot.base
 
 import com.xiao.base.testing.KtTestBase
+import com.xiao.boot.base.autoconfiguration.KtSpringBootBaseAutoConfiguration
 import com.xiao.boot.base.properties.ClassA
 import com.xiao.boot.base.properties.ClassB
 import org.junit.jupiter.api.Assertions

@@ -1,4 +1,4 @@
-package com.xiao.boot.base
+package com.xiao.boot.base.autoconfiguration
 
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
