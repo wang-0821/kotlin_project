@@ -29,17 +29,18 @@ abstract class BaseDatabase(
     }
 
     open fun initDataSource(): DataSource {
-        return HikariDataSource(HikariConfig()
-            .apply {
-                username = this@BaseDatabase.username
-                password = this@BaseDatabase.password
-                jdbcUrl = this@BaseDatabase.url
-                maximumPoolSize = 32
-                minimumIdle = 1
-                connectionTimeout = 5000
-                idleTimeout = 60000
-                initializationFailTimeout = 0
-            }
+        return HikariDataSource(
+            HikariConfig()
+                .apply {
+                    username = this@BaseDatabase.username
+                    password = this@BaseDatabase.password
+                    jdbcUrl = this@BaseDatabase.url
+                    maximumPoolSize = 32
+                    minimumIdle = 1
+                    connectionTimeout = 5000
+                    idleTimeout = 60000
+                    initializationFailTimeout = 0
+                }
         )
     }
 
