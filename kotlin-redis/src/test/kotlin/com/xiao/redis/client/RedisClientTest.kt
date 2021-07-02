@@ -62,14 +62,18 @@ class RedisClientTest : KtTestBase() {
     fun `test getting multiple key asynchronously`() {
         val redisCommand = RedisHelper.getRedisAsyncService(REDIS_URL)
         val setFutures = (0..9).map { redisCommand.set("key-$it", "value-$it") }
+        println("set future done.")
         LettuceFutures.awaitAll(1, TimeUnit.MINUTES, *setFutures.toTypedArray())
+        println("await all set future done.")
         Assertions.assertEquals(
             setFutures.filter { it.isDone && it.get() == CommonConstants.STATUS_OK }.size,
             10
         )
 
         val results = (0..9).map { redisCommand.get("key-$it") }
+        println("get future done.")
         LettuceFutures.awaitAll(1, TimeUnit.MINUTES, *results.toTypedArray())
+        println("await all get future done.")
         Assertions.assertEquals(results.filter { it.isDone && it.get().startsWith("value-") }.size, 10)
     }
 
