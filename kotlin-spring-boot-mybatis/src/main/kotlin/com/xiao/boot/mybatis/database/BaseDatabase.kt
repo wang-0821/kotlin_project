@@ -1,4 +1,4 @@
-package com.xiao.boot.mybatis.bean
+package com.xiao.boot.mybatis.database
 
 import com.xiao.boot.mybatis.annotation.KtSpringDatabase
 import com.zaxxer.hikari.HikariConfig

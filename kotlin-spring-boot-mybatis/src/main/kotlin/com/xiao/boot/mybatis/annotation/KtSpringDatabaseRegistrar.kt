@@ -1,10 +1,10 @@
 package com.xiao.boot.mybatis.annotation
 
-import com.xiao.boot.mybatis.bean.BaseDatabase.Companion.dataSourceName
-import com.xiao.boot.mybatis.bean.BaseDatabase.Companion.sqlSessionFactoryName
 import com.xiao.boot.mybatis.bean.KtDataSourceFactoryBean
 import com.xiao.boot.mybatis.bean.KtMapperFactoryBean
 import com.xiao.boot.mybatis.bean.KtSqlSessionFactoryBean
+import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceName
+import com.xiao.boot.mybatis.database.BaseDatabase.Companion.sqlSessionFactoryName
 import org.mybatis.spring.mapper.ClassPathMapperScanner
 import org.springframework.beans.factory.config.ConstructorArgumentValues
 import org.springframework.beans.factory.config.RuntimeBeanReference
