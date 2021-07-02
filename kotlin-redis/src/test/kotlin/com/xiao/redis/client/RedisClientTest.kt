@@ -1,8 +1,8 @@
 package com.xiao.redis.client
 
 import com.xiao.base.CommonConstants
+import com.xiao.base.logging.Logging
 import com.xiao.base.testing.KtTestBase
-import io.lettuce.core.LettuceFutures
 import io.lettuce.core.codec.StringCodec
 import io.lettuce.core.output.ValueOutput
 import io.lettuce.core.protocol.AsyncCommand
@@ -12,7 +12,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.nio.ByteBuffer
-import java.util.concurrent.TimeUnit
 
 /**
  *
@@ -59,21 +58,6 @@ class RedisClientTest : KtTestBase() {
     }
 
     @Test
-    fun `test getting multiple key asynchronously`() {
-        val redisCommand = RedisHelper.getRedisAsyncService(REDIS_URL)
-        val setFutures = (0..9).map { redisCommand.set("key-$it", "value-$it") }
-        LettuceFutures.awaitAll(1, TimeUnit.MINUTES, *setFutures.toTypedArray())
-        Assertions.assertEquals(
-            setFutures.filter { it.isDone && it.get() == CommonConstants.STATUS_OK }.size,
-            10
-        )
-
-        val results = (0..9).map { redisCommand.get("key-$it") }
-        LettuceFutures.awaitAll(1, TimeUnit.MINUTES, *results.toTypedArray())
-        Assertions.assertEquals(results.filter { it.isDone && it.get().startsWith("value-") }.size, 10)
-    }
-
-    @Test
     fun `test redis future listener`() {
         val command = RedisHelper.getRedisAsyncService(REDIS_URL)
         val setFuture = command.set(KEY, VALUE)
@@ -94,7 +78,7 @@ class RedisClientTest : KtTestBase() {
         Assertions.assertEquals(execResult[0], CommonConstants.STATUS_OK)
     }
 
-    companion object {
+    companion object : Logging() {
         private const val REDIS_URL = "redis://localhost:6379"
         private const val KEY = "Hello"
         private const val VALUE = "world!"

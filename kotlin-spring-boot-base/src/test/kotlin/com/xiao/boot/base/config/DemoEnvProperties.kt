@@ -1,4 +1,4 @@
-package com.xiao.boot.base.properties
+package com.xiao.boot.base.config
 
 import com.xiao.boot.base.env.ProfileType
 import com.xiao.boot.base.model.EnvConfigModel

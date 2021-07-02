@@ -1,5 +1,7 @@
-package com.xiao.boot.base.properties
+package com.xiao.boot.base.config
 
+import com.xiao.boot.base.enhancer.ClassA
+import com.xiao.boot.base.enhancer.ClassB
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 

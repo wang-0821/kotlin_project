@@ -1,4 +1,4 @@
-package com.xiao.boot.base.properties
+package com.xiao.boot.base.enhancer
 
 /**
  *

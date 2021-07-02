@@ -1,7 +1,6 @@
-package com.xiao.boot.base
+package com.xiao.boot.base.util
 
 import com.xiao.base.testing.KtTestBase
-import com.xiao.boot.base.util.SecureUtils
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 

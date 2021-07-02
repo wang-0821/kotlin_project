@@ -1,8 +1,8 @@
-package com.xiao.boot.base
+package com.xiao.boot.base.property
 
 import com.xiao.base.testing.KtTestBase
-import com.xiao.boot.base.autoconfiguration.KtSpringBootBaseAutoConfiguration
-import com.xiao.boot.base.properties.DemoEnvProperties
+import com.xiao.boot.base.KtSpringBootBaseAutoConfiguration
+import com.xiao.boot.base.config.DemoEnvProperties
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
