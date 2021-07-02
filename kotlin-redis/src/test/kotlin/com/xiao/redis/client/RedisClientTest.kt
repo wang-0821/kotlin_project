@@ -1,6 +1,7 @@
 package com.xiao.redis.client
 
 import com.xiao.base.CommonConstants
+import com.xiao.base.logging.Logging
 import com.xiao.base.testing.KtTestBase
 import io.lettuce.core.LettuceFutures
 import io.lettuce.core.codec.StringCodec
@@ -60,20 +61,21 @@ class RedisClientTest : KtTestBase() {
 
     @Test
     fun `test getting multiple key asynchronously`() {
+        log.info("start exec test")
         val redisCommand = RedisHelper.getRedisAsyncService(REDIS_URL)
         val setFutures = (0..9).map { redisCommand.set("key-$it", "value-$it") }
-        println("set future done.")
+        log.info("set future done.")
         LettuceFutures.awaitAll(1, TimeUnit.MINUTES, *setFutures.toTypedArray())
-        println("await all set future done.")
+        log.info("await all set future done.")
         Assertions.assertEquals(
             setFutures.filter { it.isDone && it.get() == CommonConstants.STATUS_OK }.size,
             10
         )
 
         val results = (0..9).map { redisCommand.get("key-$it") }
-        println("get future done.")
+        log.info("get future done.")
         LettuceFutures.awaitAll(1, TimeUnit.MINUTES, *results.toTypedArray())
-        println("await all get future done.")
+        log.info("await all get future done.")
         Assertions.assertEquals(results.filter { it.isDone && it.get().startsWith("value-") }.size, 10)
     }
 
@@ -98,7 +100,7 @@ class RedisClientTest : KtTestBase() {
         Assertions.assertEquals(execResult[0], CommonConstants.STATUS_OK)
     }
 
-    companion object {
+    companion object : Logging() {
         private const val REDIS_URL = "redis://localhost:6379"
         private const val KEY = "Hello"
         private const val VALUE = "world!"
