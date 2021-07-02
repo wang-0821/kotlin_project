@@ -26,4 +26,9 @@ class UserMapperTest : KtTestBase() {
         Assertions.assertEquals(demoDatabaseProperties.databaseUsername, "root")
         Assertions.assertTrue(Proxy.isProxyClass(userMapper::class.java))
     }
+
+    @Test
+    fun `test mapper query`() {
+
+    }
 }
