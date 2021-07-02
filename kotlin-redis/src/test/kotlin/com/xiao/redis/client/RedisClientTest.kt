@@ -3,7 +3,6 @@ package com.xiao.redis.client
 import com.xiao.base.CommonConstants
 import com.xiao.base.logging.Logging
 import com.xiao.base.testing.KtTestBase
-import io.lettuce.core.LettuceFutures
 import io.lettuce.core.codec.StringCodec
 import io.lettuce.core.output.ValueOutput
 import io.lettuce.core.protocol.AsyncCommand
@@ -13,7 +12,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.nio.ByteBuffer
-import java.util.concurrent.TimeUnit
 
 /**
  *
@@ -57,26 +55,6 @@ class RedisClientTest : KtTestBase() {
             Assertions.assertTrue(deferred.isCompleted)
             Assertions.assertEquals(deferred.getCompleted(), "Hello world!")
         }
-    }
-
-    @Test
-    fun `test getting multiple key asynchronously`() {
-        log.info("start exec test")
-        val redisCommand = RedisHelper.getRedisAsyncService(REDIS_URL)
-        val setFutures = (0..9).map { redisCommand.set("key-$it", "value-$it") }
-        log.info("set future done.")
-        LettuceFutures.awaitAll(1, TimeUnit.MINUTES, *setFutures.toTypedArray())
-        log.info("await all set future done.")
-        Assertions.assertEquals(
-            setFutures.filter { it.isDone && it.get() == CommonConstants.STATUS_OK }.size,
-            10
-        )
-
-        val results = (0..9).map { redisCommand.get("key-$it") }
-        log.info("get future done.")
-        LettuceFutures.awaitAll(1, TimeUnit.MINUTES, *results.toTypedArray())
-        log.info("await all get future done.")
-        Assertions.assertEquals(results.filter { it.isDone && it.get().startsWith("value-") }.size, 10)
     }
 
     @Test
