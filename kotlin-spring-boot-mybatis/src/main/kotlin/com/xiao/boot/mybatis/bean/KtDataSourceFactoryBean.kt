@@ -1,5 +1,6 @@
 package com.xiao.boot.mybatis.bean
 
+import com.xiao.boot.mybatis.database.BaseDatabase
 import org.springframework.beans.factory.FactoryBean
 import javax.sql.DataSource
 

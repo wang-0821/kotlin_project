@@ -52,7 +52,7 @@ dependencyManagement {
         }
         // spring framework
         dependencySet(group: "org.springframework", version: "5.3.7") {
-            entry "spring-tx"
+            entry "spring-jdbc"
         }
     }
 }

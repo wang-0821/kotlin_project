@@ -1,6 +1,6 @@
 dependencies {
     api project(":kotlin-spring-boot-base")
-    api "org.springframework:spring-tx"
+    api "org.springframework:spring-jdbc"
     api "org.mybatis:mybatis"
     api "org.mybatis:mybatis-spring"
     api "com.zaxxer:HikariCP"
