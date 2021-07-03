@@ -6,6 +6,6 @@ package com.xiao.boot.mybatis.model
  */
 class User {
     var id: Long = 0
-    var name: String? = null
-    var age: Int? = null
+    var username: String? = null
+    var password: String? = null
 }

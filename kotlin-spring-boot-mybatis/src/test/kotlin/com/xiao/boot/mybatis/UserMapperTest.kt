@@ -29,6 +29,6 @@ class UserMapperTest : KtTestBase() {
 
     @Test
     fun `test mapper query`() {
-
+        Assertions.assertEquals(userMapper.selectById(1)!!.username, "user_1")
     }
 }
