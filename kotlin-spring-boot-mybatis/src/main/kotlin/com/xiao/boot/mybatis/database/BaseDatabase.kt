@@ -1,9 +1,13 @@
 package com.xiao.boot.mybatis.database
 
+import com.xiao.boot.base.env.EnvInfoProvider
+import com.xiao.boot.base.env.ProfileType
 import com.xiao.boot.mybatis.annotation.KtSpringDatabase
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import org.joda.time.DateTimeZone
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.io.Resource
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import javax.sql.DataSource
 
 /**
@@ -13,11 +17,15 @@ import javax.sql.DataSource
 abstract class BaseDatabase(
     private val url: String,
     private val username: String,
-    private val password: String,
-    private val timeZone: DateTimeZone = DateTimeZone.UTC
+    private val password: String
 ) {
     private val name: String
     private val dataScriptPattern: String
+    private var testDataScriptMap: Map<String, Resource> = mapOf()
+    @Volatile private var dataScriptParsed: Boolean = false
+
+    @Autowired
+    lateinit var envInfoProvider: EnvInfoProvider
 
     init {
         javaClass.getAnnotation(KtSpringDatabase::class.java)
@@ -41,6 +49,27 @@ abstract class BaseDatabase(
                     initializationFailTimeout = 0
                 }
         )
+    }
+
+    internal fun getTestTableDataScript(table: String): Resource {
+        if (!dataScriptParsed) {
+            synchronized(this) {
+                if (!dataScriptParsed) {
+                    parseTestDataScript()
+                }
+            }
+        }
+        return testDataScriptMap[table] ?: throw IllegalStateException("Can't find data file for table: $table.")
+    }
+
+    private fun parseTestDataScript() {
+        check(envInfoProvider.profile() == ProfileType.TEST) {
+            "${this.name} dataScript can only be used when TEST active profile."
+        }
+        testDataScriptMap = PathMatchingResourcePatternResolver().getResources(dataScriptPattern)
+            .associateBy {
+                it.file.name
+            }
     }
 
     companion object {
