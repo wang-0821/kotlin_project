@@ -1,4 +1,4 @@
-package com.xiao.boot.mybatis.bean
+package com.xiao.boot.mybatis.factory
 
 import org.apache.ibatis.session.SqlSessionFactory
 import org.mybatis.spring.SqlSessionFactoryBean

@@ -4,7 +4,6 @@ import com.xiao.boot.mybatis.annotation.KtSpringDatabase
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.joda.time.DateTimeZone
-import org.springframework.core.annotation.AnnotationUtils
 import javax.sql.DataSource
 
 /**
@@ -21,14 +20,14 @@ abstract class BaseDatabase(
     private val dataScriptPattern: String
 
     init {
-        AnnotationUtils.findAnnotation(javaClass, KtSpringDatabase::class.java)
+        javaClass.getAnnotation(KtSpringDatabase::class.java)
             .let {
                 name = it.name
                 dataScriptPattern = it.dataScriptPattern
             }
     }
 
-    open fun initDataSource(): DataSource {
+    open fun createDataSource(): DataSource {
         return HikariDataSource(
             HikariConfig()
                 .apply {
@@ -47,5 +46,13 @@ abstract class BaseDatabase(
     companion object {
         fun sqlSessionFactoryName(databaseName: String) = "${databaseName}SqlSessionFactory"
         fun dataSourceName(databaseName: String) = "${databaseName}DataSource"
+        fun dataSourceFactoryMethodName(): String {
+            val methods = BaseDatabase::class.java.methods
+                .filter { method ->
+                    method.name == "createDataSource"
+                }
+            check(methods.size == 1)
+            return methods.first().name
+        }
     }
 }

@@ -1,10 +1,10 @@
 package com.xiao.boot.mybatis.annotation
 
-import com.xiao.boot.mybatis.bean.KtDataSourceFactoryBean
-import com.xiao.boot.mybatis.bean.KtMapperFactoryBean
-import com.xiao.boot.mybatis.bean.KtSqlSessionFactoryBean
+import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceFactoryMethodName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.sqlSessionFactoryName
+import com.xiao.boot.mybatis.factory.KtMapperFactoryBean
+import com.xiao.boot.mybatis.factory.KtSqlSessionFactoryBean
 import org.mybatis.spring.mapper.ClassPathMapperScanner
 import org.springframework.beans.factory.config.ConstructorArgumentValues
 import org.springframework.beans.factory.config.RuntimeBeanReference
@@ -74,8 +74,8 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
             dataSourceBeanName,
             GenericBeanDefinition()
                 .apply {
-                    beanClass = KtDataSourceFactoryBean::class.java
-                    propertyValues.add("database", RuntimeBeanReference(databaseBeanName))
+                    factoryBeanName = databaseBeanName
+                    factoryMethodName = dataSourceFactoryMethodName()
                 }
         )
 
