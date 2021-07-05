@@ -1,7 +1,7 @@
 package com.xiao.boot.base.enhancer
 
-import com.xiao.base.testing.KtTestBase
 import com.xiao.boot.base.KtSpringBootBaseAutoConfiguration
+import com.xiao.boot.base.testing.KtSpringTestBase
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -12,7 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest
  * @author lix wang
  */
 @SpringBootTest(classes = [KtSpringBootBaseAutoConfiguration::class])
-class ConfigurationEnhancerTest : KtTestBase() {
+class ConfigurationEnhancerTest : KtSpringTestBase() {
     @Autowired
     lateinit var classA: ClassA
 

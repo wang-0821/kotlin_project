@@ -10,7 +10,7 @@ import com.xiao.boot.base.property.KtConfiguration
  */
 @KtConfiguration
 class DemoDatabaseProperties {
-    @EnvProperty(profiles = [ProfileType.TEST], value = "jdbc:mysql://localhost:3306/lix_database_common")
+    @EnvProperty(profiles = [ProfileType.TEST], value = "jdbc:mysql://localhost:3306/lix_database_demo")
     var databaseUrl: String = ""
 
     @EnvProperty(profiles = [ProfileType.TEST], value = "root")

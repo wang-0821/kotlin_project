@@ -19,7 +19,7 @@ abstract class BaseDatabase(
     private val username: String,
     private val password: String
 ) {
-    private val name: String
+    val name: String
     private val dataScriptPattern: String
     private var testDataScriptMap: Map<String, Resource> = mapOf()
     @Volatile private var dataScriptParsed: Boolean = false
@@ -68,7 +68,7 @@ abstract class BaseDatabase(
         }
         testDataScriptMap = PathMatchingResourcePatternResolver().getResources(dataScriptPattern)
             .associateBy {
-                it.file.name
+                it.file.nameWithoutExtension
             }
     }
 
