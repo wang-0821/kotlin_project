@@ -4,6 +4,7 @@
 * [4.动态SQL](#4)
 * [5.事务](#5)
 * [6.缓存机制及问题](#6)
+* [7.MyBatis执行流程](#7)
 
 <h2 id="1">1.概述</h2>
 ### SqlSessionFactoryBuilder
@@ -538,3 +539,26 @@ MapperProxy代理对象实际会使用SqlSession对象来执行对应的方法�
         return list;
       }
         
+<h2 id="7">7.MyBatis执行流程</h2>
+&emsp;&emsp; MyBatis能够支持在mapper XML文件中书写SQL，也能在mapper interface注解中书写SQL，
+在执行时，会解析SQL。每个MapperProxy中都有methodCache。
+
+                MapperProxy.invoke(proxy, method, args)
+                                |
+                                V
+              根据methodCahce或者创建MapperMethodInvoker -------------> 创建DefaultMethodInvoker
+                                | 不是default方法        是default方法
+                                V                         
+             创建MapperMethod(mapperInterface, method, configuration)     
+                                |
+                                V
+              创建SqlCommand(configuration, mapperInterface, method) 
+                                |
+                                V
+       执行MapperMethod.resolveMappedStatement(mapperInterface, methodName, class, configuration)
+                                |
+                                V
+                                
+                                
+                                
+                                
