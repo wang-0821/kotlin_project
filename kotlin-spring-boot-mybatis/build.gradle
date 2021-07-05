@@ -5,4 +5,5 @@ dependencies {
     api "org.mybatis:mybatis-spring"
     api "com.zaxxer:HikariCP"
     api "mysql:mysql-connector-java"
+    api "org.flywaydb:flyway-core"
 }

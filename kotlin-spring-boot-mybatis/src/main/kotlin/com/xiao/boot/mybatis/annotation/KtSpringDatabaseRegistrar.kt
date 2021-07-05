@@ -49,39 +49,63 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
             ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS
         )
 
-        // register database bean
+        val databaseBeanName = getDatabaseBeanName(importingClassMetadata, registry)
+        val scanner = ClassPathMapperScanner(registry)
+
+        // register mapper beanDefinition list
+        registerMapperBeanDefinitions(name, mapperBasePackages, scanner)
+
+        // register dataSource beanDefinition
+        val dataSourceBeanName = dataSourceName(name)
+        registerSourceBeanDefinition(databaseBeanName, dataSourceBeanName, registry)
+
+        // register sqlSessionFactory beanDefinition
+        registerSqlSessionFactoryBeanDefinition(
+            sqlSessionFactoryName(name),
+            dataSourceBeanName,
+            mapperXmlPattern,
+            scanner.resourceLoader as ResourcePatternResolver,
+            registry
+        )
+    }
+
+    private fun getDatabaseBeanName(
+        importingClassMetadata: AnnotationMetadata,
+        registry: BeanDefinitionRegistry
+    ): String {
         val beanClassName = importingClassMetadata.className
         val beanNames = registry.beanDefinitionNames
             .filter { beanDefinitionName ->
                 registry.getBeanDefinition(beanDefinitionName).beanClassName == beanClassName
             }
         check(beanNames.size == 1)
-        val databaseBeanName = beanNames.first()
+        return beanNames.first()
+    }
 
-        // register mapper beanDefinition
-        val scanner = ClassPathMapperScanner(registry)
+    private fun registerMapperBeanDefinitions(
+        databaseName: String,
+        mapperBasePackages: Array<String>,
+        scanner: ClassPathMapperScanner,
+    ) {
+        scanner
             .apply {
                 setMapperFactoryBeanClass(KtMapperFactoryBean::class.java)
-                setSqlSessionFactoryBeanName(sqlSessionFactoryName(name))
+                setSqlSessionFactoryBeanName(sqlSessionFactoryName(databaseName))
                 registerFilters()
                 doScan(*mapperBasePackages)
             }
-        val xmlMapperResources = (scanner.resourceLoader as ResourcePatternResolver).getResources(mapperXmlPattern)
+    }
 
-        // register dataSource beanDefinition
-        val dataSourceBeanName = dataSourceName(name)
+    private fun registerSqlSessionFactoryBeanDefinition(
+        beanName: String,
+        dataSourceBeanName: String,
+        mapperXmlPattern: String,
+        scanner: ResourcePatternResolver,
+        registry: BeanDefinitionRegistry
+    ) {
+        val xmlMapperResources = scanner.getResources(mapperXmlPattern)
         registry.registerBeanDefinition(
-            dataSourceBeanName,
-            GenericBeanDefinition()
-                .apply {
-                    factoryBeanName = databaseBeanName
-                    factoryMethodName = dataSourceFactoryMethodName()
-                }
-        )
-
-        // register sqlSessionFactory beanDefinition
-        registry.registerBeanDefinition(
-            sqlSessionFactoryName(name),
+            beanName,
             GenericBeanDefinition()
                 .apply {
                     beanClass = KtSqlSessionFactoryBean::class.java
@@ -90,6 +114,21 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
                             addGenericArgumentValue(xmlMapperResources)
                         }
                     propertyValues.add("dataSource", RuntimeBeanReference(dataSourceBeanName))
+                }
+        )
+    }
+
+    private fun registerSourceBeanDefinition(
+        databaseBeanName: String,
+        dataSourceBeanName: String,
+        registry: BeanDefinitionRegistry
+    ) {
+        registry.registerBeanDefinition(
+            dataSourceBeanName,
+            GenericBeanDefinition()
+                .apply {
+                    factoryBeanName = databaseBeanName
+                    factoryMethodName = dataSourceFactoryMethodName()
                 }
         )
     }
