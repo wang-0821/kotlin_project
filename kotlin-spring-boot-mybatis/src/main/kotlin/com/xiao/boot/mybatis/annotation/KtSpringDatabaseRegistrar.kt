@@ -57,7 +57,7 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
 
         // register dataSource beanDefinition
         val dataSourceBeanName = dataSourceName(name)
-        registerSourceBeanDefinition(databaseBeanName, dataSourceBeanName, registry)
+        registerDataSourceBeanDefinition(databaseBeanName, dataSourceBeanName, registry)
 
         // register sqlSessionFactory beanDefinition
         registerSqlSessionFactoryBeanDefinition(
@@ -118,7 +118,7 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
         )
     }
 
-    private fun registerSourceBeanDefinition(
+    private fun registerDataSourceBeanDefinition(
         databaseBeanName: String,
         dataSourceBeanName: String,
         registry: BeanDefinitionRegistry
