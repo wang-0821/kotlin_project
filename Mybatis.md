@@ -540,25 +540,96 @@ MapperProxy代理对象实际会使用SqlSession对象来执行对应的方法�
       }
         
 <h2 id="7">7.MyBatis执行流程</h2>
-&emsp;&emsp; MyBatis能够支持在mapper XML文件中书写SQL，也能在mapper interface注解中书写SQL，
-在执行时，会解析SQL。每个MapperProxy中都有methodCache。
+&emsp;&emsp; MyBatis首先会创建SqlSessionFactory。
 
-                MapperProxy.invoke(proxy, method, args)
-                                |
-                                V
-              根据methodCahce或者创建MapperMethodInvoker -------------> 创建DefaultMethodInvoker
-                                | 不是default方法        是default方法
-                                V                         
-             创建MapperMethod(mapperInterface, method, configuration)     
-                                |
-                                V
-              创建SqlCommand(configuration, mapperInterface, method) 
-                                |
-                                V
-       执行MapperMethod.resolveMappedStatement(mapperInterface, methodName, class, configuration)
-                                |
-                                V
-                                
+                       // SqlSessionFactory创建流程
+                            创建Configuration
+                                    |
+                                    V
+        创建Environment(id, transactionFactory, dataSource)并赋值给configuration
+     -----------------------------> |
+    |                               V
+    |  创建XPathParser(inputStream, validation, configuration.variables, XMLMapperEntiryResolver)
+    |                               |
+    |                               V
+    | xPathParser属性初始化：validation、entityResolver、variables、xpath(XPathImpl)
+    |                               |
+    |                               V
+    |              创建DocumentBuilderImpl，设置entityResolver
+    |                               |
+    |                               V
+    | xPathParser属性初始化：document: Document = DocumentBuilder.parse(InputSource)
+    |                               |
+    |                               V
+    | 创建XMLMapperBuilder(xPathParser, configuration, resource, configuration.sqlFragments)
+    |                               |
+    |                               V
+    |                   执行XMLMapperBuilder.parse()
+    |                               |
+    |                               V
+    | 执行xmlMapperBuilder.parser.xpath.evaluate("/mapper", document, XPathConstants.NODE)获取Node
+    |                               |
+    |                               V
+    | 创建XNode(xPathParser, node, variables), xnode.body内容为: <mapper>...</mapper>
+    |                               |
+    |                               V
+    |              处理XNode中"cache-ref"，处理XNode中的“cache”
+    |                               |
+    |                               V
+    |                处理XNode下的"/mapper/parameterMap"
+    |                               |
+    |                               V
+    |                 处理XNode下的"/mapper/resultMap"
+    |                               |
+    |                               V
+    |  处理XNode下的"/mapper/sql" XNode集合，添加XMLMapperBuilder.sqlFragments.put(sqlNode.id, sqlNode)
+    |                               |
+    |                               V
+    |         获取XNode下的"select|insert|update|delete" XNode集合
+    |   --------------------------> | 循环处理获取到的XNode集合
+    |  |                            V
+    |  | 执行XMLStatementBuilder(configuration, builderAssistant, XNode, databaseId).parseStatementNode()
+    |  |                            |
+    |  |                            V
+    |  | 如果当前XMLStatementBuilder.XNode的databaseId跟configuration.databaseId不一样，则跳过
+    |  |                            |
+    |  |                            V
+    |  |    解析XNode的SqlCommandType、flushCache、useCache、resultOrdered
+    |  |                            |
+    |  |                            V
+    |  | 处理XNode的<include>Node，将<include>Node替换成sqlFragments下的同名<sql>Node
+    |  |                            |
+    |  |                            V
+    |  |    处理XNode的parameterType、lang、selectKey、useGeneratedKeys
+    |  |                            |
+    |  |                            V
+    |  |  执行LanguageDriver.createSqlSource(configuration, XNode, parameterTypeClass)创建SqlSource
+    |  |                            |
+    |  |                            V
+    |  | 执行XMLScriptBuilder(configuration, XNode, parameterTypeClass).parseScriptNode()创建SqlSource
+    |  |                            |
+    |  |                            v
+    |  |        创建DynamicSqlSource或者RawSqlSource(一般)
+    |  |                            |
+    |  |                            V
+    |  |        根据XNode statementType获取StatementType
+    |  |                            |
+    |  |                            V
+    |  |    处理XNode的fetchSize、timeout、parameterMap、resultType、resultMap、
+    |  |        resultSetType、keyProperty、keyColumn、resultSets
+    |  |                            |
+    |  |                            V
+    |  |   使用MappedStatement.Builder创建MappedStatement，添加到configuration.mappedStatements
+    |  -----------------------------|
+    |                               V
+    |      根据XML mapper的namespace添加mapper interface到 MapperRegistry.knownMappers
+     -------------------------------|
+                                    V
+                根据configuration创建SqlSessionFactory
+         
+### Mapper执行过程
+&emsp;&emsp; 在执行mapper的时候，我们先要获取mapper interface的代理对象，
+获取方法为sqlSessionFactory.getConfiguration().getMapper()
                                 
                                 
                                 
