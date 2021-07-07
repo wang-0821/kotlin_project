@@ -3,6 +3,8 @@ package com.xiao.boot.mybatis.invocation
 import com.xiao.base.logging.Logging
 import com.xiao.base.util.ProxyUtils
 import com.xiao.boot.mybatis.annotation.MapperRetry
+import org.apache.ibatis.binding.BindingException
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
 /**
@@ -10,7 +12,7 @@ import java.lang.reflect.Method
  * @author lix wang
  */
 class RetryKtInvocation(
-    sourceClass: Class<*>
+    private val sourceClass: Class<*>
 ) : KtInvocation() {
     private val methodExecuteTimes: Map<Method, Int>
 
@@ -32,12 +34,23 @@ class RetryKtInvocation(
         (1..executeTimes).forEach { times ->
             try {
                 return doExecuteMethod(obj, method, args)
+            } catch (e: InvocationTargetException) {
+                ex = (e.targetException as? Exception)
+                    ?: IllegalStateException(e.targetException.message, e.targetException)
+                if (ex is BindingException) {
+                    // no need retry
+                    throw ex as Exception
+                } else {
+                    log.warn("invoke ${sourceClass.name}.${method.name} failed, times: $times.")
+                }
             } catch (e: Exception) {
                 ex = e
-                log.warn("execute: ${method.name} failed,  times: $times.")
+                log.warn("invoke: ${sourceClass.name}.${method.name} failed,  times: $times.")
             }
         }
-        throw IllegalStateException("execute: ${method.name} failed, total times: $executeTimes.", ex)
+        throw IllegalStateException(
+            "invoke: ${sourceClass.name}.${method.name} failed, total times: $executeTimes.", ex
+        )
     }
 
     private fun parseMethodRetryTimes(sourceClass: Class<*>): Map<Method, Int> {

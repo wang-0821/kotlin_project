@@ -44,8 +44,8 @@ class KtMySqlTablesMigrationExtension : BeforeAllCallback {
             val runner = ScriptRunner(connection)
                 .apply {
                     setSendFullScript(true)
+                    setLogWriter(null)
                 }
-            println("start migrate tables.")
             dataFiles
                 .forEach { file ->
                     connection
@@ -53,7 +53,6 @@ class KtMySqlTablesMigrationExtension : BeforeAllCallback {
                         .executeUpdate("DELETE FROM ${file.nameWithoutExtension};")
                     runner.runScript(InputStreamReader(FileInputStream(file)))
                 }
-            println("end migrate tables.")
         }
     }
 

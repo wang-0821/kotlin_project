@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
 @KtSpringDatabase(
     name = DemoDatabase.NAME,
     mapperBasePackage = "com.xiao.boot.mybatis.mapper",
-    mapperXmlPattern = "classpath*:com/xiao/boot/mybatis/mapper/*.xml",
+    mapperXmlPattern = "classpath*:mybatis/mapper/*.xml",
     dataScriptPattern = "classpath*:db/${DemoDatabase.NAME}/*.sql"
 )
 class DemoDatabase(properties: DemoDatabaseProperties) : BaseDatabase(
