@@ -540,7 +540,7 @@ MapperProxy代理对象实际会使用SqlSession对象来执行对应的方法�
       }
         
 <h2 id="7">7.MyBatis执行流程</h2>
-&emsp;&emsp; MyBatis首先会创建SqlSessionFactory。
+### XML Mapper添加过程
 
                        // SqlSessionFactory创建流程
                             创建Configuration
@@ -627,9 +627,94 @@ MapperProxy代理对象实际会使用SqlSession对象来执行对应的方法�
                                     V
                 根据configuration创建SqlSessionFactory
          
-### Mapper执行过程
-&emsp;&emsp; 在执行mapper的时候，我们先要获取mapper interface的代理对象，
-获取方法为sqlSessionFactory.getConfiguration().getMapper()
-                                
-                                
-                                
+### Interface Mapper添加过程
+&emsp;&emsp; 在mybatis-spring中，使用MapperFactoryBean来创建mapper实例。以configuration.addMapper(mapperInterface)的
+方式向MyBatis中添加mapper。
+
+    // 桥接方法，下面的ClassA在类型擦除后泛型为Object，而ClassAImpl类型擦除后泛型为String，
+    // 因此需要有一个桥接方法来override func函数：
+        intereface ClassA<T> {
+            fun func(param: T)
+        }
+
+        class ClassAImpl<String> : ClassA<T> {
+            @override
+            fun func(param: String) {
+                ...
+            }
+
+            // 虚拟机会自动生成一个桥接方法。
+            fun func(param: Object) {
+                this.func(param as String)
+            }
+        }
+
+    向MapperRegistry.knownMappers中添加MapperProxyFactory(mapperInterface)
+                                    |
+                                    V
+    执行MapperAnnotationBuilder(configuration, mapperInterface).parse()
+                                    |
+                                    V
+    如果mapperInterface同目录同名称下的XML mapper resource存在，则加载XML mapper
+                                    |
+                                    V
+                处理当前mapperInterface上的@CacheNamespace注解
+                                    |
+                                    V
+                处理当前mapperInterface上的@CacheNamespaceRef注解
+                                    |
+                                    V
+                    获取mapperInterface的所有可见Method-------------------------------------------------
+                                    | if Method上有@Select或者@SelectProvider注解并且没有@ResultMap注解  ｜ else                                                 
+                                    V                                                                |
+                获取Method上@Arg、@Result、@TypeDiscriminator                                          |
+                                    |                                                                |
+                                    V                                                                |
+            根据Method上的@Results或者Method参数类型列表获取resultMapId                                   ｜
+                                    |                                                                |
+                                    V                                                                |
+    执行ResultMap.Builder(configuration, resultMapId, returnType, resultMappings, autoMapping).build()|
+                                    |                                                                |
+                                    V                                                                |
+            将build构建出的resultMap放到configuration.resultMaps中                                      |
+                                    | <--------------------------------------------------------------            
+                                    V
+                        获取Method parameterType
+                                    |
+                                    V
+        根据@Lang注解从configuration.languageRegistry中获取LanguageDriver
+                                    |
+                                    V
+        查找Method上的注解：@Select、@Update、@Insert、@Delete、@SelectProvider、--------------> 结束
+                @UpdateProvider、@InsertProvider、@DeleteProvider                  否则
+                                    | 找到注解
+                                    V
+    执行MapperAnnotationBuilder.buildSqlSource(annotation, parameterTypeClass, languageDriver, method)
+                                    |
+                                    V
+        执行XMLLanguageDriver.createSqlSource(configuration, script, parameterTypeClass)---------
+                                    |   如果script不以<script>开头                                | 否则
+                                    V                                                           V
+        执行PropertyParser.parse(script, configuration.getVariables())    创建XPathParser(script, false, variables, 
+                                    |                                     XMLMapperEntityResolver)
+                                    |                                   执行xPathParser.evalNode("/script") 获取XNode
+                                    |                                                           |
+                                    V                                                           V
+        返回RawSqlSource(configuration, script, parameterType)           执行XMLScriptBuilder(configuration, XNode, 
+                                    |                                   parameterType).parseScriptNode() 得到SqlSource
+                                    |                                                           |
+                                    | <----------------------------------------------------------
+                                    V
+                    根据Method注解获取SqlCommandType
+                                    |
+                                    V
+                        处理Method上@Options注解
+                                    |
+                                    V
+                根据mapper class和Method获取mappedStatementId
+                                    |
+                                    V
+        对于Insert和Update方法获取@SelectKey注解，处理keyGenerator、keyProperty、keyColumn
+                                    |
+                                    V
+        执行MappedStatement.Builder(...).build()获取MappedStatement并添加到configuration.mappedStatements
