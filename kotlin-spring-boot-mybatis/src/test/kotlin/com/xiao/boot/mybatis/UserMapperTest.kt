@@ -37,4 +37,9 @@ class UserMapperTest : KtSpringMybatisTestBase() {
     fun `test query user by id`() {
         Assertions.assertEquals(userMapper.selectById(1)!!.username, "user_1")
     }
+
+    @Test
+    fun `test query user by id with annotation`() {
+        Assertions.assertEquals(userMapper.findById(1)!!.username, "user_1")
+    }
 }

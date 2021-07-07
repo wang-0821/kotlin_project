@@ -4,9 +4,8 @@ import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceFactoryMe
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.sqlSessionFactoryName
 import com.xiao.boot.mybatis.factory.KtMapperFactoryBean
-import com.xiao.boot.mybatis.factory.KtSqlSessionFactoryBean
+import org.mybatis.spring.SqlSessionFactoryBean
 import org.mybatis.spring.mapper.ClassPathMapperScanner
-import org.springframework.beans.factory.config.ConstructorArgumentValues
 import org.springframework.beans.factory.config.RuntimeBeanReference
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.beans.factory.support.BeanNameGenerator
@@ -51,17 +50,18 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
 
         val databaseBeanName = getDatabaseBeanName(importingClassMetadata, registry)
         val scanner = ClassPathMapperScanner(registry)
+        val dataSourceBeanName = dataSourceName(name)
+        val sqlSessionFactoryBeanName = sqlSessionFactoryName(name)
 
         // register mapper beanDefinition list
-        registerMapperBeanDefinitions(name, mapperBasePackages, scanner)
+        registerMapperBeanDefinitions(mapperBasePackages, sqlSessionFactoryBeanName, scanner)
 
         // register dataSource beanDefinition
-        val dataSourceBeanName = dataSourceName(name)
         registerDataSourceBeanDefinition(databaseBeanName, dataSourceBeanName, registry)
 
         // register sqlSessionFactory beanDefinition
         registerSqlSessionFactoryBeanDefinition(
-            sqlSessionFactoryName(name),
+            sqlSessionFactoryBeanName,
             dataSourceBeanName,
             mapperXmlPattern,
             scanner.resourceLoader as ResourcePatternResolver,
@@ -83,14 +83,14 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
     }
 
     private fun registerMapperBeanDefinitions(
-        databaseName: String,
         mapperBasePackages: Array<String>,
+        sqlSessionFactoryBeanName: String,
         scanner: ClassPathMapperScanner,
     ) {
         scanner
             .apply {
                 setMapperFactoryBeanClass(KtMapperFactoryBean::class.java)
-                setSqlSessionFactoryBeanName(sqlSessionFactoryName(databaseName))
+                setSqlSessionFactoryBeanName(sqlSessionFactoryBeanName)
                 registerFilters()
                 doScan(*mapperBasePackages)
             }
@@ -108,12 +108,9 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
             beanName,
             GenericBeanDefinition()
                 .apply {
-                    beanClass = KtSqlSessionFactoryBean::class.java
-                    constructorArgumentValues = ConstructorArgumentValues()
-                        .apply {
-                            addGenericArgumentValue(xmlMapperResources)
-                        }
+                    beanClass = SqlSessionFactoryBean::class.java
                     propertyValues.add("dataSource", RuntimeBeanReference(dataSourceBeanName))
+                    propertyValues.add("mapperLocations", xmlMapperResources)
                 }
         )
     }
