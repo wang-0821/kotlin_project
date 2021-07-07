@@ -540,9 +540,11 @@ MapperProxy代理对象实际会使用SqlSession对象来执行对应的方法�
       }
         
 <h2 id="7">7.MyBatis执行流程</h2>
+&emsp;&emsp; 当SqlSource被构建完成后，此时XML mapper中的<include>，Interface mapper中的${}
+都已经被填充，并且两者里面的#{}都被解析完毕，将参数原来的#{...}以"?"来占位。
+
 ### XML Mapper添加过程
 
-                       // SqlSessionFactory创建流程
                             创建Configuration
                                     |
                                     V
@@ -609,7 +611,11 @@ MapperProxy代理对象实际会使用SqlSession对象来执行对应的方法�
     |  | 执行XMLScriptBuilder(configuration, XNode, parameterTypeClass).parseScriptNode()创建SqlSource
     |  |                            |
     |  |                            v
-    |  |        创建DynamicSqlSource或者RawSqlSource(一般)
+    |  |        创建DynamicSqlSource(configuration, MixedSqlNode)
+    |  |   或者RawSqlSource(configuration, MixedSqlNode, parameterType)(一般)
+    |  |                            |
+    |  |                            V
+    |  |   执行GenericTokenParser("#{", "}", ParameterMappingTokenHandler).parse(sql)
     |  |                            |
     |  |                            V
     |  |        根据XNode statementType获取StatementType
@@ -629,7 +635,8 @@ MapperProxy代理对象实际会使用SqlSession对象来执行对应的方法�
          
 ### Interface Mapper添加过程
 &emsp;&emsp; 在mybatis-spring中，使用MapperFactoryBean来创建mapper实例。以configuration.addMapper(mapperInterface)的
-方式向MyBatis中添加mapper。
+方式向MyBatis中添加mapper。mapper解析并添加到configuration中时，主要影响到mapperRegistry.knownMappers、mappedStatements、
+resultMaps、loadedResources、sqlFragments。
 
     // 桥接方法，下面的ClassA在类型擦除后泛型为Object，而ClassAImpl类型擦除后泛型为String，
     // 因此需要有一个桥接方法来override func函数：
@@ -697,12 +704,16 @@ MapperProxy代理对象实际会使用SqlSession对象来执行对应的方法�
                                     V                                                           V
         执行PropertyParser.parse(script, configuration.getVariables())    创建XPathParser(script, false, variables, 
                                     |                                     XMLMapperEntityResolver)
-                                    |                                   执行xPathParser.evalNode("/script") 获取XNode
+                                    V                                   执行xPathParser.evalNode("/script") 获取XNode
+             执行GenericTokenParser("${", "}",                                                   | 
+                VariableTokenHandler(variables)).parse(script)                                  V
+                                    |                                    执行XMLScriptBuilder(configuration, XNode, 
+                                    V                                   parameterType).parseScriptNode() 得到SqlSource
+        执行GenericTokenParser("#{", "}",                                                        |
+            ParameterMappingTokenHandler).parse(script)                                         |
                                     |                                                           |
-                                    V                                                           V
-        返回RawSqlSource(configuration, script, parameterType)           执行XMLScriptBuilder(configuration, XNode, 
-                                    |                                   parameterType).parseScriptNode() 得到SqlSource
-                                    |                                                           |
+                                    V                                                           |
+           返回RawSqlSource(configuration, script, parameterType)                                |
                                     | <----------------------------------------------------------
                                     V
                     根据Method注解获取SqlCommandType
@@ -718,3 +729,148 @@ MapperProxy代理对象实际会使用SqlSession对象来执行对应的方法�
                                     |
                                     V
         执行MappedStatement.Builder(...).build()获取MappedStatement并添加到configuration.mappedStatements
+        
+### Mapper执行过程
+&emsp;&emsp; 先从configuration.mapperRegistry.knownMappers获取mapperInterface，
+然后根据sqlSession和mapperInterface构建MapperProxy(sqlSession, mapperInterface, methodCache)代理对象。
+如果mapperClass是Object，那么直接执行method.invoke(this, args)，否则的话先获取MapperMethodInvoker，
+先从mapperProxy的methodCache中获取MapperMethodInvoker，如果没有则需要创建。如果Method是default方法，
+那么会创建DefaultMethodInvoker(MethodHandle)，否则会创建PlainMethodInvoker(MapperMethod)。
+    
+    DefaultSqlSession中包含：selectList、selectMap、selectCursor、update。
+        其他的selectOne、select使用selectList实现。insert、delete使用update实现。
+
+              构建MapperMethod(mapperInterface, method, configuration)
+                                        |
+                                        V
+           获取创建SqlCommand(name = MappedStatement.id, SqlCommandType)
+                                        |
+                                        V
+        解析method的returnType、@MapKey、RowBounds、ResultHandler类型parameterType
+                                        |
+                                        V
+                    解析Method @Param获取参数列表，MapperMethod构造完毕
+                                        |
+                                        V
+                    执行MapperMethod.execute(sqlSession, args)
+                                        |
+                                        V
+                 根据Method resultType和SqlCommandType执行mapper
+                                        |
+                                        V
+       根据args和参数列表，获取参数名到参数值的映射关系mapOf("id" to 1, "param1" to 1)
+                                        |
+                                        V
+                    根据SqlCommand.name获取MappedStatement
+                                        |
+                                        V
+        执行DefaultSqlSession.executor.query(MappedStatement, parameter, 
+            RowBounds.DEFAULT, ResultHandler.NO_RESULT_HANDLER)
+                                        |
+                                        V
+         执行MappedStatement.sqlSource.getBoundSql(parameter)获取BoundSql
+                                        |
+                                        V
+      执行CachingExecutor.createCacheKey(ms, parameter, rowBounds, boundSql)创建CacheKey
+                                        |
+                                        V
+        如果MappedStatement存在Cache，那么根据CacheKey查询缓存，有缓存就返回，没有继续执行
+                                        |
+                                        V
+       如果resultHandler为空，那么根据CacheKay从Executor.localCache中获取缓存，没有继续执行
+                                        |
+                                        V                                                 
+                执行configuration.newStatementHandler(executor, ms, 
+                   parameter, rowBounds, resultHandler, boundSql)
+                                        |
+                                        V
+                创建PreparedStatementHandler(executor, ms, parameter, 
+                    rowBounds, resultHandler, boundSql)
+                                        |
+                                        V
+        执行MappedStatement.lang.createParameterHandler(ms, parameter, boundSql)
+                                        |
+                                        V
+          执行Configuration.interceptorChain.pluginAll(parameterHandler)
+                                        |
+                                        V
+      创建DefaultResultSetHandler，并执行Configuration.interceptorChain.pluginAll(resultSetHandler)
+                                        |
+                                        V
+         执行Configuration.interceptorChain.pluginAll(PreparedStatementHandler)
+                                        |
+                                        V
+        执行Executor.prepareStatement(StatementHandler, statementLog)获取java.sql.Statement
+                                        |
+                                        V
+                使用Executor.transaction.getConnection()获取Connection
+                                        |
+                                        V
+       执行PreparedStatementHandler.prepare(connection, transaction.timeout)获取java.sql.Statement
+                                        |
+                                        V
+              执行connection.prepareStatement(sql)获取java.sql.Statement
+                                        |
+                                        V
+        根据transaction.getTimeout()设置java.sql.Statement的statementTimeout
+                                        |
+                                        V
+          执行PreparedStatementHandler.parameterize(java.sql.Statement)这一步会给SQL进行参数赋值
+                                        |
+                                        V
+              根据DefaultParameterHandler.boundSql获取参数列表[ParameterMapping]
+                                        |
+                                        V
+            如果boundSql.additionalParameters 有当前ParameterMapping属性，则用该值
+                                        |
+                                        V
+             如果DefaultParameterHandler中parameterObject没有值，那么赋值为null
+                                        |
+                                        V
+          如果typeHandlerRegistry中有mapperObject类型的TypeHandler，那么用mapperObject
+                                        |
+                                        V
+            否则使用configuration.newMetaObject(parameterObject)创建MetaObject，
+                  使用metaObject.getValue(propertyName)来获取值
+                                        |
+                                        V
+                  根据ParameterMapping获取TypeHandler和JdbcType ----------
+                        | parameter is null                             |
+                        V 此时jdbcType不能为空                            V
+      PreparedStatement.setNull(i, jdbcType.TYPE_CODE)  typeHandler.setNonNullParameter(ps, i, parameter, jdbcType)                                   
+                        |                                               |
+                         -----------------------------------------------
+                                        |
+                                        V
+      执行DefaultParameterHandler.setParameters(java.sql.Statement(HikariProxyPreparedStatement))
+                                        |
+                                        V
+         执行PreparedStatementHandler.query(java.sql.PreparedStatement, ResultHandler)
+                                        |
+                                        V
+       执行java.sql.PreparedStatement(HikariProxyPreparedStatement).execute()这一步真正执行了SQL请求
+                                        |
+                                        V
+            执行DefaultResultSetHandler.handleResultSets(preparedStatement)
+                                        |
+                                        V
+          根据Statement.getResultSet()获取SQL结果，获取MappedStatement.resultMaps
+                                        |
+                                        V
+                根据[ResultMap]和SQL执行结果解析出最终结果List<Object>
+                                        |
+                                        V
+                          执行java.sql.Statement.close()
+                                        |
+                                        V
+                     根据返回结果向Executor.localCache中添加缓存
+                                        |
+                                        V
+            如果configuration.localCacheScope为LocalCacheScope.STATEMENT会清理localCache缓存
+                                        |
+                                        V
+                    如果MappedStatement中cache不为空，向cache中添加缓存
+                                        
+### SqlSession
+&emsp;&emsp; 在Mapper方法真正执行前，SqlSessionTemplate会根据是否采用事务，来获取不同的sqlSession，
+当采用事务时，在Mapper方法执行完毕后，会自动commit提交事务。
