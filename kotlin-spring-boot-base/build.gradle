@@ -1,6 +1,15 @@
 dependencies {
     api project(":kotlin-base")
     api "org.springframework.boot:spring-boot-starter"
-    api "org.springframework.boot:spring-boot-starter-test"
+    api("org.springframework.boot:spring-boot-starter-test") {
+        exclude group: "com.jayway.jsonpath", module: "json-path"
+        exclude group: "org.xmlunit", module: "xmlunit-core"
+        exclude group: "org.assertj", module: "assertj-core"
+        exclude group: "org.hamcrest", module: "hamcrest"
+        exclude group: "org.opentest4j", module: "opentest4j"
+        exclude group: "org.mockito", module: "mockito-core"
+        exclude group: "org.mockito", module: "mockito-junit-jupiter"
+        exclude group: "org.skyscreamer", module: "jsonassert"
+    }
     api "org.apache.commons:commons-lang3"
 }

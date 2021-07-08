@@ -1,6 +1,7 @@
 package com.xiao.boot.mybatis.testing
 
 /**
+ * Specify tables to migrate in testing environment.
  *
  * @author lix wang
  */

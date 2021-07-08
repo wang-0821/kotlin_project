@@ -1,0 +1,4 @@
+dependencies {
+    api project(":kotlin-spring-boot-base")
+    api "org.springframework:spring-webmvc"
+}
