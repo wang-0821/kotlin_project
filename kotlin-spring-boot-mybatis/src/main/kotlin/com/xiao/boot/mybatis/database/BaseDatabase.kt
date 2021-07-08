@@ -56,15 +56,16 @@ abstract class BaseDatabase(
 
     open fun createConfiguration(): Configuration {
         return Configuration()
-                .apply {
-                    isMapUnderscoreToCamelCase = true
-                    isLazyLoadingEnabled = true
-                    isCacheEnabled = false
-                    localCacheScope = LocalCacheScope.STATEMENT
-                    if (envInfoProvider.profile() == ProfileType.TEST) {
-                        languageRegistry.defaultDriverClass = KtTestXMLLanguageDriver::class.java
-                    }
+            .apply {
+                isMapUnderscoreToCamelCase = true
+                isLazyLoadingEnabled = true
+                isCacheEnabled = false
+                localCacheScope = LocalCacheScope.STATEMENT
+                if (envInfoProvider.profile() == ProfileType.TEST) {
+                    languageRegistry.defaultDriverClass = KtTestXMLLanguageDriver::class.java
                 }
+                variables.setProperty(DATABASE_NAME_KEY, databaseName(name))
+            }
     }
 
     internal fun getTestTableDataScript(table: String): Resource {
@@ -89,9 +90,11 @@ abstract class BaseDatabase(
     }
 
     companion object {
-        fun configurationName(databaseName: String) = "${databaseName}Configuration"
-        fun sqlSessionFactoryName(databaseName: String) = "${databaseName}SqlSessionFactory"
-        fun dataSourceName(databaseName: String) = "${databaseName}DataSource"
+        const val DATABASE_NAME_KEY = "KT_MYSQL_DATABASE_NAME"
+        fun databaseName(name: String) = "${name}Database"
+        fun configurationName(name: String) = "${name}Configuration"
+        fun sqlSessionFactoryName(name: String) = "${name}SqlSessionFactory"
+        fun dataSourceName(name: String) = "${name}DataSource"
         fun dataSourceFactoryMethodName(): String = getDatabaseMethodName("createDataSource")
         fun configurationName(): String = getDatabaseMethodName("createConfiguration")
 

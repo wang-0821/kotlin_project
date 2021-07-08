@@ -7,10 +7,10 @@ import org.apache.ibatis.session.Configuration
 
 class KtTestXMLLanguageDriver : XMLLanguageDriver() {
     override fun createSqlSource(configuration: Configuration, script: XNode, parameterType: Class<*>?): SqlSource {
-        return KtTestSqlSource(super.createSqlSource(configuration, script, parameterType))
+        return KtTestSqlSource(configuration, super.createSqlSource(configuration, script, parameterType))
     }
 
     override fun createSqlSource(configuration: Configuration, script: String, parameterType: Class<*>?): SqlSource {
-        return KtTestSqlSource(super.createSqlSource(configuration, script, parameterType))
+        return KtTestSqlSource(configuration, super.createSqlSource(configuration, script, parameterType))
     }
 }

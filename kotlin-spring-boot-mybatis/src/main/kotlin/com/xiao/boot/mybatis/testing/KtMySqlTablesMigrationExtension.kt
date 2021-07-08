@@ -4,9 +4,11 @@ import com.xiao.base.util.ThreadUtils
 import com.xiao.boot.base.testing.TestSpringContextUtils
 import com.xiao.boot.mybatis.database.BaseDatabase
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceName
+import com.xiao.boot.mybatis.database.BaseDatabase.Companion.databaseName
 import org.apache.ibatis.jdbc.ScriptRunner
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import java.io.File
 import java.io.FileInputStream
 import java.io.InputStreamReader
 import javax.sql.DataSource
@@ -38,7 +40,13 @@ class KtMySqlTablesMigrationExtension : BeforeAllCallback {
         dataSource: DataSource,
         tables: Set<String>
     ) {
-        val dataFiles = tables.map { database.getTestTableDataScript(it).file }
+        val dataFiles = mutableListOf<File>()
+        val fileToTableMap = mutableMapOf<String, String>()
+        for (table in tables) {
+            val file = database.getTestTableDataScript(table).file
+            dataFiles.add(file)
+            fileToTableMap[file.name] = table
+        }
         if (dataFiles.isNotEmpty()) {
             val connection = dataSource.connection
             val runner = ScriptRunner(connection)
@@ -52,6 +60,7 @@ class KtMySqlTablesMigrationExtension : BeforeAllCallback {
                         .createStatement()
                         .executeUpdate("DELETE FROM ${file.nameWithoutExtension};")
                     runner.runScript(InputStreamReader(FileInputStream(file)))
+                    TestMigrationUtils.addMigratedTable(databaseName(database.name), fileToTableMap[file.name]!!)
                 }
         }
     }

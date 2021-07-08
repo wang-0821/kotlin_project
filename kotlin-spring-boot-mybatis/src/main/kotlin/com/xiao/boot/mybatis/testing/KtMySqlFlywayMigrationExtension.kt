@@ -3,6 +3,7 @@ package com.xiao.boot.mybatis.testing
 import com.xiao.boot.base.env.EnvConstants
 import com.xiao.boot.base.testing.TestSpringContextUtils
 import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.exception.FlywayValidateException
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.springframework.test.context.TestContext
@@ -43,13 +44,22 @@ class KtMySqlFlywayMigrationExtension : BeforeAllCallback {
         Flyway
             .configure()
             .dataSource(testDatabaseUrl, testDatabaseUsername, testDatabasePassword)
-            .sqlMigrationSuffixes(".sql")
-            .schemas("testFlywaySchema")
+            .sqlMigrationSuffixes(*MIGRATION_FILE_SUFFIX)
+            .schemas(*MIGRATION_SCHEMAS)
             .load()
-            .migrate()
+            .apply {
+                try {
+                    migrate()
+                } catch (e: FlywayValidateException) {
+                    repair()
+                    migrate()
+                }
+            }
     }
 
     companion object {
         @Volatile private var migrated = false
+        val MIGRATION_FILE_SUFFIX = arrayOf(".sql")
+        val MIGRATION_SCHEMAS = arrayOf("testFlywaySchema")
     }
 }
