@@ -6,7 +6,6 @@ dependencies {
         exclude group: "org.xmlunit", module: "xmlunit-core"
         exclude group: "org.assertj", module: "assertj-core"
         exclude group: "org.hamcrest", module: "hamcrest"
-        exclude group: "org.opentest4j", module: "opentest4j"
         exclude group: "org.mockito", module: "mockito-core"
         exclude group: "org.mockito", module: "mockito-junit-jupiter"
         exclude group: "org.skyscreamer", module: "jsonassert"
