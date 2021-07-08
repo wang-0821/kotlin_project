@@ -1,5 +1,6 @@
 package com.xiao.boot.mybatis.annotation
 
+import com.xiao.boot.mybatis.database.BaseDatabase.Companion.configurationName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceFactoryMethodName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.sqlSessionFactoryName
@@ -52,6 +53,7 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
         val scanner = ClassPathMapperScanner(registry)
         val dataSourceBeanName = dataSourceName(name)
         val sqlSessionFactoryBeanName = sqlSessionFactoryName(name)
+        val configurationBeanName = configurationName(name)
 
         // register mapper beanDefinition list
         registerMapperBeanDefinitions(mapperBasePackages, sqlSessionFactoryBeanName, scanner)
@@ -59,10 +61,14 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
         // register dataSource beanDefinition
         registerDataSourceBeanDefinition(databaseBeanName, dataSourceBeanName, registry)
 
+        // register configuration beanDefinition
+        registerConfigurationBeanDefinition(databaseBeanName, configurationBeanName, registry)
+
         // register sqlSessionFactory beanDefinition
         registerSqlSessionFactoryBeanDefinition(
             sqlSessionFactoryBeanName,
             dataSourceBeanName,
+            configurationBeanName,
             mapperXmlPattern,
             scanner.resourceLoader as ResourcePatternResolver,
             registry
@@ -96,25 +102,6 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
             }
     }
 
-    private fun registerSqlSessionFactoryBeanDefinition(
-        beanName: String,
-        dataSourceBeanName: String,
-        mapperXmlPattern: String,
-        scanner: ResourcePatternResolver,
-        registry: BeanDefinitionRegistry
-    ) {
-        val xmlMapperResources = scanner.getResources(mapperXmlPattern)
-        registry.registerBeanDefinition(
-            beanName,
-            GenericBeanDefinition()
-                .apply {
-                    beanClass = SqlSessionFactoryBean::class.java
-                    propertyValues.add("dataSource", RuntimeBeanReference(dataSourceBeanName))
-                    propertyValues.add("mapperLocations", xmlMapperResources)
-                }
-        )
-    }
-
     private fun registerDataSourceBeanDefinition(
         databaseBeanName: String,
         dataSourceBeanName: String,
@@ -126,6 +113,42 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
                 .apply {
                     factoryBeanName = databaseBeanName
                     factoryMethodName = dataSourceFactoryMethodName()
+                }
+        )
+    }
+
+    private fun registerConfigurationBeanDefinition(
+        databaseBeanName: String,
+        configurationBeanName: String,
+        registry: BeanDefinitionRegistry
+    ) {
+        registry.registerBeanDefinition(
+            configurationBeanName,
+            GenericBeanDefinition()
+                .apply {
+                    factoryBeanName = databaseBeanName
+                    factoryMethodName = configurationName()
+                }
+        )
+    }
+
+    private fun registerSqlSessionFactoryBeanDefinition(
+        beanName: String,
+        dataSourceBeanName: String,
+        configurationBeanName: String,
+        mapperXmlPattern: String,
+        scanner: ResourcePatternResolver,
+        registry: BeanDefinitionRegistry
+    ) {
+        val xmlMapperResources = scanner.getResources(mapperXmlPattern)
+        registry.registerBeanDefinition(
+            beanName,
+            GenericBeanDefinition()
+                .apply {
+                    beanClass = SqlSessionFactoryBean::class.java
+                    propertyValues.add("dataSource", RuntimeBeanReference(dataSourceBeanName))
+                    propertyValues.add("configuration", RuntimeBeanReference(configurationBeanName))
+                    propertyValues.add("mapperLocations", xmlMapperResources)
                 }
         )
     }

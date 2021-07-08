@@ -54,3 +54,7 @@ fun Type.isMap() = run {
         this == Map::class.java
     }
 }
+
+fun Char.isViewable() = run {
+    this.toInt() in 33..126
+}

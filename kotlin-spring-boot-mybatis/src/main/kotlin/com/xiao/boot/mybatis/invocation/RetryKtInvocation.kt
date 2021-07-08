@@ -48,9 +48,7 @@ class RetryKtInvocation(
                 log.warn("invoke: ${sourceClass.name}.${method.name} failed,  times: $times.")
             }
         }
-        throw IllegalStateException(
-            "invoke: ${sourceClass.name}.${method.name} failed, total times: $executeTimes.", ex
-        )
+        throw ex!!
     }
 
     private fun parseMethodRetryTimes(sourceClass: Class<*>): Map<Method, Int> {

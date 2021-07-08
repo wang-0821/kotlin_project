@@ -20,14 +20,30 @@ interface UserMapper {
         SELECT 
             $COLUMNS
         FROM
-            users
+            $TABLE
         WHERE
             id = #{id}
         """
     )
+    @MapperRetry
     fun findById(@Param("id") id: Long): User?
 
+    @Select(
+        """
+        SELECT
+            $COLUMNS
+        FROM
+            $TABLE
+        INNER JOIN user_task ON user_task.user_id = $TABLE.id
+        WHERE
+            $TABLE.id = #{id}
+        """
+    )
+    @MapperRetry
+    fun findByIdWithJoin(@Param("id") id: Long): User?
+
     companion object {
-        const val COLUMNS = "id, username, password"
+        private const val TABLE = "users"
+        const val COLUMNS = "$TABLE.id, $TABLE.username, $TABLE.password"
     }
 }

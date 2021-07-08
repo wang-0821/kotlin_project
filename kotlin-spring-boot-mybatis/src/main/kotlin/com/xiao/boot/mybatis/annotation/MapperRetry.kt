@@ -1,6 +1,7 @@
 package com.xiao.boot.mybatis.annotation
 
 /**
+ * Available except test active profile.
  *
  * @author lix wang
  */

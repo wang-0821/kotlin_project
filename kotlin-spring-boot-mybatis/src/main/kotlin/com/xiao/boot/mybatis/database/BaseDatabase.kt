@@ -3,8 +3,11 @@ package com.xiao.boot.mybatis.database
 import com.xiao.boot.base.env.EnvInfoProvider
 import com.xiao.boot.base.env.ProfileType
 import com.xiao.boot.mybatis.annotation.KtSpringDatabase
+import com.xiao.boot.mybatis.testing.KtTestXMLLanguageDriver
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import org.apache.ibatis.session.Configuration
+import org.apache.ibatis.session.LocalCacheScope
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.Resource
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
@@ -51,6 +54,20 @@ abstract class BaseDatabase(
         )
     }
 
+    open fun createConfiguration(): Configuration {
+        return Configuration()
+            .apply {
+                isMapUnderscoreToCamelCase = true
+                isLazyLoadingEnabled = true
+                isCacheEnabled = false
+                localCacheScope = LocalCacheScope.STATEMENT
+                if (envInfoProvider.profile() == ProfileType.TEST) {
+                    languageRegistry.defaultDriverClass = KtTestXMLLanguageDriver::class.java
+                }
+                variables.setProperty(DATABASE_NAME_KEY, databaseName(name))
+            }
+    }
+
     internal fun getTestTableDataScript(table: String): Resource {
         if (!dataScriptParsed) {
             synchronized(this) {
@@ -73,12 +90,18 @@ abstract class BaseDatabase(
     }
 
     companion object {
-        fun sqlSessionFactoryName(databaseName: String) = "${databaseName}SqlSessionFactory"
-        fun dataSourceName(databaseName: String) = "${databaseName}DataSource"
-        fun dataSourceFactoryMethodName(): String {
+        const val DATABASE_NAME_KEY = "KT_MYSQL_DATABASE_NAME"
+        fun databaseName(name: String) = "${name}Database"
+        fun configurationName(name: String) = "${name}Configuration"
+        fun sqlSessionFactoryName(name: String) = "${name}SqlSessionFactory"
+        fun dataSourceName(name: String) = "${name}DataSource"
+        fun dataSourceFactoryMethodName(): String = getDatabaseMethodName("createDataSource")
+        fun configurationName(): String = getDatabaseMethodName("createConfiguration")
+
+        private fun getDatabaseMethodName(name: String): String {
             val methods = BaseDatabase::class.java.methods
                 .filter { method ->
-                    method.name == "createDataSource"
+                    method.name == name
                 }
             check(methods.size == 1)
             return methods.first().name
