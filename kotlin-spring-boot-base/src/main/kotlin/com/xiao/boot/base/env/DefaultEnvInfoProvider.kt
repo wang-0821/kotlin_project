@@ -4,10 +4,10 @@ package com.xiao.boot.base.env
  *
  * @author lix wang
  */
-class DefaultEnvInfoProvider(
+internal class DefaultEnvInfoProvider(
     private val ip: String,
     private val host: String,
-    private val port: Int,
+    var port: Int,
     private val profile: ProfileType
 ) : EnvInfoProvider {
     override fun ip(): String {

@@ -50,6 +50,7 @@ dependencyManagement {
         dependencySet(group: "org.springframework.boot", version: "2.5.0") {
             entry "spring-boot-starter"
             entry "spring-boot-starter-test"
+            entry "spring-boot-starter-undertow"
         }
         // spring framework
         dependencySet(group: "org.springframework", version: "5.3.7") {

@@ -2,7 +2,9 @@ package com.xiao.boot.base.util
 
 import com.xiao.boot.base.env.ProfileType
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition
+import org.springframework.boot.web.context.WebServerApplicationContext
 import org.springframework.core.env.Environment
+import org.springframework.util.StringUtils
 
 /**
  *
@@ -22,4 +24,12 @@ fun Environment.activeProfileType(): ProfileType {
             "current found ${profiles.size}."
     }
     return profiles.first()
+}
+
+fun WebServerApplicationContext.serverName(): String {
+    return if (StringUtils.hasText(this.serverNamespace)) {
+        this.serverNamespace
+    } else {
+        "server"
+    }
 }
