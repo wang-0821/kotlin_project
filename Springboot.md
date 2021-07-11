@@ -2,6 +2,7 @@
 * [2.SpringBoot启动过程](#2)
 * [3.Spring Bean的扫描与注册](#3)
 * [4.SpringBoot自动配置](#4)
+* [5.SpringBoot web](#5)
 
 <h2 id="1">1.SpringBoot模块结构</h2>
 &emsp;&emsp; SpringBoot项目下主要有：buildSrc、spring-boot-project、spring-boot-tests三大模块。
@@ -309,6 +310,9 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
                         |
                         V
         创建ConfigurableApplicationContext
+			|
+			V
+    执行prepareContext(bootstrapContext, context, environment, listeners, arguement, banner)
                         |
                         V
             context设置environment
@@ -327,6 +331,12 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
                         |
                         V
         发布ApplicationPreparedEvent事件
+			|
+			V
+	      prepareContext执行完毕
+	      		｜
+			V
+	执行refreshContext(context)(applicationContext.refresh())
                         |
                         V
         预处理ConfigurableListableBeanFactory
@@ -339,6 +349,10 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
                         |
                         V
     向beanFactory中注册[BeanPostProcessor] Beans
+    			|
+			V
+	执行applicationContext.onRefresh()
+			|
     ------------------->| finishBeanFactoryInitialization(beanFactory)开始，创建所有Beans。LABEL(getBean)
     |     loop(创建失败) V  循环执行LABEL(getBean - getBeanEnd)
 	--beanFactory[InstantiationAwareBeanPostProcessor].postProcessBeforeInstantiation(beanClass, beanName)创建Bean
@@ -402,6 +416,9 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
                                         |
                                         V
                             发布ContextRefreshedEvent事件
+			    		|
+					V
+				refreshContext执行完毕
                                         |
                                         V
                             发布ApplicationStartedEvent事件
@@ -554,3 +571,84 @@ CGLIB增强后的class所代替。
         执行DeferredImportSelector.Group.process(AnnptationMetadata, DeferredImportSelector)方法，
         这个方式就会获取所有spring.factories中org.springframework.boot.autoconfigure.EnableAutoConfiguration配置项，
         并把扫描出来的所有非ImportSelector、ImportBeanDefinitionRegistrar类型的类当作@Configuration类处理。
+
+<h2 id="5">5.SpringBoot web</h2>
+&emsp;&emsp; SpringBoot web程序在启动过程中与普通的SpringBoot程序启动流程是一样的，区别在于由于引入了servlet
+和springframework web等依赖，SpringApplication 的WebApplicationType为SERVLET，因此创建的ConfigurableEnvironment
+具体类型为ApplicationServletEnvironment，创建的ConfigurableApplicationContext具体类型为
+AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执行完后，main线程会自然结束退出，
+但是在onRefresh过程中WebServer创建的线程会一直存在，并监听web请求。
+
+    ApplicationServletEnvironment和ApplicationEnvironment的区别在于：
+    	构造函数会调用customizePropertySources(propertySources)，ApplicationEnvironment会添加
+	systemProperties、systemEnvironment，而ApplicationServletEnvironment会先添加另外两个PropertySource，
+	分别是servletConfigInitParams、servletContextInitParams。
+	
+    ServletWebServerApplicationContext和AnnotationConfigApplicationContext的区别在于：
+    	两者refresh具体执行过程不同。
+	
+	ServletWebServerApplicationContext.refresh()执行过程如下：
+				执行prepareRefresh()
+					|
+					V
+				执行initPropertySources()
+					|
+					V
+	执行ConfigurableWebEnvironment.initPropertySources(servletContext, servletConfig)
+					|
+					V
+			执行obtainFreshBeanFactory()获取beanFactory
+					|
+					V
+			执行prepareBeanFactory(beanFactory)
+					|
+					V
+			执行postProcessBeanFactory(beanFactory)
+					|
+					V
+	添加WebApplicationContextServletContextAwareProcessor BeanPostProcessor
+					|
+					V
+		添加ServletContextAware ignoredDependencyInterfaces
+					|
+					V
+			postProcessBeanFactory(beanFactory)执行完毕
+					|
+					V
+	执行[BeanDefinitionRegistryPostProcessor].postProcessBeanDefinitionRegistry(registry)
+					|
+					V
+		执行[BeanFactoryPostProcessor].postProcessBeanFactory(beanFactory)
+					|
+					V
+		执行registerBeanPostProcessors(beanFactory)注册BeanPostProcessor集合
+					|
+					V
+				注册MessageSource
+					|
+					V
+				  执行onRefresh()
+				  	|
+					V
+			初始化GenericWebApplicationContext.themeSource
+					|
+					V
+				获取ServletWebServerFactory
+					|
+					V
+	执行ServletWebServerFactory.getWebServer(getSelfInitializer())获取WebServer
+					|
+					V
+	执行ConfigurableWebEnvironment.initPropertySources(servletContext, servletConfig)
+					|
+					V
+		用传入的值替换掉servletContextInitParams、servletConfigInitParams
+					|
+					V
+		执行registerListeners()注册ApplicationListener集合
+					|
+					V
+		执行finishBeanFactoryInitialization(beanFactory)完成bean的创建
+					|
+					V
+				执行finishRefresh()
