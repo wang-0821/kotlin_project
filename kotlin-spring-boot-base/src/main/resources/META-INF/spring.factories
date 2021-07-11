@@ -13,3 +13,7 @@ com.xiao.boot.base.testing.TestSpringExecutionListener
 # set autoConfiguration filter
 org.springframework.boot.autoconfigure.AutoConfigurationImportFilter=\
 com.xiao.boot.base.filter.AutoConfigurationExcludeFilter
+
+# Application Listeners
+org.springframework.context.ApplicationListener=\
+com.xiao.boot.base.listener.SpringContextRefreshedEventListener
