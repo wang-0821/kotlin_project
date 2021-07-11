@@ -639,6 +639,9 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
 	执行ServletWebServerFactory.getWebServer(getSelfInitializer())获取WebServer
 					|
 					V
+	注册webServerGracefulShutdown、webServerStartStop SmartLifecycle 用来管理webserver生命周期
+					|
+					V
 	执行ConfigurableWebEnvironment.initPropertySources(servletContext, servletConfig)
 					|
 					V
