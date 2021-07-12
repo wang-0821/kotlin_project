@@ -655,3 +655,89 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
 					|
 					V
 				执行finishRefresh()
+
+### Undertow WebServer创建过程
+&emsp;&emsp; ServletWebServerApplicationContext在执行onRefresh时，
+会根据ServletWebServerFactory Bean创建WebServer。如果引入了undertow依赖，
+那么默认会根据UndertowServletWebServerFactory创建WebServer。
+
+	WebServerFactoryCustomizer Bean有四种：
+	    UndertowServletWebServerFactoryCustomizer、
+	    ServletWebServerFactoryCustomizer、
+	    UndertowWebServerFactoryCustomizer、
+	    LocaleCharsetMappingsCustomizer。
+	
+	执行WebServerFactoryCustomizerBeanPostProcessor.postProcessBeforeInitialization(bean, beanName)
+					|
+					V
+		从beanFactory中获取WebServerFactoryCustomizer类型的Bean集合
+					|
+					V
+		依次执行WebServerFactoryCustomizer.customize(WebServerFactory)，
+	会向UndertowWebServerFactoryDelegate中添加UndertowOption配置类UndertowBuilderCustomizer
+					|
+					V
+					zhixingsdfs执行
+					|
+					V
+    	执行UndertowWebServerFactoryDelegate.createBuilder(this)创建Undertow.Builder
+					|
+					V
+	创建Builder，设置ssl、address、port、bufferSize、ioThreads、workThreads、
+		directBuffers、http2、httpListener
+					|
+					V
+	依次执行UndertowBuilderCustomizer.customize(builder)进一步配置UndertowOption
+					|
+					V
+				Undertow.Builder创建完成
+					|
+					V
+	执行UndertowServletWebServerFactory.createManager(initializers)开始创建DeploymentManager
+					|
+					V
+				创建DeploymentInfo
+					|
+					V
+		用initializers设置DeploymentInfo.servletContainerInitializers
+					|
+					V
+	设置DeploymentInfo的：classLoader、contextPath、displayName、deploymentName
+					|
+					V
+		根据factory中的errorpages配置DeploymentInfo.errorPages
+					|
+					V
+	设置DeploymentInfo的：servletStackTraces、resourceManager、tempDir、eagerFilterInit、
+		preservePathOnForward、mimeMappings、listeners
+					|
+					V
+	执行factory.deploymentInfoCustomizers[UndertowDeploymentInfoCustomizer].customize(DeploymentInfo)
+					|
+					V
+			设置DeploymentInfo的：localeCharsetMapping
+					|
+					V
+	创建ServletContainer对象，执行ServletContainer.addDeployment(DeploymentInfo)获取DeploymentManager
+					|
+					V
+			执行DeploymentManager.deploy()
+					|
+					V
+		根据DeploymentManager、DeploymentInfo、ServletContainer创建Deployment
+					|
+					V
+	创建ServletContextImpl(servletContainer, deployment)，并赋值给Deployment.servletContext
+			
+					|
+					V
+	设置DeploymentManager中DeploymentInfo的mimeExtensionMappings
+					|
+					V
+	设置DeploymentManager.deployment.sessionManager中的defaultSessionTimeout为factory.session.timeout
+					|
+					V
+				DeploymentManager创建完毕
+					
+					
+					
