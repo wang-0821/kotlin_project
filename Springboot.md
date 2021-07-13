@@ -728,10 +728,116 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
 					|
 					V
 	创建ServletContextImpl(servletContainer, deployment)，并赋值给Deployment.servletContext
-			
 					|
 					V
-	设置DeploymentManager中DeploymentInfo的mimeExtensionMappings
+	根据ServiceLoader、ServletExtensionHolder、DeploymentInfo获取ServletExtension集合，
+	执行[ServletExtension].handleDeployment(deploymentInfo, servletContext)
+					|
+					V
+		设置Deployment.threadSetupActions、Deployment.servletPaths.welcomePages
+					|
+					V
+			设置servletContext的SessionCookieConfigImpl各属性
+					|
+					V
+	根据DeploymentInfo.sessionManagerFactory创建SessionManager并赋值给Deployment.sessionManager
+					|
+					V
+		创建一个ThreadSetupHandler.Action，并根据Deployment.threadSetupActions，
+	执行[ThreadSetupHandler].create(Action) 获取一个新的Action，最后执行Action.call(exchange, context)
+					|
+					V
+		设置Deployment的：applicationListeners、servlets、filters
+					|
+					V
+		设置ServletContext的javax.servlet.context.tempdir属性
+					|
+					V
+	根据DeploymentInfo.servletContainerInitializers.instanceFactory创建ServletContainerInitializer集合
+		执行[ServletContainerInitializer].onStartup(class, servletContext)
+					|
+					V
+		根据factory.initParameters设置ServletContext.deploymentInfo.initParameters
+					|
+					V
+		根据factory.session.cookie设置ServletContext.sessionCookieConfig
+					|
+					V
+	设置ServletContext的org.springframework.web.context.WebApplicationContext.ROOT 为当前ApplicationContext，
+		设置当前GenericWebApplicationContext的servletContext为当前ServletContext
+					|
+					V
+			根据ServletContext设置ApplicationContext的scope
+					|
+					V
+	根据ServletContext向beanFactory中注册servletContext、contextParameters、contextAttributes Bean
+					|
+					V
+	获取beanFactory中的ServletContextInitializer集合，执行[ServletContextInitializer].onStartup(servletContext)
+					|
+					V
+		向Deployment.sessionManager中注册SessionListener
+					|
+					V
+		根据DeploymentInfo中的errorPages设置Deployment的errorPages
+					|
+					V
+		根据DeploymentInfo中的mimeMappings设置Deployment的mimeMappings
+					|
+					V
+			发送context initialized事件
+					|
+					V
+	创建ServletDispatchingHandler HttpHandler，根据DeploymentInfo.innerHandlerChainWrappers，
+		执行[HandlerWrapper].wrap(ServletDispatchingHandler)得到一个新的wrappedHandler
+					|
+					V
+		创建RedirectDirHandler(wrappedHandler, servletPaths) wrappedHandler
+					|
+					V
+	创建PredicateHandler(Predicate, secureHandler, wrappedHandler)作为wrappedHandler skippable
+					|
+					V
+	根据DeploymentInfo.outerHandlerChainWrappers，执行[HttpWrapper].wrap(wrappedHandler)作为outerHandler
+					|
+					V
+		创建SendErrorPageHandler(outerHandler)作为outerHandler
+					|
+					V
+	创建PredicateHandler(Predicate, outerHandler, wrappedHandler)作为wrappedHandler
+					|
+					V
+		根据DeploymentInfo.sessionPersistenceManager处理wrappedHandler skippable
+					|
+					V
+		根据DeploymentInfo.metricsCollector处理wrappedHandler skippable
+					|
+					V
+	根据DeploymentInfo.crawlerSessionManagerConfig处理wrappedHandler skippable
+					|
+					V
+	根据Deployment.servletPaths、wrappedHandler、Deployment、ServletContext创建ServletInitialHandler
+					|
+					V
+		根据Deployment.deploymentInfo.initialHandlerChainWrappers，
+		执行[HandlerWrapper].wrap(ServletInitialHandler)结果作为initialHandler
+					|
+					V
+		创建HttpContinueReadHandler(initialHandler)作为initialHandler
+					|
+					V skippable
+	根据DeploymentInfo.urlEncoding创建URLDecodingHandler(urlEncoding, initialHandler)作为initialHandler
+					|
+					V
+	设置Deployment的initialHandler(initialHandler)、servletHandler(ServletInitialHandler)
+					|
+					V
+			执行ServletContext.initDone()
+		
+				
+					|
+					V
+		设置DeploymentManager中DeploymentInfo的mimeExtensionMappings
 					|
 					V
 	设置DeploymentManager.deployment.sessionManager中的defaultSessionTimeout为factory.session.timeout
