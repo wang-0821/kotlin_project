@@ -276,7 +276,8 @@ initializers执行初始化。4，使用SpringApplicationRunListener执行Applic
 然后会获取所有ApplicationRunner、CommandLineRunner类型的Bean，并执行这些runners。最后会发布一条ApplicationReadyEvent。
 
 ### SpringBoot启动流程图
-&emsp;&emsp; 包括SpringBoot启动时主要执行的逻辑及。
+&emsp;&emsp; SpringApplication 在refreshContext(context)开始时，会向Runtime中注册shutdownHook Thread，
+在System.exit(status)时，会执行Runtime中所有的shutdown线程。
 
 					SpringApplication初始化
     (加载spring.factories BootstrapRegistryInitializer、ApplicationListener、ApplicationContextInitializer)
@@ -677,7 +678,7 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
 	会向UndertowWebServerFactoryDelegate中添加UndertowOption配置类UndertowBuilderCustomizer
 					|
 					V
-					zhixingsdfs执行
+		执行factory.getWebServer(ServletContextInitializer)获取WebServer
 					|
 					V
     	执行UndertowWebServerFactoryDelegate.createBuilder(this)创建Undertow.Builder
@@ -685,6 +686,9 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
 					V
 	创建Builder，设置ssl、address、port、bufferSize、ioThreads、workThreads、
 		directBuffers、http2、httpListener
+					|
+					V
+	根据传入的ServletContextInitializer设置DeploymentInfo.servletContainerInitializers
 					|
 					V
 	依次执行UndertowBuilderCustomizer.customize(builder)进一步配置UndertowOption
@@ -762,7 +766,7 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
 					V
 		根据factory.session.cookie设置ServletContext.sessionCookieConfig
 					|
-					V
+					V ServletWebServerApplicationContext.selfInitialize(servletContext) start
 	设置ServletContext的org.springframework.web.context.WebApplicationContext.ROOT 为当前ApplicationContext，
 		设置当前GenericWebApplicationContext的servletContext为当前ServletContext
 					|
@@ -774,7 +778,7 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
 					|
 					V
 	获取beanFactory中的ServletContextInitializer集合，执行[ServletContextInitializer].onStartup(servletContext)
-					|
+					|ServletWebServerApplicationContext.selfInitialize(servletContext) end
 					V
 		向Deployment.sessionManager中注册SessionListener
 					|
@@ -833,8 +837,57 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
 					|
 					V
 			执行ServletContext.initDone()
-		
-				
+					|
+					V
+			执行Deployment.servletPaths.initData()
+					|
+					V
+	根据Deployment.deploymentInfo.filterUrlMappings计算pathMatches、extensionMatches
+					|
+					V
+	根据Deployment.servlets.managedServletMap计算pathMatches(Set<String>)、
+	extensionMatches(Set<String>)、defaultServlet(ServletHandler)、
+	pathServlets(Map<String, ServletHandler>)、extensionServlets(Map<String, ServletHandler>)
+					|
+					V
+	如果Deployment.servlets没有"default" ServletHandler，则新建一个作为"default"添加到servlets里
+					|
+					V
+			创建ServletPathMatchesData.Builder对象
+					|
+					V
+	根据pathMatches和DeploymentInfo.getFilterMappings()计算noExtension(Map<DispatcherType, List<ManagedFilter>>)、
+		extension(Map<String, Map<DispatcherType, List<ManagedFilter>>>)
+					|
+					V
+	根据pathMatches(pathMatch以"/*"结尾)设置ServletPathMatchesData.Builder.prefixMatches，
+		并设置PathMatch的defaultHandler、requireWelcomeFileMatch
+					|
+					V
+	根据pathMatches(pathMatch以"/*"结尾)和extension设置ServletPathMatchesData.Builder.prefixMatches，
+			并设置PathMatch的extensionMatches
+					|
+					V
+	根据pathMatches(pathMatch为空)，设置ServletPathMatchesData.Builder.exactPathMatches
+					|
+					V
+	根据pathMatches(pathMatch其他)，设置ServletPathMatchesData.Builder.exactPathMatches
+					|
+					V
+	根据Deployment.getServletHandlers()和DeploymentInfo.getFilterMappings()，
+		设置ServletPathMatchesData.Builder.nameMatches
+					|
+					V
+	执行ServletPathMatchesData.Builder.build()获取ServletPathMatchesData并赋值给Deployment.servletPaths.data
+					|
+					V
+			Deployment.servletPaths.initData()执行完毕
+					|
+					V
+	执行[DeploymentInfo.deploymentCompleteListeners].contextInitialized(ServletContextEvent(ServletContext))
+					|
+					V
+			DeploymentManager.deploy()执行完毕
 					|
 					V
 		设置DeploymentManager中DeploymentInfo的mimeExtensionMappings
@@ -844,6 +897,97 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
 					|
 					V
 				DeploymentManager创建完毕
+					|
+					V
+	执行getUndertowWebServer(Builder, DeploymentManager, factory.port)创建UndertowServletWebServer
+					|
+					V
+	执行UndertowWebServerFactoryDelegate(webServerFactory, DeploymentManagerHttpHandlerFactory(DeploymentManager))
+				获取HttpHandlerFactory集合
+					|
+					V
+	创建UndertowServletWebServer(Builder, [HttpHandlerFactory], webServer.contextPath, autoPort)
 					
 					
+### Undertow WebServer启动过程
+&emsp;&emsp; 在执行LifecycleProcessor.onRefresh()时，会启动WebServer。
+
+	Map<Integer, LifecycleGroup> phases 由于采用phase为key，且采用TreeMap，
+	TreeMap会对key进行排序，因此会按照phase顺序执行LifecycleGroup.start()
+	
+	Lifecycle Bean有两种:
+	    WebServerStartStopLifecycle、
+	    WebServerGracefulShutdownLifecycle。
+		
+				执行DefaultLifecycleProcessor.onRefresh()
+						|
+						V
+				执行getLifecycleBeans()获取LifeCycle Bean集合
+						|
+						V
+		根据LifeCycle的getPhase()值不同，创建LifecycleGroup，一个phase值对应一个LifecycleGroup
+						|
+						V
+		根据Lifecycle Bean的phase值的不同，将Lifecycle添加到不同的LifecycleGroup中
+						|
+						V
+					执行[LifecycleGroup].start()
+						|
+						V
+				执行WebServerStartStopLifecycle.start()
+						|
+						V
+					执行WebServer.start()
+						|
+						V
+		执行UndertowWebServer.createUndertowServer()创建UndertowWebServer.undertow
+						|
+						V
+	执行UndertowWebServer.httpHandlerFactories(DeploymentManagerHttpHandlerFactory).getHandler(null),
+			创建DeploymentManagerHandler(DeploymentManager) HttpHandler
+						|
+						V
+			设置Undertow.Builder.handler为上一步创建的HttpHandler
+						|
+						V
+		创建Undertow(Undertow.Builder)，将Undertow.Builder中的属性赋值给Undertow
+						|
+						V
+					执行Undertow.start()
+						|
+						V
+		根据ServiceLoader获取XnioProvider，执行XnioProvider.getInstance()获取Xnio
+						|
+						V
+				执行Xnio.createWorker创建XnioWorker
+						|
+						V
+				根据Xnio创建XnioWorker.Builder(Xnio)
+						|
+						V
+			根据OptionMap将各配置项赋值给XnioWorker.Builder
+						|
+						V
+			执行Xnio.build(XnioWorker.Builder)创建XnioWorker
+						|
+						V
+		设置XnioWorker的：xnio、terminationTask、name、bindAddressTable、taskPool
+						|
+						V 
+			根据XnioWorker.Builder.workerIoThreads数值，创建WorkerThread集合
+						|
+						V
+			使用Xnio.mainSelectorCreator.open获取一个threadSelector Selector
+						|
+						V
+						
+						
+						|
+						V
+			ApplicationContext发布ServletWebServerInitializedEvent
+						|
+						V
+					UndertowWebServer启动成功
 					
+				
+				
