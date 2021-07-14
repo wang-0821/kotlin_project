@@ -684,8 +684,11 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
     	执行UndertowWebServerFactoryDelegate.createBuilder(this)创建Undertow.Builder
 					|
 					V
-	创建Builder，设置ssl、address、port、bufferSize、ioThreads、workThreads、
-		directBuffers、http2、httpListener
+		创建Builder，设置ssl、address、port、bufferSize、ioThreads、
+			workThreads、directBuffers、http2
+					|
+					V
+	根据factory.port和factory.address向Undertow.Builder.listeners中添加HTTP类型的ListenerConfig
 					|
 					V
 	根据传入的ServletContextInitializer设置DeploymentInfo.servletContainerInitializers
@@ -959,7 +962,7 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
 		根据ServiceLoader获取XnioProvider，执行XnioProvider.getInstance()获取Xnio
 						|
 						V
-				执行Xnio.createWorker创建XnioWorker
+				执行Xnio.createWorker(OptionMap)创建XnioWorker
 						|
 						V
 				根据Xnio创建XnioWorker.Builder(Xnio)
@@ -968,18 +971,87 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
 			根据OptionMap将各配置项赋值给XnioWorker.Builder
 						|
 						V
-			执行Xnio.build(XnioWorker.Builder)创建XnioWorker
+			执行Xnio.build(XnioWorker.Builder)创建NioXnioWorker
 						|
 						V
-		设置XnioWorker的：xnio、terminationTask、name、bindAddressTable、taskPool
+	设置NioXnioWorker的：xnio、terminationTask、name、bindAddressTable、taskPool、workerStackSize
 						|
 						V 
-			根据XnioWorker.Builder.workerIoThreads数值，创建WorkerThread集合
+	根据XnioWorker.Builder.workerIoThreads数值，创建WorkerThread集合，赋值给NioXnioWorker.workerThreads
+       --------------------------------------->	|
+      |						V
+      |			使用Xnio.mainSelectorCreator.open创建一个Selector threadSelector
+      |						|
+      |						V
+      |  创建WorkerThread(NioXnioWorker, threadSelector, name, ThreadGroup, workerStackSize, number)
+       -----------------------------------------|
+						V
+			使用Xnio.mainSelectorCreator.open创建一个Selector threadSelector
 						|
 						V
-			使用Xnio.mainSelectorCreator.open获取一个threadSelector Selector
+	创建一个WorkerThread(NioXnioWorker, threadSelector, name, ThreadGroup, workerStackSize, number)
+				赋值给NioXnioWorker.acceptThread
 						|
 						V
+			创建NioWorkerMetrics，并执行NioWorkerMetrics.register()
+						|
+						V
+					NioXnioWorker创建完成
+						|
+						V
+					执行NioXnioWorker.start()
+						|
+						V
+		启动NioXnioWorker.workerThreads线程集，启动NioXnioWorker.acceptThread
+						|
+						V
+			Xnio.createWorker(OptionMap)创建XnioWorker执行完成
+						|
+						V
+			如果Undertow.byteBufferPool为空，那么创建ByteBufferPool
+						|
+						V
+				循环处理Undertow.listeners ListenerConfig
+						|
+						V
+	如果ListenerConfig.rootHandler不为空，那么将其作为rootHandler，否则取Undertow.rootHandler
+						|
+						V
+			根据ByteBufferPool和OptionMap创建HttpOpenListener
+						|
+						V
+	如果允许使用http2，那么handler为Http2UpgradeHandler(rootHandler)，否则为rootHandler
+						|
+						V
+			将handler赋值给HttpOpenListener.rootHandler
+						|
+						V
+			执行ChannelListeners.openListenerAdapter(HttpOpenListener)，
+		创建ChannelListener<AcceptingChannel<StreamConnection>> acceptListener
+						|
+						V
+			根据ListenerConfig的host和port创建InetSocketAddress
+						|
+						V
+	执行NioXnioWorker.createStreamConnectionServer(InetSocketAddress, acceptListener, OptionMap)，
+					创建AcceptingChannel server
+						|
+						V
+	执行NioXnioWorker.createTcpConnectionServer(InetSocketAddress, acceptListener, OptionMap)
+						|
+						V
+			执行ServerSocketChannel.open()获取一个ServerSocketChannel
+						|
+						V
+			根据OptionMap设置ServersocketChannel的：receiveBufferSize、reuseAddress、backlog
+						|
+						V
+	执行ServerSocketChannel.socket.bind(InetSocketAddress, backlog)，将socket绑定到address上，
+			如果这个address是无效的，那么将会绑定到本地任意一个有效的端口上。
+						|
+						V
+		根据NioXnioWorker、ServerSocketChannel、OptionMap创建QueuedNioTcpServer2
+						
 						
 						
 						|
