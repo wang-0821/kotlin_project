@@ -921,6 +921,12 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
 	Lifecycle Bean有两种:
 	    WebServerStartStopLifecycle、
 	    WebServerGracefulShutdownLifecycle。
+	    
+        SelectionKey类型，0表示不关注任何事件：
+	    OP_READ = 1、
+	    OP_WRITE = 4、
+	    OP_CONNECT = 8、
+	    OP_ACCEPT = 16。
 		
 				执行DefaultLifecycleProcessor.onRefresh()
 						|
@@ -1043,17 +1049,68 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
 			执行ServerSocketChannel.open()获取一个ServerSocketChannel
 						|
 						V
-			根据OptionMap设置ServersocketChannel的：receiveBufferSize、reuseAddress、backlog
+		根据OptionMap设置ServersocketChannel的：receiveBufferSize、reuseAddress、backlog
 						|
 						V
 	执行ServerSocketChannel.socket.bind(InetSocketAddress, backlog)，将socket绑定到address上，
 			如果这个address是无效的，那么将会绑定到本地任意一个有效的端口上。
 						|
 						V
-		根据NioXnioWorker、ServerSocketChannel、OptionMap创建QueuedNioTcpServer2
-						
-						
-						
+		根据NioXnioWorker、ServerSocketChannel、OptionMap创建NioTcpServer
+						|
+						V
+			执行NioXnioWorker.acceptThread.registerChannel(ServerSocketChannel)，
+			执行ServerSocketChannel.register(Selector, 0)，返回SelectionKey
+						|
+						V
+		根据NioTcpServer、SelectionKey、NioXnioWorker.acceptThread，创建NioTcpServerHandle
+						|
+						V
+		执行SelectionKey.attach(NioTcpServerHandle)，将NioTcpServerHandle贴到SelectionKey
+						|
+						V
+			设置NioTcpServer.handles为创建的NioTcpServerHandle，
+		设置NioTcpServer.mbeanHandle为NioXnioWorker.registerServerMXBean(XnioServerMXBean)
+						|
+						V
+					NioTcpServer创建完毕
+						|
+						V
+				根据NioTcpServer创建QueuedNioTcpServer2
+						|
+						V
+	根据NioXnioWorker.workerThreads数量，创建同等数量的LinekedBlockingQueue，赋值给acceptQueues
+						|
+						V
+		向NioTcpServer.closeSetter中设置ChannelListener，设置NioTcpServer.acceptListener
+						|
+						V
+	设置QueuedNioTcpServer2.acceptListener为之前创建的acceptListener，QueuedNioTcpServer2创建完毕
+						|
+						V
+	NioXnioWorker.createTcpConnectionServer(InetSocketAddress, acceptListener, OptionMap)执行完毕
+						|
+						V
+				执行QueuedNioTcpServer.resumeAccepts()
+						|
+						V
+			执行NioTcpServer.doResume(SelectionKey.OP_ACCEPT)
+						|
+						V
+			根据NioTcpServer.handles，执行[NipTcpServerHandle].resume()
+						|
+						V
+	据NioTcpServerHandle.workerThread即NioXnioWorker.acceptThread，执行WorkerThread.execute(Runnable)
+						|
+						V
+			将Runnable添加到WorkerThread.selectorWorkQueue中，
+		让NioXnioWorker.acceptThread异步执行resume(SelectionKey.OP_ACCEPT)
+						|
+						V
+				执行WorkerThread.setOps(SelectionKey, ops)
+						|
+						V
+		执行SelectionKey.interestOps(SelectionKey.OP_ACCEPT)，设置SelectionKey的interestOp
 						|
 						V
 			ApplicationContext发布ServletWebServerInitializedEvent
@@ -1061,5 +1118,93 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
 						V
 					UndertowWebServer启动成功
 					
-				
-				
+### WorkerThread
+&emsp;&emsp; WorkerThread是用来执行Server 请求的具体线程。
+
+				WorkerThread执行流程：
+				WorkerThread.run()
+					|
+        ------------------------------> V
+       |		执行selectorWorkQueue.poll()，获取Runnable task-------------------
+       |				| task is null			else		|
+       |				V						|
+       |		处理delayWorkQueue (TreeSet<TimeKey>)			       |
+       |				|						|
+       |				V						|
+       |			获取当前nanoTime					     |
+       |				|						|
+       |   ---------------------------> V						|
+       |  |		  从delayWorkQueue获取TimeKey				      |
+       |  |		  		|						|
+       |  |			 	V						|
+       |  |	如果TimeKey.deadline已经到达,将TimeKey.command添加selectorWorkQueue，	 |
+       |  |	否则根据TimeKey.deadline和算出到期剩余时间delayTime，跳出循环		    |
+       |  | loop  delayWorkQueue	|						|
+       |   -----------------------------V						|
+       |		执行selectorWorkQueue.poll()，获取task			     |
+       |				| <---------------------------------------------						
+       |				V
+       |	执行Thread.interrupted()，清理线程的interrupt状态
+       |				|
+       |				V
+       |	如果Runnable task不为空，那么执行Runnable，并继续循环
+       ---------------------------------|
+       	loop while task not null	V
+			如果WorkerThread.state为SHUTDOWN ------------------------
+					|			else		|
+					V					|
+		如果selector的SelectionKey数量为0，且selectorWorkQueue为空-----	 |
+					|			    else   |	|
+					V				   |	|
+				     return				   |	|
+									   |	|
+					 ----------------------------------	|
+					|					|
+					V					|
+		根据Selector获取SelectionKey集合，赋值给keys SelectionKey[]	 |
+					|					|
+	      ------------------------>	V					|
+	     |		执行SelectionKey.attachment()，获取NioHandle		     |
+	     |				|					|
+	     |				V					|
+	     |	如果NioHandle不为空，执行SelectionKey.ServerSocketChannel.close()，|
+	     |		并执行NioTcpServerHandle.forceTermination()	      |
+	     | 	loop keys		|					|
+	      ------------------------- V					|
+				清理keys，全部置空				   |
+					| <-------------------------------------
+					V
+		执行Thread.interrupted()，清理线程的interrupt状态
+					|
+					V
+			如果WorkerThread.state状态不是SHUTDOWN------------
+					|				|
+					V				V
+		执行selectorWorkQueue.peek()获取Runnable任务	如果WorkerThread.state为SHUTDOWN，而之前没return，
+					|			说明SelectionKey数量不为0
+					V				|
+		如果Runnable任务不为空，执行selector.selectNow()		 V
+					|		执行Selector.selectNow()非阻塞方法，获取I/O事件
+					V				|
+		如果Runnable任务为空，delayTime不为Long.MAX_VALUE，	 |
+		说明delayWorkQueue中还有没执行完的延时任务，		      |
+		此时执行selector.select(delayMills)。		    |
+		如果deplayTime为Long.MAX_VALUE，			     |
+		说明没有待处理的任务，执行selector.select()阻塞任务。	    |
+					| <-----------------------------				
+					V
+		执行Selector.selectedKeys()获取SelectionKey集合赋值给keys
+					|
+	     -------------------------> V
+	    |		获取SelectionKey的interestOps、attachment(NioHandle)
+	    |				|
+	    |				V
+	    |	如果attachment为空，执行cancelKey(key, false)来取消该SelectionKey
+	    |				|
+	    |				V
+	    |	如果attachment不为空，执行attachment(NioHandle).handleReady(key.readyOps())
+	     ---------------------------|
+			loop keys		
+	
+### NipTcpServerHandle
+&emsp;&emsp; ServerSocketChannel会绑定到NioXnioWorker.selector，
