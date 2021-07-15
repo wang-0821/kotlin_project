@@ -1207,4 +1207,27 @@ AnnotationConfigServletWebServerApplicationContext。SpringBoot 程序启动执�
 			loop keys		
 	
 ### NipTcpServerHandle
-&emsp;&emsp; ServerSocketChannel会绑定到NioXnioWorker.selector，
+&emsp;&emsp; ServerSocketChannel会绑定到NioXnioWorker.acceptThread.selector，创建一个SelectionKey。
+NioTcpServerHandle也会以attachment的方式，附着在这个SelectionKey上。当QueuedNioTcpServer2.resumeAccepts()时，
+实际是在执行NioTcpServerHandle.resume()，这个方法会设置SeverSocketChannel.interestOps。
+
+<br>
+&emsp;&emsp; 首先由于NioXnioWorker.workerThreads中各个WorkerThread并没有绑定任何channel，
+因此这些WorkerThread不会获取到任何Socket I/O事件。最开始只有NioXnioWorker.acceptThread会监听Socket I/O事件。
+
+				NioTcpServerHandle.handleReady(ops)
+						|
+						V
+	执行ChannelListeners.invokeChannelListener(NioTcpServer, NioTcpServer.acceptListener)
+						|
+						V
+				执行ChannelListener.handleEvent(NioTcpServer),
+			该ChannelListener对应的lambda实际为QueuedNioTcpServer2中的handleReady()
+						|
+						V
+						
+						
+						
+				
+				
+				
