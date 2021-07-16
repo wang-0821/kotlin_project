@@ -1225,9 +1225,324 @@ NioTcpServerHandle也会以attachment的方式，附着在这个SelectionKey上�
 			该ChannelListener对应的lambda实际为QueuedNioTcpServer2中的handleReady()
 						|
 						V
+					执行NioTcpServer.accept()
+						|
+						V
+			执行ServerSocketChannel.accept()获取一个SocketChannel
+						|
+						V
+			执行ThreadLocalRandom.current.nextInt()获取一个hash值
+						|
+						V
+			根据hash值在NioXnioWorker.workerThreads中获取一个WorkerThread
+						|
+						V
+			执行WorkerThread.registerChannel(SocketChannel)，获取一个SelectionKey
+						|
+						V
+			执行SocketChannel.register(WorkerThread.selector, 0)，
+			将SocketChannel绑定到NioXnioWorker.workerThreads中的Selector
+						|
+						V
+		根据WorkerThread、SelectionKey、NioTcpServerHandle创建NioSocketStreamConnection
+						|
+						V
+		根据WorkerThread、SelectionKey、NioSocketStreamConnection创建NioSocketConduit
+						|
+						V
+				将NioSocketConduit attach到SelectionKey
+						|
+						V
+			NioTcpServer.accept()执行完毕，获取一个NioSocketStreamConnection
+						|
+	 ------------------------------------->	V
+	|	将创建的NioSocketStreamConnection添加到QueuedNioTcpServer2.acceptQueues中
+	|					|
+	|					V
+	|		执行WorkerThread.execute(QueuedNioTcpServer2.acceptTask)
+	|					|
+	|					V
+	|	根据WorkerThread.number，从QueuedNioTcpServer2.acceptQueues中获取Queue<StreamConnection>
+	|					|
+	|					V
+	|	执行ChannelListeners.invokeChannelListener(QueuedNioTcpServer2, QueuedNioTcpServer2.acceptListener)
+	|					|
+	|					V
+	|		执行ChannelListener.handleEvent(QueuedNioTcpServer2)
+	|					|
+	|					V
+	|		执行Undertow中acceptListener，继而执行Undertow中finalListener
+	|					|
+	|					V
+	|		执行HttpOpenListener.handleEvent(NioSocketStreamConnection)
+	|					|
+	|					V
+	|	根据NioSocketStreamConnection、HttpOpenListener的：bufferPool、rootHandler、
+	|	undertowOptions、bufferSize、connectorStatistics创建HttpServerConnection
+	|					|
+	|					V
+	|	根据HttpServerConnection、HttpOpenListener的：parser、connectorStatistics创建HttpReadListener			
+	|					|
+	|					V
+	|		向HttpOpenListener.connections添加HttpServerConnection
+	|					|
+	|					V
+	|		设置HttpServerConnection.readListener为HttpReadListener
+	|					|
+	|					V
+	|	设置NioSocketStreamConnection.sourceChannel.readListener为HttpReadListener
+	|					|
+	|					V
+	|	执行HttpReadListener.handleEvent(NioSocketStreamConnection.sourceChannel)
+	|					|
+	|					V
+	|	执行HttpServerConnection.bufferPool.allocate()获取PooledByteBuffer
+	|					|
+	|					V
+	|		执行PooledByteBuffer.getBuffer()获取ByteBuffer
+	|      ------------------------------->	|
+	|     |					V
+	|     |	执行NioSocketStreamConnection.sourceChannel(ConduitStreamSourceChannel).read(ByteBuffer)
+	|     |					|
+	|     |					V
+	|     |	执行SocketChannel.read(ByteBuffer)，将SocketChannel中的字节流读取到ByteBuffer中
+	|     |					|
+	|     |					V
+	|     |		如果HttpReadListener.httpServerExchange为空，根据HttpServerConnection、
+	|     |		HttpReadListener.maxEntitySize创建HttpServerExchange，并赋值。
+	|     |					|
+	|     |					V
+	|     |	执行HttpReasListener.parser.handle(ByteBuffer, HttpReadListener.state, httpServerExchange)
+	|     |					|
+	|     |					V
+	|     |	parser.handle()会解析并设置httpServerExchange的：requestMethod、
+	|     |	requestPath、relativePath、requestURI、queryString、queryParameters、
+	|     |		pathParameters、quprotocol、requestHeaders、
+	|     |					|
+	|     |					V
+	|     -------------------如果没解析完毕，继续读取SocketChannel中字节流
+	|	loop				|
+	|					V
+	|		设置HttpServerConnection.current为HttpServerExchange
+	|					|
+	|					V
+	|  执行Connectors.executeRootHandler(HttpServerConnection.rootHandler, HttpServerExchange)
+	|					|
+	|					V
+	|		执行rootHandler.handleRequest(HttpServerExchange)
+	|					|
+	|					V
+	|	执行HttpServerExchange.getDispatchtask()获取Runnable dispatchTask
+	|					|
+	|					V
+	|	获取HttpServerExchange.connection.channel.thread.worker作为Executor
+	|					|
+	|					V
+	|		执行NioXnioWorker.taskPool.execute(Runnable)
+	|					|
+	|					V
+	|			执行PooledByteBuffer.close()
+	|					|
+	|					V
+	|	HttpReadListener.handleEvent(NioSocketStreamConnection.sourceChannel)执行完毕
+	|					|
+	|					V
+	|	HttpOpenListener.handleEvent(NioSocketStreamConnection)执行完毕
+	|					|
+	|					V
+	| ChannelListeners.invokeChannelListener(QueuedNioTcpServer2, QueuedNioTcpServer2.acceptListener)执行完毕
+	|					|
+	|					V
+	|	如果Queue<StreamConnection>不为空，执行WorkerThread.execute(QueuedNioTcpServer2.acceptTask)
+	|					|
+	|					V
+	|			QueuedNioTcpServer2.acceptTask执行完毕
+	|					|
+	|					V
+	|		如果NioTcpServer.accept()的数量超过128，直接return
+	|					|
+	|					V
+	|				执行NioTcpServer.accept()
+	|					|
+	|					V
+	 --------------如果accept获取不到NioSocketStreamConnection，直接return
+						
+						
+### HttpHandler
+&emsp;&emsp; 在创建Undertow WebServer时，会构建HttpHandler。WebServer启动后，在获取到请求后，
+会创建HttpServerExchange，然后执行HttpHandler.handleRequest(HttpServerExchange)。
+根据Undertow WebServer的创建流程来看，rootHandler为DeploymentManagerHandler(DeploymentManager)。
+
+			DeploymentManagerHandler.handler wrap链为：
+				HttpContinueReadHandler
+		    			|
+					V
+				ServletInitialHandler
+					|
+					V
+		   	 --------PredicateHandler---------------
+		  	|	   				|
+		  	V  	   				V
+		trueHandler(SendErrorPageHandler)	falseHandler(PredicateHandler)
+		  	|				  |			|
+		  	V				  V			V
+	  	PredicateHandler----------	     falseHandler	    trueHandler
+	  	|			  |		  |			|
+	  	V	  		  V               |			|
+	    trueHandler	  	      falseHandler        |			|
+	    	|			      |		  |			|
+		|                             V		  V			|
+	    	|     			    RedirectDirHandler			|
+		|			   	   |				|
+	   	|   				   V				|
+		|			  ServletDispatchingHandler		|
+		|								|
+		 -----------------------	 -------------------------------
+					|	|
+					V	V
+				SecurityInitialhandler
+					   |
+				 	   V
+			  CachedAuthenticatedSessionHandler
+					   |
+					   V
+			  AuthenticationMechanismsHandler	
+					   |			   
+					   V			
+			ServletConfidentialityConstraintHandler
+					   |
+					   V
+	  			   PredicateHandler
+	 			   |		|
+	 			   V		V
+				trueHandler falseHandler
+	  			  |		|
+	  			  V		|
+    			DisableCacheHandler     |
+    	  			 |		|
+	  			 V		V
+    			ServletAuthenticationCallHandler
+					|
+					V
+    			SSLInformationAssociationHandler
+    					|
+					V
+				RedirectDirHandler
+					|
+					V
+				ServletDispatchingHandler
+	
+	
+					HttpHandler执行流程：
+			DeploymentManagerHandler.handleRequest(HttpServerExchange)
+						|
+						V
+			HttpContinueReadHandler.handleRequest(HttpServerExchange)
+						|
+						V
+			ServletInitialHandler.handleRequest(HttpServerExchange)
+						|
+						V
+			校验HttpServerExchange.relativePath path 是否是禁止的路径
+						|
+						V
+	执行ServletInitialHandler.paths.getServletHandlerByPath(path)获取ServletPathMatch
+						|
+						V
+	创建HttpServletResponseImpl(HttpServerExchange, ServletInitialHandler.servletContext) response
+						|
+						V
+	创建HttpServletRequestImpl(HttpServerExchange, ServletInitialHandler.servletContext) request
+						|
+						V
+	创建ServletRequestContext(ServletContext.deployment, request, response, ServletPathMatch)
+						|
+						V
+	设置HttpServerExchange.maxEntitySize = ServletPathMatch.servletChain.managedServlet.maxRequestSize
+						|
+						V
+	HttpServerExchange设置ServletRequestContext.ATTACHMENT_KEY attachment为ServletRequestContext
+						|
+						V
+	创建ServletBlockingHttpExchange(HttpServerExchange)，并赋值给HttpServerExchange.blockingHttpExchange
+						|
+						V
+				设置ServletRequestContext.servletPathMatch
+						|
+						V
+		执行HttpServerExchange.dispatch(null, ServletInitialHandler.dispatchHandler)
+						|
+						V
+				设置HttpServerExchange.dispatchTask Runnable
+						|
+						V
+	获取Executor为NioXnioWorker，利用taskPool，异步执行NioXnioWorker.execute(dispatchTask)
+						|
+						V
+	执行Connectors.executeRootHandler(ServletInitialHandler.dispatchHandler, HttpServerExchange)
+						|
+						V
+		执行ServletInitialHandler.dispatchHandler.handleRequest(exchange)
+						|
+						V
+		根据ServletRequestContext.ATTACHMENT_KEY获取ServletRequestContext
+						|
+						V
+	执行dispatchRequest(exchange, servletRequestContext, ServletPathMatch.servletChain, DispatcherType)
+						|
+						V
+	执行ServletInitialHandler.handleFirstRequest(HttpServerExchange, ServletRequestContext)
+						|
+						V
+		执行ServletInitialHandler.next(PredicateHandler).handleRequest(exchange)
+						|
+						V
+	执行Predicate.predicate(DispatcherTypePredicate).resolve(exchange)，得到trueHandler(SendErrorPageHandler)
+						|
+						V
+				执行SendErrorPageHandler.handleRequest(exchange)
+						|
+						V
+	PredicateHandler.handleRequest(exchange)，PredicateHandler.predicate为DispatcherTypePredicate
+						|
+						V
+			执行SecurityInitialHandler.handleRequest(exchange)
+						|
+						V
+			执行CachedAuthenticatedSessionHandler.handleRequest(exchange)
+						|
+						V
+	执行CachedAuthenticatedSessionHandler.servletContext.getSession(exchange, false)获取HttpSession
+						|
+						V
+		执行AuthenticationMechanismsHandler.handleRequest(exchange)
+						|
+						V
+		执行ServletConfidentialityConstraintHandler.handleRequest(exchange)
+						|
+						V
+			执行PredicateHandler.handleRequest(exchange)
+						|
+						V
+		执行ServletAuthenticationCallHandler.handleRequest(exchange)
+						|
+						V
+		执行SSLInformationAssociationHandler.handlRequest(exchange)
+						|
+						V
+			执行RedirectDirHandler.handleRequest(exchange)
+						|
+						V
+			执行ServletDispatchingHandler.handleRequest(exchange)
+						|
+						V
+	根据HttpServerExchange的ServletRequestContext.ATTACHMENT_KEY attachment取ServletRequestContext，
+		根据ServletRequestContext.currentServlet获取ServletChain
+						|
+						V
+			执行ServletChain.handler.handleRequest(exchange)
+						
+			
 						
 						
 						
-				
-				
-				
