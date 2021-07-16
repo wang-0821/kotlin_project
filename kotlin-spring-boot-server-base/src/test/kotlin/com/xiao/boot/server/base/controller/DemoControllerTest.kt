@@ -33,4 +33,16 @@ class DemoControllerTest : KtSpringTestBase() {
         )
         Assertions.assertEquals(result.body, "hello world")
     }
+
+    @Test
+    fun `test request post method`() {
+        val result = RestTemplate().exchange(
+            "http://localhost:${envInfoProvider.port()}/api/v1/demo/printInput",
+            HttpMethod.POST,
+            HttpEntity("hello world"),
+            String::class.java,
+            mapOf<String, String>()
+        )
+        Assertions.assertEquals(result.body, "hello world")
+    }
 }
