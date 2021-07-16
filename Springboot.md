@@ -1541,8 +1541,61 @@ NioTcpServerHandle也会以attachment的方式，附着在这个SelectionKey上�
 						|
 						V
 			执行ServletChain.handler.handleRequest(exchange)
+						|
+						V
+			执行ServletChain.forceInit(DispatcherType)
+						|
+						V
+		执行ServletChain.filters.get(DispatcherType)，获取ManagedFiletr集合
+						|
+						V
+				执行[ManagedFilter].forceInit()
+						|
+						V
+			执行ServletChain.managedServlet.forceInit()
+						|
+						V
+		执行ManagedServlet.instanceStrategy(DefaultInstanceStrategy).start()
+						|
+						V
+		执行DefaultInstanceStrategy.factory.createInstance()，赋值给DefaultInstanceStrategy.handle
+						|
+						V
+	执行DrfaultInstanceStrategy.handle(ImmediateInstanceHandle).getInstance()，获取DispatcherServlet。
+						|
+						V
+		创建LifecyleInterceptorInvocation(DeploymentInfo.lifecycleInterceptors, servletInfo, 
+		DispatcherServlet, ServletConfigImpl(servletInfo, servletContext))
+						|
+						V
+				执行LifecyleInterceptorInvocation.proceed()
+						|
+						V
+				执行DispatcherServlet.init(ServletConfigImpl)
+						|
+						V
+		根据ServletConfigImpl.servletInfo.initParams设置DispatcherServlet属性
+						|
+						V
+		执行DispatcherServlet.onRefresh(ApplicationContext)，主要确保以下Bean都存在：
+		MultipartResolver、LocaleResolver、ThemeResolver、HandlerMapping、
+		HandlerAdapter、HandlerExceptionResolver、RequestToViewNameTranslator、
+				ViewResolver、FlashMapManager
+						|
+						V
+			LifecyleInterceptorInvocation.proceed()执行完毕
+						|
+						V
+			ServletChain.managedServlet.forceInit()执行完毕
+						|
+						V
+	执行ServletChain.originHandler(ServletSecurityRoleHandler).handleRequest(exchange)
+						|
+						V
+		执行ServletSecurityRoleHandler.next(FilterHandler).handleRequest(exchange)
+						|
+						V
 						
 			
-						
-						
-						
+			
+			
