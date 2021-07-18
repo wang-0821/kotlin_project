@@ -1595,7 +1595,41 @@ NioTcpServerHandle也会以attachment的方式，附着在这个SelectionKey上�
 		执行ServletSecurityRoleHandler.next(FilterHandler).handleRequest(exchange)
 						|
 						V
-						
+		根据DispatcherType从FilterHandler.filters中获取对应类型的ManagedFilter filters集合
+	filterClass包括：OrderedCharacterEncodingFilter、OrderedFormContentFilter、OrderedRequestContextFilter
+		    				|
+						V
+		创建FilterChainImpl(exchange, filters, next, allowNonStandardWrappers)
+						|
+						V
+	执行FilterChainImpl.doFilter(ServletRequestContext.servletRequest, ServletRequestContext.servletResponse)
+						|
+						V
+		执行OrderedCharacterEncodingFilter.doFilter(request, response, FilterHandler)
+						|
+						V
+		执行OrderedFormContentFilter.doFilter(request, response, FilterHandler)
+						|
+						V
+		执行OrderedRequestContextFilter.doFilter(request, response, FilterHandler)
+						|
+						V
+		执行FilterHandler.next(ServletHandler).handleRequest(HttpServerExchange)
+						|
+						V
+		执行ServletHandler.managedServlet.getServlet().getInstance()获取DispatcherServlet
+						|
+						V
+		执行DispatcherServlet.service(HttpServletRequest, HttpServletResponse)-----------
+						|		     如果RequestMethod是PATCH或空 |
+						|						V
+						|	执行DispatcherServlet.processRequest(request, response)
+						V
+		根据HttpMethod处理Http请求，执行：doPost(req, res)、doPut(req, res)、doDelete(req, res)、
+		doOptions(req, res)、doTrace(req, res)、doHead(req, res)、doGet(req, res)。
+						|
+						V
+			执行DispatcherServlet.processRequest(request, response)
 			
 			
 			
