@@ -1737,16 +1737,59 @@ NioTcpServerHandle也会以attachment的方式，附着在这个SelectionKey上�
 	执行HandlerMethodReturnValueHandler.handleReturnValue(returnValue, returnType, mavContainer, webRequest)
 						|
 						V
-						qingqiu请求执行结束
-				
+		RequestMappingHandlerAdapter.handle(request, response, HandlerExecutionChain.handler)执行完毕
 						|
 						V
-				如果ModelAndView.view为null，设置默认的view
+			如果ModelAndView不为空，且ModelAndView.view为null，设置默认的view
 						|
 						V
 	执行HandlerExecutionChain.interceptorList[HandlerInterceptor].postHandle(request, response, handler, modelAndView)
 						|
 						V
+		执行DispatcherServlet.processDispatchResult(HttpServletRequest, HttpServletResponse, 
+			HttpExecutionChain, ModelAndView, Exception)，处理Exception
+						|
+						V
+	如果Exception不为空，执行DispatcherServlet.processHandlerException(request, response, HandlerMethod, Exception)
+						|
+						V
+	执行DispatcherServlet.handlerExceptionResolvers [HandlerExceptionResolver].resolveException(request, response, handler, ex)
+						|
+						V
+		执行HandlerExecutionChain.triggerAfterCompletion(request, response, null)
+						|
+						V
+	执行HandlerExecutionChain.interceptorList [HandlerInterceptor].afterCompletion(request, response, handler, ex)
+						|
+						V
+				清理当前HttpServletRequest的multipart
+						|
+						V
+			DispatcherServlet.doDispatch(request, response)执行完毕
+						|
+						V
+			DispatcherServlet.doService(request, response)执行完毕
+						|
+						V
+				发布ServletRequestHandledEvent事件
+						|
+						V
+			DispatcherServlet.processRequest(request, response)执行完毕
+						|
+						V
+			ServletHandler.handleRequest(HttpServerExchange)执行完毕
+						|
+						V
+		ServletSecurityRoleHandler.next(FilterHandler).handleRequest(exchange)执行完毕
+						|
+						V
+			执行HttpServletResponse.responseDone()关闭OutputStream
+						|
+						V
+	ServletInitialHandler.handleFirstRequest(HttpServerExchange, ServletRequestContext)执行完毕
+						|
+						V
+		ServletInitialHandler.dispatchHandler.handleRequest(exchange)执行完毕
 						
-			
-			
+						
+						
