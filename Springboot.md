@@ -1630,6 +1630,123 @@ NioTcpServerHandle也会以attachment的方式，附着在这个SelectionKey上�
 						|
 						V
 			执行DispatcherServlet.processRequest(request, response)
-			
+						|
+						V
+		创建WebAsyncManager，添加callableInterceptors RequestBindingInterceptor
+						|
+						V
+			执行DispatcherServlet.doService(request, response)
+						|
+						V
+			执行DispatcherServlet.doDispatch(request, response)
+						|
+						V
+	如果HttpServletRequest是multipart，执行DispatcherServlet.multipartResolver.resolveMultipart(request)，
+				获取一个新的HttpServletRequest
+						|
+						V
+		执行DispatcherServlet.getHandler(request)获取HandlerExecutionChain
+						|
+						V
+		根据DispatcherServlet.handlerMappings，执行[HandlerMapping].getHandler(request)，
+		一旦获取到一个非空的HandlerExecutionChain，则返回。HandlerMapping类型有：
+		RequestMappingHandlerMapping、BeanNameUrlHandlerMapping、RouterFunctionMapping、
+		SimpleUrlHandlerMapping、WelcomePageHandlerMapping。
+						|
+						V
+			执行RequestMappingHandlerMapping.getHandler(request)
+						|
+						V
+		执行UrlPathHelper.resolveAndCacheLookupPath(request)获取lookupPath
+						|
+						V
+		根据RequestMappingHandlerMapping.mappingRegistry的：pathLookup、registry获取Match，
+			根据Match.registration.handlerMethod获取HandlerMethod
+						|
+						V
+			根据HandlerMethod.bean可以获取到真实的controller Bean
+						|
+						V
+			根据获取到的HandlerMethod可以创建HandlerExecutionChain
+						|
+						V
+			根据RequestMappingHandlerMapping.adaptedInterceptors，
+		向HandlerExecutionChain.interceptorList中添加HandlerInterceptor
+						|
+						V
+		[HandlerMapping].getHandler(request)执行完毕，获取到一个HandlerExecutionChain
+						|
+						V
+	根据DispatcherServlet.handlerAdapters，执行[HandlerAdapter].supports(HandlerExecutionChain.handler)，
+	如果匹配。则返回该HandlerAdapter。HandlerAdapter类型有：RequestMappingHandlerAdapter、HandlerFunctionAdapter、
+	HttpRequestHandlerAdapter、SimpleControllerHandlerAdapter。
+						|
+						V
+	执行HandlerAdapter.handle(request, response, HandlerExecutionChain.handler)获取ModelAndView
+						|
+						V
+	执行RequestMappingHandlerAdapter.handle(request, response, HandlerExecutionChain.handler)
+						|
+						V
+	创建ServletWebRequest(request, response)，创建ServletInvocableHandlerMethod(HandlerMethod)
+						|
+						V
+	根据RequestMappingHandlerAdapter.argumentResolvers设置ServletInvocableHandlerMethod.resolvers
+						|
+						V
+	使用RequestMappingHandlerAdapter.returnValueHandlers，设置ServletInvocableHandlerMethod.returnValueHandlers
+						|
+						V
+		设置ServletInvocableHandlerMethod的：dataBinderFactory、parameterNameDiscoverer
+						|
+						V
+				创建并初始化ModelAndViewContainer
+						|
+						V
+			处理ServletInvocableHandlerMethod的@ModelAttribute
+						|
+						V
+		执行ServletInvocableHandlerMethod.invokeAndHandle(ServletWebRequest, ModelAndViewContainer)
+						|
+						V
+	执行ServletInvocableHandlerMethod.getMethodArgumentValues(ServletWebRequest, ModelAndViewContainer)
+						|
+						V
+			根据ServletWebRequest.parameters 获取MethodParameter集合
+	执行resolvers.resolveArgument(parameter, mavContainer, request, dataBinderFactory)获取参数值
+						|
+						V
+			根据HandlerMethodArgumentResolverComposite.argumentResolvers，
+	执行[HandlerMethodArgumentResolver].supportsParameter(MethodParameter)，获取HandlerMethodArgumentResolver
+						|
+						V
+	执行HandlerMethodArgumentResolver.resolveArgument(parameter, mavContainer, webRequest, binderFactory)，获取参数值
+						|
+						V
+				执行ServletInvocableHandlerMethod.doInvoke(args)获取执行结果
+						|
+						V
+		执行ServletInvocableHandlerMethod.returnValueHandlers.handleReturnValue(
+			returnValue, returnType, mavContainer, webRequest)处理执行结果
+						|
+						V
+		根据HandlerMethodReturnValueHandlerComposite.returnValueHandlers，
+	[HandlerMethodReturnValueHandler].supportsReturnType(returnType)获取HandlerMethodReturnValueHandler
+						|
+						V
+	执行HandlerMethodReturnValueHandler.handleReturnValue(returnValue, returnType, mavContainer, webRequest)
+						|
+						V
+						qingqiu请求执行结束
+				
+						|
+						V
+				如果ModelAndView.view为null，设置默认的view
+						|
+						V
+	执行HandlerExecutionChain.interceptorList[HandlerInterceptor].postHandle(request, response, handler, modelAndView)
+						|
+						V
+						
 			
 			
