@@ -3,6 +3,7 @@
 * [3.Spring Bean的扫描与注册](#3)
 * [4.SpringBoot自动配置](#4)
 * [5.SpringBoot web](#5)
+* [6.SpringBoot异常处理](#6)
 
 <h2 id="1">1.SpringBoot模块结构</h2>
 &emsp;&emsp; SpringBoot项目下主要有：buildSrc、spring-boot-project、spring-boot-tests三大模块。
@@ -1791,5 +1792,62 @@ NioTcpServerHandle也会以attachment的方式，附着在这个SelectionKey上�
 						V
 		ServletInitialHandler.dispatchHandler.handleRequest(exchange)执行完毕
 						
-						
+<h2 id="6">6.SpringBoot异常处理</h2>
+&emsp;&emsp; 当DispatcherServlet.doDispatch(HttpServletRequest, HttpServletResponse)执行异常时，
+会根据DispatcherServlet.handlerExceptionResolvers，依次处理异常。
+
+    DispatcherServlet.handlerExceptionResolvers包含:
+    	1，DefaultErrorAttributes: 
+	    出现错误数据时，提供默认的参数值，包括：timestamp、status、error、exception、message、
+	    errors、trace、path、requestId。
+	2，HandlerExceptionResolverComposite: 
+	    本身不处理Exception，但包含一个HandlerExceptionResolver集合属性，
+	    利用其中的HandlerExceptionResolver来处理Exception。
+	
+    在WebMvcConfigurationSupport中通过@Bean创建HandlerExceptionResolver Bean时：
+    	1，先创建List<HandlerExceptionResolver> exceptionResolvers，获取所有的WebMvcConfigurer Bean集合，
+	    执行[WebMvcConfigurer].configureHandlerExceptionResolvers(exceptionResolvers)，
+	    通过这种方式添加HandlerExceptionResolver。
+	2，如果exceptionResolvers为空，向其中添加默认的HandlerExceptionResolver。
+	    并且执行ExceptionHandlerExceptionResolver.afterPropertiesSet()。
+	    会添加三种HandlerExceptionResolver，包括：
+	    	ExceptionHandlerExceptionResolver、
+	    	ResponseStatusExceptionResolver、
+		DefaultHandlerExceptionResolver。
+	3，创建HandlerExceptionResolverComposite，并设置exceptionResolvers。
+    
+    		ExceptionHandlerExceptionResolver.afterPropertiesSet()
+					|
+					V
+		获取所有被@ControllerAdvice注解的Bean，创建ControllerAdviceBean集合，
+		ControllerAdviceBean(beanName, beanFactory, ControllerAdvice)
+	     ------------------------->	|
+	    |				V
+	    |	创建ExceptionHandlerMethodResolver(Class beanType)
+	    |				|
+	    |				V
+	    |	根据beanType找到Bean上被@ExceptionHandler注解的Method集合
+	    |				|
+	    |				V
+	    |	根据Method上的@ExceptionHandler，找到支持的Throwable类型，
+	    |	设置ExceptionHandlerMethodResolver.mappedMethods，
+	    |	一种Throwable只能被一个@ExceptionHandler方式处理
+	    |				|
+	    |				V
+	    |	向ExceptionHandlerExceptionResolver.exceptionHandlerAdviceCache中，
+	    |	添加ControllerAdviceBean和ExceptionHandlerMethodResolver
+	     -------------------------- |
+	    loop ControllerAdviceBeans  V
+	设置ExceptionHandlerExceptionResolver的：argumentResolvers、returnValueHandlers
+					
+### DispatcherServlet异常处理
+&emsp;&emsp; DispatcherServlet使用ExceptionHandlerExceptionResolver.resolveException()
+来处理异常。执行过程如下。
+
+    	ExceptionHandlerExceptionResolver.resolveException(request, response, handler, ex)
+					|
+					V
+					
+					
+					
 						
