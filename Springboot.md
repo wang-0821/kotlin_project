@@ -1811,8 +1811,8 @@ NioTcpServerHandle也会以attachment的方式，附着在这个SelectionKey上�
 	2，如果exceptionResolvers为空，向其中添加默认的HandlerExceptionResolver。
 	    并且执行ExceptionHandlerExceptionResolver.afterPropertiesSet()。
 	    会添加三种HandlerExceptionResolver，包括：
-	    	ExceptionHandlerExceptionResolver、
-	    	ResponseStatusExceptionResolver、
+	    	ExceptionHandlerExceptionResolver：根据@ExceptionHandler来处理异常、
+	    	ResponseStatusExceptionResolver：根据@ResponseStatus处理异常、
 		DefaultHandlerExceptionResolver。
 	3，创建HandlerExceptionResolverComposite，并设置exceptionResolvers。
     
@@ -1842,12 +1842,68 @@ NioTcpServerHandle也会以attachment的方式，附着在这个SelectionKey上�
 					
 ### DispatcherServlet异常处理
 &emsp;&emsp; DispatcherServlet使用ExceptionHandlerExceptionResolver.resolveException()
-来处理异常。执行过程如下。
+来处理异常。先获取Controller Bean对应的ExceptionHandlerMethodResolver，使用Bean中被@ExceptionHandler
+注解的方法来处理异常，如果没找到@ExceptionHandler方法，则根据@ControllerAdvice Bean，
+来获取@ExceptionHandler方法，来处理异常。
 
     	ExceptionHandlerExceptionResolver.resolveException(request, response, handler, ex)
 					|
 					V
+	先根据HandlerMethod的beanType，从ExceptionHandlerExceptionResolver.exceptionHandlerCache，
+	获取ExceptionHandlerMethodResolver，没有的话则创建，并设置到exceptionHandlerCache
+					|
+					V
+	执行ExceptionHandlerMethodResolver.resolveMethod(exception)获取处理异常的Method------
+					| 没找到Method				  找到   |
+					V						  |
+	根据exceptionHandlerAdviceCache，获取ExceptionHandlerMethodResolver		       |
+					|						  |
+					V						  |
+	执行ExceptionHandlerMethodResolver.resolveMethod(exception)获取处理异常的Method	    |
+					|						  |
+					V						  |
+	根据ExceptionHandlerMethodResolver.mappedMethods和异常类型，获取Method		   |
+					|		 ----------------------------------					
+					|		|
+					V		V
+		如果Method不为空，根据@ExceptionHandler方法所在Bean及Method
+		创建ServletInvocableHandlerMethod，否则返回null
+					|
+					V
+			    根据Method获取对应的桥接方法
+					|
+					V
+	首先根据桥接方法的参数数量，创建HandlerMethodParameter列表赋值给 parameters
+					|
+					V
+	解析Method上的@ResponseStatus，赋值给 responseStatus、responseStatusReason
+					|
+					V
+			根据Bean和Method获取description
+					|
+					V
+			ServletInvocableHandlerMethod创建完毕
+					|
+					V
+		如果ServletInvocableHandlerMethod为null，则直接return
+					|
+					V
+		设置ServletInvocableHandlerMethod的：resolvers、returnValueHandlers
+					|
+					V
+		执行ServletInvocableHandlerMethod.invokeAndHandle(
+		    ServletWebRequest, ModelAndViewContainer, arguments)
+		    			|
+					V
+	执行ServletInvocableHandlerMethod.invokeForRequest(webRequest, mavContainer, args)
+					|
+					V
+				设置Response status
+					|
+					V
+				处理returnValue
+					
+
 					
 					
 					
-						
