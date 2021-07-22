@@ -1812,7 +1812,7 @@ NioTcpServerHandle也会以attachment的方式，附着在这个SelectionKey上�
 	    并且执行ExceptionHandlerExceptionResolver.afterPropertiesSet()。
 	    会添加三种HandlerExceptionResolver，包括：
 	    	ExceptionHandlerExceptionResolver：根据@ExceptionHandler来处理异常、
-	    	ResponseStatusExceptionResolver：根据@ResponseStatus处理异常、
+	    	ResponseStatusExceptionResolver：根据Exception上的@ResponseStatus注解处理异常、
 		DefaultHandlerExceptionResolver。
 	3，创建HandlerExceptionResolverComposite，并设置exceptionResolvers。
     
@@ -1903,7 +1903,38 @@ NioTcpServerHandle也会以attachment的方式，附着在这个SelectionKey上�
 					V
 				处理returnValue
 					
+&emsp;&emsp; 如果在执行完DispatcherServlet.processHandlerException(HttpServletRequest, HttpServletResponse,
+HandlerMethod, Exception)之后，返回的ModelAndView不为空，那么会，执行DispatcherServlet.render()返回response。
+如果异常没有被处理掉，还是抛出，此时在ServletInitialHandler.handleFirstRequest(exchange, servletRequestContext)函数中，
+会catch Throwable，然后处理异常。catch块执行流程如下。
 
+    	执行ServletContext.deployment.errorPages.getErrorLocation(Throwable)获取location
+					|
+					V
+		根据location和ServletContext创建RequestDispatcherImpl
+					|
+					V
+	执行RequestDispatcherImpl.error(servletRequestContext, request, response, servletName, Throwable)
+					|
+					V
+		设置HttpServletRequest、HttpServletResponse、HttpServerExchange
+					|
+					V
+		执行ServletInitialHandler.dispatchRequest(exchange, 
+		    servletRequestContext, ServletChain, DispatcherType.ERROR)
+					|
+					V
+	最终执行DispatcherServlet.processRequest(HttpServletRequest, HttpServletResponse)
+					|
+					V
+	执行DispatcherServlet.getHandler(HttpServletRequest)获取HandlerExecutionChain
+					|
+					V
+	执行RequestMappingHandlerAdapter.handle(request, response, HandlerMethod)
+					|
+					V
+		最终执行BasicErrorController.error(HttpServletRequest)
+					
 					
 					
 					
