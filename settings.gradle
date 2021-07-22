@@ -3,11 +3,22 @@
  */
 rootProject.name = 'kotlin_project'
 
-fileTree(".") {
-    include "**/build.gradle"
-    exclude "build.gradle"
-}.collect {
-    relativePath(it.parent).replace(File.separator, ":")
-}.each {
-    include(it)
+file("${rootDir}").eachFile {module ->
+    if (module.isDirectory() && module.name != "gradle") {
+        List<String> gradleBuildFiles = new ArrayList<>()
+        file("${module.name}").eachFile {file ->
+            if (file.name.endsWith(".gradle") || file.name.endsWith(".gradle.kts")) {
+                gradleBuildFiles.add(file.name)
+            }
+        }
+
+        if (gradleBuildFiles.size() == 1) {
+            include(module.name)
+            project(":${module.name}").buildFileName = gradleBuildFiles.get(0)
+        }
+
+        if (gradleBuildFiles.size() > 1) {
+            throw new GradleException("Find more than 1 build file for module: ${module.name}.")
+        }
+    }
 }

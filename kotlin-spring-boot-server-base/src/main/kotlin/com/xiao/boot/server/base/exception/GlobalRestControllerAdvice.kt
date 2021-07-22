@@ -1,19 +1,60 @@
 package com.xiao.boot.server.base.exception
 
+import com.xiao.base.logging.Logging
+import com.xiao.boot.base.env.EnvInfoProvider
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import javax.servlet.http.HttpServletResponse
 
 /**
  *
  * @author lix wang
  */
 @RestControllerAdvice
-class GlobalRestControllerAdvice {
-    @ExceptionHandler(value = [Exception::class])
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleException(exception: Exception) {
-        throw KtWebException(exception)
+class GlobalRestControllerAdvice(
+    private val envInfoProvider: EnvInfoProvider
+) {
+    // unexpected exceptions
+    @ExceptionHandler(value = [Exception::class, Error::class])
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    fun handleException(
+        response: HttpServletResponse,
+        throwable: Throwable
+    ): KtExceptionResponse {
+        log.error("${throwable.message}", throwable)
+        return buildExceptionResponse(null, throwable.message)
     }
+
+    // expected exceptions
+    @ExceptionHandler(value = [KtServerException::class])
+    fun handleCutomException(
+        response: HttpServletResponse,
+        ex: KtServerException
+    ): KtExceptionResponse {
+        log.warn("${ex.message}", ex)
+        return buildExceptionResponse(ex.errorCode, ex.message)
+    }
+
+    // expected runtime exceptions
+    @ExceptionHandler(value = [KtServerRuntimeException::class])
+    fun handleCustomRuntimeException(
+        response: HttpServletResponse,
+        ex: KtServerRuntimeException
+    ): KtExceptionResponse {
+        log.info("${ex.message}", ex)
+        return buildExceptionResponse(ex.errorCode, ex.message)
+    }
+
+    private fun buildExceptionResponse(errorCode: String?, message: String?): KtExceptionResponse {
+        return KtExceptionResponse()
+            .apply {
+                this.errorCode = errorCode
+                this.message = message
+                this.server = envInfoProvider.serverName()
+            }
+    }
+
+    companion object : Logging()
 }

@@ -1,6 +1,6 @@
 package com.xiao.boot.mybatis.testing
 
-import com.xiao.boot.base.env.EnvConstants
+import com.xiao.boot.base.ServerConstants
 import com.xiao.boot.base.testing.TestSpringContextUtils
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.exception.FlywayValidateException
@@ -29,16 +29,16 @@ class KtMySqlFlywayMigrationExtension : BeforeAllCallback {
     private fun doMigrate(testContext: TestContext) {
         val environment = testContext.applicationContext.environment
         val testDatabaseUrl = environment.getProperty(
-            EnvConstants.TEST_MYSQL_URL,
-            EnvConstants.DEFAULT_TEST_MYSQL_URL
+            ServerConstants.TEST_MYSQL_URL,
+            ServerConstants.DEFAULT_TEST_MYSQL_URL
         )
         val testDatabaseUsername = environment.getProperty(
-            EnvConstants.TEST_MYSQL_USERNAME,
-            EnvConstants.DEFAULT_TEST_MYSQL_USERNAME
+            ServerConstants.TEST_MYSQL_USERNAME,
+            ServerConstants.DEFAULT_TEST_MYSQL_USERNAME
         )
         val testDatabasePassword = environment.getProperty(
-            EnvConstants.TEST_MYSQL_PASSWORD,
-            EnvConstants.DEFAULT_TEST_MYSQL_PASSWORD
+            ServerConstants.TEST_MYSQL_PASSWORD,
+            ServerConstants.DEFAULT_TEST_MYSQL_PASSWORD
         )
 
         Flyway

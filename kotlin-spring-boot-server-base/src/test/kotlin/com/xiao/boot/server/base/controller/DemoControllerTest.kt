@@ -3,8 +3,10 @@ package com.xiao.boot.server.base.controller
 import com.xiao.boot.base.env.EnvInfoProvider
 import com.xiao.boot.base.testing.KtSpringTestBase
 import com.xiao.boot.server.base.ServerBaseAutoConfiguration
+import com.xiao.boot.server.base.exception.KtServerException
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpEntity
@@ -48,12 +50,15 @@ class DemoControllerTest : KtSpringTestBase() {
 
     @Test
     fun `test throw exception`() {
-        val result = RestTemplate().exchange(
-            "http://localhost:${envInfoProvider.port()}/api/v1/demo/throwException",
-            HttpMethod.GET,
-            HttpEntity.EMPTY,
-            Unit::class.java,
-            mapOf<String, String>()
-        ).body
+        val exception = assertThrows<KtServerException> {
+            RestTemplate().exchange(
+                "http://localhost:${envInfoProvider.port()}/api/v1/demo/throwException",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                Unit::class.java,
+                mapOf<String, String>()
+            ).body
+        }
+        Assertions.assertEquals(exception.message, "throw Exception")
     }
 }

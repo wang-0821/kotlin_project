@@ -1,6 +1,7 @@
 package com.xiao.boot.base.env
 
-import com.xiao.boot.base.env.EnvConstants.DEFAULT_SERVER_PORT
+import com.xiao.boot.base.ServerConstants.DEFAULT_SERVER_PORT
+import com.xiao.boot.base.ServerConstants.SERVER_NAME_KEY
 import com.xiao.boot.base.util.activeProfileType
 import org.springframework.context.EnvironmentAware
 import org.springframework.context.annotation.Bean
@@ -18,7 +19,15 @@ class EnvInfoConfiguration : EnvironmentAware {
 
     @Bean
     fun envInfoProvider(): EnvInfoProvider {
-        return DefaultEnvInfoProvider(getIp(), getHost(), getPort(), environment.activeProfileType())
+        val serverName = environment.getProperty(SERVER_NAME_KEY)
+            ?: throw IllegalStateException("Must set server name with environment property key: $SERVER_NAME_KEY")
+        return DefaultEnvInfoProvider(
+            getIp(),
+            getHost(),
+            getPort(),
+            environment.activeProfileType(),
+            serverName
+        )
     }
 
     override fun setEnvironment(environment: Environment) {

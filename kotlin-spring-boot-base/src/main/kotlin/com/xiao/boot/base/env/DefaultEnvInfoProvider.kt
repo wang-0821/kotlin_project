@@ -8,7 +8,8 @@ internal class DefaultEnvInfoProvider(
     private val ip: String,
     private val host: String,
     var port: Int,
-    private val profile: ProfileType
+    private val profile: ProfileType,
+    private var serverName: String
 ) : EnvInfoProvider {
     override fun ip(): String {
         return ip
@@ -24,5 +25,9 @@ internal class DefaultEnvInfoProvider(
 
     override fun profile(): ProfileType {
         return profile
+    }
+
+    override fun serverName(): String {
+        return serverName
     }
 }
