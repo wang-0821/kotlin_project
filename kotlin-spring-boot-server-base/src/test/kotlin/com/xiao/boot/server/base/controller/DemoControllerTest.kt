@@ -1,9 +1,10 @@
 package com.xiao.boot.server.base.controller
 
+import com.xiao.base.util.JsonUtils
 import com.xiao.boot.base.env.EnvInfoProvider
 import com.xiao.boot.base.testing.KtSpringTestBase
 import com.xiao.boot.server.base.ServerBaseAutoConfiguration
-import com.xiao.boot.server.base.exception.KtServerException
+import com.xiao.boot.server.base.exception.KtExceptionResponse
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -11,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpMethod
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpServerErrorException
 import org.springframework.web.client.RestTemplate
 
 /**
@@ -50,15 +53,18 @@ class DemoControllerTest : KtSpringTestBase() {
 
     @Test
     fun `test throw exception`() {
-        val exception = assertThrows<KtServerException> {
+        val exception = assertThrows<HttpServerErrorException.InternalServerError> {
             RestTemplate().exchange(
                 "http://localhost:${envInfoProvider.port()}/api/v1/demo/throwException",
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                Unit::class.java,
+                String::class.java,
                 mapOf<String, String>()
-            ).body
+            )
         }
-        Assertions.assertEquals(exception.message, "throw Exception")
+
+        Assertions.assertEquals(exception.statusCode.value(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+        val exceptionResponse = JsonUtils.deserialize(exception.responseBodyAsString, KtExceptionResponse::class.java)
+        Assertions.assertEquals(exceptionResponse.message, "throw Exception")
     }
 }

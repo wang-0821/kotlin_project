@@ -34,6 +34,13 @@ class GlobalRestControllerAdvice(
         ex: KtServerException
     ): KtExceptionResponse {
         log.warn("${ex.message}", ex)
+        ex.statusCode
+            ?.let {
+                response.status = it
+            }
+            ?: run {
+                response.status = HttpStatus.INTERNAL_SERVER_ERROR.value()
+            }
         return buildExceptionResponse(ex.errorCode, ex.message)
     }
 
@@ -44,13 +51,20 @@ class GlobalRestControllerAdvice(
         ex: KtServerRuntimeException
     ): KtExceptionResponse {
         log.info("${ex.message}", ex)
+        ex.statusCode
+            ?.let {
+                response.status = it
+            }
+            ?: run {
+                response.status = HttpStatus.BAD_REQUEST.value()
+            }
         return buildExceptionResponse(ex.errorCode, ex.message)
     }
 
     private fun buildExceptionResponse(errorCode: String?, message: String?): KtExceptionResponse {
         return KtExceptionResponse()
             .apply {
-                this.errorCode = errorCode
+                this.errorCode = errorCode ?: "server.exception"
                 this.message = message
                 this.server = envInfoProvider.serverName()
             }

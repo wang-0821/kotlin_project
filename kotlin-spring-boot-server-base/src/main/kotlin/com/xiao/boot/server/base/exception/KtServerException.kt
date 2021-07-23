@@ -6,6 +6,7 @@ package com.xiao.boot.server.base.exception
  */
 class KtServerException : Exception {
     var errorCode: String? = null
+    var statusCode: Int? = null
 
     constructor() : super()
     constructor(message: String?) : super(message)

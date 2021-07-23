@@ -11,7 +11,7 @@ abstract class BaseSpringApplication {
     companion object {
         @JvmStatic
         fun start(cls: Class<*>, serverName: String, vararg args: String) {
-            System.getenv()[SERVER_NAME_KEY] = serverName
+            System.setProperty(SERVER_NAME_KEY, serverName)
             SpringApplication.run(cls, *args)
         }
     }

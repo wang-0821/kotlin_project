@@ -8,6 +8,7 @@ import kotlin.RuntimeException
  */
 class KtServerRuntimeException : RuntimeException {
     var errorCode: String? = null
+    var statusCode: Int? = null
 
     constructor() : super()
     constructor(message: String?) : super(message)

@@ -19,14 +19,12 @@ class EnvInfoConfiguration : EnvironmentAware {
 
     @Bean
     fun envInfoProvider(): EnvInfoProvider {
-        val serverName = environment.getProperty(SERVER_NAME_KEY)
-            ?: throw IllegalStateException("Must set server name with environment property key: $SERVER_NAME_KEY")
         return DefaultEnvInfoProvider(
             getIp(),
             getHost(),
             getPort(),
             environment.activeProfileType(),
-            serverName
+            environment.getProperty(SERVER_NAME_KEY) ?: "undefined"
         )
     }
 
