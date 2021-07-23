@@ -1,6 +1,6 @@
 package com.xiao.boot.base.property
 
-import com.xiao.boot.base.env.EnvConstants.ENV_ENCRYPT_KEY
+import com.xiao.boot.base.ServerConstants.ENV_ENCRYPT_KEY
 import com.xiao.boot.base.env.ProfileType
 
 /**

@@ -1,10 +1,10 @@
-package com.xiao.boot.base.env
+package com.xiao.boot.base
 
 /**
  *
  * @author lix wang
  */
-object EnvConstants {
+object ServerConstants {
     const val ENV_TEST = "test"
     const val ENV_DEVELOP = "develop"
     const val ENV_BETA = "beta"
@@ -20,4 +20,6 @@ object EnvConstants {
     const val TEST_MYSQL_URL = "spring.boot.test.mysql.url"
     const val TEST_MYSQL_USERNAME = "spring.boot.test.mysql.username"
     const val TEST_MYSQL_PASSWORD = "spring.boot.test.mysql.password"
+
+    const val SERVER_NAME_KEY = "spring.boot.server.name"
 }

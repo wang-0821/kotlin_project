@@ -9,4 +9,5 @@ interface EnvInfoProvider {
     fun host(): String
     fun port(): Int
     fun profile(): ProfileType
+    fun serverName(): String
 }
