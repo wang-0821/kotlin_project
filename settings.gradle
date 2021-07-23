@@ -3,10 +3,10 @@
  */
 rootProject.name = 'kotlin_project'
 
-file("${rootDir}").eachFile {module ->
+file("${rootDir}").eachFile { module ->
     if (module.isDirectory() && module.name != "gradle") {
         List<String> gradleBuildFiles = new ArrayList<>()
-        file("${module.name}").eachFile {file ->
+        file("${module.name}").eachFile { file ->
             if (file.name.endsWith(".gradle") || file.name.endsWith(".gradle.kts")) {
                 gradleBuildFiles.add(file.name)
             }
