@@ -138,9 +138,40 @@ Unconfined会指定协程在当前线程中执行。如果不指定协程调度�
          执行block.startCoroutineCancellable(receriver: DeferredCoroutine, completion: DeferredCoroutine)
                                                 |
                                                 V
-                                        zhixing执行createCoroutineUnintercepted
-                                                                                                     
-                                                                                                     
+           执行block.createCoroutineUnintercepted(DeferredCoroutine, DeferredCoroutine)创建SuspendLambda
+                                                |
+                                                V
+                                     执行SuspendLambda.intercepted()
+                                                |
+                                                V
+            执行SuspendLambda.context.get(ContinuationInterceptor).interceptContinuation(SuspendLambda)
+                                                |
+                                                V
+             执行DefaultScheduler.interceptContinuation(SuspendLambda)将结果赋值给SuspendLambda.intercepted
+                                                |
+                                                V
+                          创建DispatchedCotinuation(DefaultScheduler, SuspendLambda)
+                                                |
+                                                V
+                      执行DispatchedCotinuation.resumeCancellableWith(Result(Unit), null)
+                                                |
+                                                V
+                     执行DispatchedCotinuation.resumeCancellableWith(Result, onCancellation)
+                                                |
+                                                V
+                        如果DispatchedCotinuation.dispatcher.isDispatchNeeded(context)
+                            只有Unconfined CoroutineDispatcher 为false，默认为true
+                                                |
+                                                V
+                   执行DispatchedContinuation.dispatcher(DefaultScheduler).dispatch(context, this)
+                                                |
+                                                V
+                          执行CoroutineScheduler.dispatch(block: DispatchedContinuation)
+                                                |
+                                                V
+                           执行完当前Continuation后，执行Continuation.resumeWith(result)。                      
+                           每调用一个suspend方法，都会创建一个Continuation，每个Continuation中，
+                           resumeWith(result)方法，包含了协程执行完毕后，恢复现场继续执行的逻辑。
                                                 |
                                                 V
                             返回coroutine DeferredCoroutine作为Deferred<T>
