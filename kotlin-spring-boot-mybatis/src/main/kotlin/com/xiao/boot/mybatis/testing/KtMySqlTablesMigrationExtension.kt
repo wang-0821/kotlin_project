@@ -1,7 +1,7 @@
 package com.xiao.boot.mybatis.testing
 
-import com.xiao.base.util.ThreadUtils
 import com.xiao.boot.base.testing.TestSpringContextUtils
+import com.xiao.boot.base.thread.KtThreadPool
 import com.xiao.boot.mybatis.database.BaseDatabase
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.databaseName
@@ -27,7 +27,7 @@ class KtMySqlTablesMigrationExtension : BeforeAllCallback {
                 val database = applicationContext.getBean(databaseClass.java)
                 val dataSourceName = dataSourceName(database.name)
                 val dataSource = applicationContext.getBean(dataSourceName, DataSource::class.java)
-                ThreadUtils.DEFAULT_EXECUTOR.submit {
+                KtThreadPool.workerPool.submit {
                     runDatabaseScripts(database, dataSource, tables)
                 }
             }.forEach {

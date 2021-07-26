@@ -1,12 +1,15 @@
+import com.xiao.base.executor.DefaultExecutorServiceFactory
 import com.xiao.base.testing.KtTestBase
-import com.xiao.base.util.ThreadUtils
 import com.xiao.rpc.Http
 import com.xiao.rpc.util.UrlParser
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.CoroutineContext
 
 /**
  *
@@ -30,7 +33,7 @@ class HttpTest : KtTestBase() {
 
     @Test
     fun `test http coroutine`() {
-        val job = ThreadUtils.DEFAULT_SCOPE.launch {
+        val job = DEFAULT_SCOPE.launch {
             val completableDeferred = Http.deferred(request)
             val response = completableDeferred.awaitNanos()
             assertEquals(response.status, 200)
@@ -46,5 +49,9 @@ class HttpTest : KtTestBase() {
     companion object {
         val request = UrlParser.parseUrl("https://www.baidu.com")
         const val timeout = 5000L
+        val DEFAULT_SCOPE: CoroutineScope = object : CoroutineScope {
+            override val coroutineContext: CoroutineContext
+                get() = DefaultExecutorServiceFactory.newExecutorService(4).asCoroutineDispatcher()
+        }
     }
 }

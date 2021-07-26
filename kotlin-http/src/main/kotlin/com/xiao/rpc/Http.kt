@@ -1,8 +1,8 @@
 package com.xiao.rpc
 
+import com.xiao.base.executor.DefaultExecutorServiceFactory
 import com.xiao.base.executor.ExecutionQueue
 import com.xiao.base.executor.SafeDeferred
-import com.xiao.base.util.ThreadUtils
 import com.xiao.base.util.deferred
 import com.xiao.rpc.io.Request
 import com.xiao.rpc.io.Response
@@ -17,7 +17,10 @@ import java.util.concurrent.atomic.AtomicInteger
  * @author lix wang
  */
 object Http {
-    private val executionQueue = ExecutionQueue("Rpc-execution-queue", ThreadUtils.DEFAULT_EXECUTOR)
+    private val executionQueue = ExecutionQueue(
+        "Rpc-execution-queue",
+        DefaultExecutorServiceFactory.newExecutorService(2)
+    )
     val client = Client()
     var started = AtomicInteger(0)
 

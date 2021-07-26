@@ -73,6 +73,15 @@ class KtFastThreadLocal<T> {
         }
     }
 
+    fun release() {
+        get()?.let {
+            if (it is AutoCloseable) {
+                it.close()
+            }
+            set(null)
+        }
+    }
+
     private fun expandIndexVariables(src: Array<Any?>, size: Int): Array<Any?> {
         val dest = arrayOfNulls<Any?>(size)
         System.arraycopy(src, 0, dest, 0, src.size)
