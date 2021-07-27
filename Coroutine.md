@@ -78,6 +78,8 @@ Unconfined会指定协程在当前线程中执行。如果不指定协程调度�
 <h2 id="3">3.协程执行过程</h2>
 &emsp;&emsp; 协程的启用包括七种方式：1，CoroutineScope.launch。2，CoroutineScope.async。3，CoroutineScope.broadcast。
 4，CoroutineScope.produce。5，CoroutineScope.flowProduce。6，runBlocking。7，CoroutineScope.actor。
+对于runBlocking来说，会使用当前线程创建BlockingEventLoop(Thread.currentThread()) CoroutineDispatcher，并且会阻塞当前线程，
+直到runBlocking中所有的任务包括子协程都执行完毕。
                         
             CoroutineContext.plus(context)：一般执行此类操作时，originalContext和context都是Element，每个Element都有一个key。
                 CoroutineContext接口默认plus(context)方法：
@@ -175,11 +177,4 @@ Unconfined会指定协程在当前线程中执行。如果不指定协程调度�
                                                 |
                                                 V
                             返回coroutine DeferredCoroutine作为Deferred<T>
-                                                                                                     
-                                                                                                     
-                                                                                                     
-                                                                                                     
-                                                                                                     
-                                                                                                     
-                                                                                                     
-                                                                                                     
+                                                                                                                                                     
