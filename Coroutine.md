@@ -2,6 +2,7 @@
 
 * [1.概述](#1)
 * [2.协程的结构](#2)
+* [3.协程执行过程](#3)
 
 <h2 id="1">1.概述</h2>
 &emsp;&emsp; 协程是以状态机的形式运行在线程池中的，通过resumeWith回调的方式来实现非阻塞。以Future为例，异步任务在Future.get()方法执行时，
@@ -74,3 +75,106 @@ Unconfined会指定协程在当前线程中执行。如果不指定协程调度�
 ### CoroutineScope.async
 &emsp;&emsp; async跟launch执行的内容一致，唯一的区别是async执行的block是带返回值的，async返回的结果不是Job而是Deferred<T>。
 
+<h2 id="3">3.协程执行过程</h2>
+&emsp;&emsp; 协程的启用包括七种方式：1，CoroutineScope.launch。2，CoroutineScope.async。3，CoroutineScope.broadcast。
+4，CoroutineScope.produce。5，CoroutineScope.flowProduce。6，runBlocking。7，CoroutineScope.actor。
+对于runBlocking来说，会使用当前线程创建BlockingEventLoop(Thread.currentThread()) CoroutineDispatcher，并且会阻塞当前线程，
+直到runBlocking中所有的任务包括子协程都执行完毕。
+                        
+            CoroutineContext.plus(context)：一般执行此类操作时，originalContext和context都是Element，每个Element都有一个key。
+                CoroutineContext接口默认plus(context)方法：
+                    1，如果originalContext和context的key是同一个key，那么返回context，用这个新的context替代之前的originalContext。
+                    2，originalContext和context不是同一个key，且originalContxet.key不是ContinuationInterceptor，
+                        那么返回CombinedContext(originalContext，context)。
+                    3，如果originalContext和context不是同一个key，且originalContext.key为ContinuationInterceptor，
+                        那么返回CombinedContext(context, originalContext)。
+                    4，CombinedContext(left, element)，根据key获取Element时，总是先查询element，再查询left。
+                        也就是每次plus操作，将originalContext、context中key为ContinuationInterceptor的放在优先位置。
+                
+    
+                     先构建CoroutineScope，CoroutineScope只有一个CoroutineContext属性
+                                                |
+                                                V
+                    执行CoroutineScope.async(CoroutineContext, CoroutineStart, block)
+                                                |
+                                                V
+               根据CoroutineContext参数，执行newCoroutineContext(context)创建新的CoroutineContext
+                                                |
+                                                V
+               执行CoroutineScope.coroutineContext.plus(context)获取CoroutineContext combined
+                                                |
+                                                V
+               如果combined不是Dispatchers.Default,并且不包含ContinuationInterceptor Key --------------
+                                                |                                                   |
+                                                V                                                   |
+                  获取Dispatchers.Default，即DefaultScheduler(CoroutineDispatcher)                    |
+                                                |                                                   |
+                                                V                                                   V
+               执行combined(CoroutineContext).plus(Dispatchers.Default)获取CoroutineContext   将combined返回
+                                                |                                                   |
+                                                V <-------------------------------------------------
+                 newCoroutineContext(context)执行完毕，获取到新的CoroutineContext newContext
+                                                |
+                                                V
+                         创建DeferredCoroutine(newContext: DefaultScheduler, true)
+                                                |
+                                                V
+            DeferredCoroutine创建完context属性为CombinedContext(DeferredCoroutine, DefaultScheduler)
+                                                |
+                                                V
+                   执行DeferredCoroutine.start(CoroutineStart, DeferredCoroutine, block)                                                    
+                                                |
+                                                V
+                                   执行cotoutine.initParentJob()
+                                                |
+                                                V
+             执行DeferredCoroutine.parentContext.get(Job)，获取parentContext DefaultScheduler Job对象
+                                                |
+                                                V
+         如果parentContext Job为null，设置当前DeferredCoroutine.parentHandle为NonDisposableHandle，return
+                                                |
+                                                V
+                     执行CoroutineStart.invoke(block, receiver, DeferredCoroutine)
+                                                |
+                                                V
+         执行block.startCoroutineCancellable(receriver: DeferredCoroutine, completion: DeferredCoroutine)
+                                                |
+                                                V
+           执行block.createCoroutineUnintercepted(DeferredCoroutine, DeferredCoroutine)创建SuspendLambda
+                                                |
+                                                V
+                                     执行SuspendLambda.intercepted()
+                                                |
+                                                V
+            执行SuspendLambda.context.get(ContinuationInterceptor).interceptContinuation(SuspendLambda)
+                                                |
+                                                V
+             执行DefaultScheduler.interceptContinuation(SuspendLambda)将结果赋值给SuspendLambda.intercepted
+                                                |
+                                                V
+                          创建DispatchedCotinuation(DefaultScheduler, SuspendLambda)
+                                                |
+                                                V
+                      执行DispatchedCotinuation.resumeCancellableWith(Result(Unit), null)
+                                                |
+                                                V
+                     执行DispatchedCotinuation.resumeCancellableWith(Result, onCancellation)
+                                                |
+                                                V
+                        如果DispatchedCotinuation.dispatcher.isDispatchNeeded(context)
+                            只有Unconfined CoroutineDispatcher 为false，默认为true
+                                                |
+                                                V
+                   执行DispatchedContinuation.dispatcher(DefaultScheduler).dispatch(context, this)
+                                                |
+                                                V
+                          执行CoroutineScheduler.dispatch(block: DispatchedContinuation)
+                                                |
+                                                V
+                           执行完当前Continuation后，执行Continuation.resumeWith(result)。                      
+                           每调用一个suspend方法，都会创建一个Continuation，每个Continuation中，
+                           resumeWith(result)方法，包含了协程执行完毕后，恢复现场继续执行的逻辑。
+                                                |
+                                                V
+                            返回coroutine DeferredCoroutine作为Deferred<T>
+                                                                                                                                                     
