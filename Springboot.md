@@ -1683,6 +1683,12 @@ NioTcpServerHandle也会以attachment的方式，附着在这个SelectionKey上�
 	HttpRequestHandlerAdapter、SimpleControllerHandlerAdapter。
 						|
 						V
+	    执行HandlerExecutionChain.applyPreHandle(HttpServletRequest, HttpServletResponse)
+	    					|
+						V
+	根据HandlerExecutionChain.interceptorList，执行[HandlerInterceptor].preHandle(request, response, HandlerMethod)
+						|
+						V
 	执行HandlerAdapter.handle(request, response, HandlerExecutionChain.handler)获取ModelAndView
 						|
 						V
