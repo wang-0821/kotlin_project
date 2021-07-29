@@ -9,7 +9,6 @@ import org.mybatis.spring.SqlSessionFactoryBean
 import org.mybatis.spring.mapper.ClassPathMapperScanner
 import org.springframework.beans.factory.config.RuntimeBeanReference
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
-import org.springframework.beans.factory.support.BeanNameGenerator
 import org.springframework.beans.factory.support.GenericBeanDefinition
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar
@@ -25,8 +24,7 @@ import org.springframework.util.StringUtils
 class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
     override fun registerBeanDefinitions(
         importingClassMetadata: AnnotationMetadata,
-        registry: BeanDefinitionRegistry,
-        importBeanNameGenerator: BeanNameGenerator
+        registry: BeanDefinitionRegistry
     ) {
         AnnotationAttributes.fromMap(
             importingClassMetadata.getAnnotationAttributes(KtSpringDatabase::class.java.name)
