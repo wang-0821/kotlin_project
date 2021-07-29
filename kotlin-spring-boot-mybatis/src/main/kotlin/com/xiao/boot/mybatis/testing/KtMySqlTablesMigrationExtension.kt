@@ -27,7 +27,7 @@ class KtMySqlTablesMigrationExtension : BeforeAllCallback {
                 val database = applicationContext.getBean(databaseClass.java)
                 val dataSourceName = dataSourceName(database.name)
                 val dataSource = applicationContext.getBean(dataSourceName, DataSource::class.java)
-                KtThreadPool.workerPool.submit {
+                KtThreadPool.globalPool.submit {
                     runDatabaseScripts(database, dataSource, tables)
                 }
             }.forEach {

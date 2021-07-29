@@ -1,20 +1,27 @@
 package com.xiao.boot.server.base.undertow
 
+import com.xiao.boot.server.base.properties.ServerArgs
 import io.undertow.Undertow
 import io.undertow.servlet.api.DeploymentInfo
 import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFactory
 import org.springframework.boot.web.server.WebServerFactoryCustomizer
 import org.springframework.core.Ordered
+import org.springframework.stereotype.Component
 
 /**
  * Customize undertow webServerFactory.
  *
  * @author lix wang
  */
-class KtUndertowWebServerFactoryCustomizer : WebServerFactoryCustomizer<UndertowServletWebServerFactory>, Ordered {
+@Component
+class KtUndertowWebServerFactoryCustomizer(
+    private val serverArgs: ServerArgs
+) : WebServerFactoryCustomizer<UndertowServletWebServerFactory>, Ordered {
     override fun customize(factory: UndertowServletWebServerFactory) {
-        factory.addBuilderCustomizers(this::customizeWebServerBuilder)
-        factory.addDeploymentInfoCustomizers(this::customizeDeploymentInfo)
+        if (serverArgs.enableServletExecutor) {
+            factory.addBuilderCustomizers(this::customizeWebServerBuilder)
+            factory.addDeploymentInfoCustomizers(this::customizeDeploymentInfo)
+        }
     }
 
     override fun getOrder(): Int {
