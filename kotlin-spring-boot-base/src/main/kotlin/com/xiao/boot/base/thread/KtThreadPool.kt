@@ -1,9 +1,11 @@
 package com.xiao.boot.base.thread
 
 import com.xiao.base.executor.DefaultExecutorServiceFactory
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ThreadPoolExecutor
+import kotlin.coroutines.CoroutineContext
 
 /**
  * @author lix wang
@@ -17,6 +19,10 @@ object KtThreadPool {
     }
 
     val globalCoroutineContext = globalPool.asCoroutineDispatcher()
+    val globalCoroutineScope = object : CoroutineScope {
+        override val coroutineContext: CoroutineContext
+            get() = globalCoroutineContext
+    }
 }
 
 fun ExecutorService.fastShutDown() {

@@ -4,6 +4,7 @@ import com.xiao.boot.base.thread.KtThreadPool
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.util.AttachmentKey
+import kotlinx.coroutines.launch
 
 /**
  * @author lix wang
@@ -17,10 +18,10 @@ class UndertowRootInitialHttpHandler(
             UndertowExechangeAttachment(
                 System.currentTimeMillis(),
                 KtThreadPool.globalPool,
-                KtThreadPool.globalCoroutineContext
+                KtThreadPool.globalCoroutineScope
             )
         )
-        KtThreadPool.globalPool.execute {
+        KtThreadPool.globalCoroutineScope.launch {
             httpHandler.handleRequest(exchange)
         }
     }

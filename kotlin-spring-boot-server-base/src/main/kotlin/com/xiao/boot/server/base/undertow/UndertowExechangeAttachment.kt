@@ -1,5 +1,6 @@
 package com.xiao.boot.server.base.undertow
 
+import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.ExecutorService
 import kotlin.coroutines.CoroutineContext
 
@@ -10,5 +11,5 @@ import kotlin.coroutines.CoroutineContext
 data class UndertowExechangeAttachment(
     val requestStartMills: Long = -1,
     val executorService: ExecutorService? = null,
-    val coroutineContext: CoroutineContext? = null,
+    val coroutineScope: CoroutineScope? = null
 )

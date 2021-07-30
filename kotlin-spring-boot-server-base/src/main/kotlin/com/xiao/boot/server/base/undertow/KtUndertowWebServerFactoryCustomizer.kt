@@ -18,7 +18,7 @@ class KtUndertowWebServerFactoryCustomizer(
     private val serverArgs: ServerArgs
 ) : WebServerFactoryCustomizer<UndertowServletWebServerFactory>, Ordered {
     override fun customize(factory: UndertowServletWebServerFactory) {
-        if (serverArgs.enableServletExecutor) {
+        if (serverArgs.enableServletCustomExecutor) {
             factory.addBuilderCustomizers(this::customizeWebServerBuilder)
             factory.addDeploymentInfoCustomizers(this::customizeDeploymentInfo)
         }
