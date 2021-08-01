@@ -12,6 +12,9 @@ class UndertowRootInitialHttpHandler(
     private val httpHandler: HttpHandler
 ) : HttpHandler {
     override fun handleRequest(exchange: HttpServerExchange) {
+        // Use global executor instead of undertow taskPool.
+        exchange.dispatchExecutor = KtThreadPool.globalPool
+        // set exchange attachment
         exchange.putAttachment(
             UNDERTOW_SERVLET_ATTACHMENT,
             UndertowExechangeAttachment(
@@ -20,9 +23,7 @@ class UndertowRootInitialHttpHandler(
                 KtThreadPool.globalCoroutineContext
             )
         )
-        KtThreadPool.globalPool.execute {
-            httpHandler.handleRequest(exchange)
-        }
+        httpHandler.handleRequest(exchange)
     }
 
     companion object {
