@@ -7,4 +7,4 @@ import com.xiao.boot.server.base.annotations.KtSpringBootApplication
  * @author lix wang
  */
 @KtSpringBootApplication
-class ServerBaseAutoConfiguration
+class ServerBaseApplication
