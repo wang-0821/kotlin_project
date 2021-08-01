@@ -29,7 +29,7 @@ class KtUndertowWebServerFactoryCustomizer(
     }
 
     private fun customizeWebServerBuilder(builder: Undertow.Builder) {
-        val dispatchWorkerThreads = Runtime.getRuntime().availableProcessors().coerceAtLeast(2)
+        val dispatchWorkerThreads = Runtime.getRuntime().availableProcessors().coerceAtMost(2)
         builder.setWorkerThreads(dispatchWorkerThreads)
     }
 
