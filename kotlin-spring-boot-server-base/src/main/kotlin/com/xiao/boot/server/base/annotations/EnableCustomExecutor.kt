@@ -8,5 +8,5 @@ import org.springframework.context.annotation.Import
  */
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.ANNOTATION_CLASS)
-@Import(ServletExecutorRegistrar::class)
+@Import(ServletCustomExecutorRegistrar::class)
 annotation class EnableCustomExecutor

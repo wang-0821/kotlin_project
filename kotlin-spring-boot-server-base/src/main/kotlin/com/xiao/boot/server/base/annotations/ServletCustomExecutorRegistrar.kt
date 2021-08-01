@@ -12,7 +12,7 @@ import org.springframework.context.ApplicationContextAware
  * @author lix wang
  */
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-class ServletExecutorRegistrar : ApplicationContextAware, InstantiationAwareBeanPostProcessor {
+class ServletCustomExecutorRegistrar : ApplicationContextAware, InstantiationAwareBeanPostProcessor {
     private lateinit var applicationCOntext: ApplicationContext
 
     override fun setApplicationContext(context: ApplicationContext) {
@@ -22,7 +22,7 @@ class ServletExecutorRegistrar : ApplicationContextAware, InstantiationAwareBean
     override fun postProcessAfterInstantiation(bean: Any, beanName: String): Boolean {
         applicationCOntext.getBean(ServerArgs::class.java)
             .apply {
-                enableServletExecutor = true
+                enableServletCustomExecutor = true
             }
         return true
     }

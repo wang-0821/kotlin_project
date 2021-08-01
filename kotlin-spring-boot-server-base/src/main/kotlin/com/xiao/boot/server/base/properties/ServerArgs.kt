@@ -8,5 +8,5 @@ import org.springframework.stereotype.Component
  */
 @Component
 class ServerArgs {
-    internal var enableServletExecutor: Boolean = false
+    internal var enableServletCustomExecutor: Boolean = false
 }

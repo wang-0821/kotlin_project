@@ -18,7 +18,7 @@ class KtUndertowWebServerFactoryCustomizer(
     private val serverArgs: ServerArgs
 ) : WebServerFactoryCustomizer<UndertowServletWebServerFactory>, Ordered {
     override fun customize(factory: UndertowServletWebServerFactory) {
-        if (serverArgs.enableServletExecutor) {
+        if (serverArgs.enableServletCustomExecutor) {
             factory.addBuilderCustomizers(this::customizeWebServerBuilder)
             factory.addDeploymentInfoCustomizers(this::customizeDeploymentInfo)
         }
@@ -29,7 +29,7 @@ class KtUndertowWebServerFactoryCustomizer(
     }
 
     private fun customizeWebServerBuilder(builder: Undertow.Builder) {
-        val dispatchWorkerThreads = Runtime.getRuntime().availableProcessors().coerceAtLeast(2)
+        val dispatchWorkerThreads = Runtime.getRuntime().availableProcessors().coerceAtMost(2)
         builder.setWorkerThreads(dispatchWorkerThreads)
     }
 
