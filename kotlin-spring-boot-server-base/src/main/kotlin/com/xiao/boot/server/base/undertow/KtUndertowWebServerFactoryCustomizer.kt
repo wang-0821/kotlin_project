@@ -1,6 +1,6 @@
 package com.xiao.boot.server.base.undertow
 
-import com.xiao.boot.server.base.bean.CoroutineServerArgs
+import com.xiao.boot.server.base.servlet.CoroutineServerArgs
 import io.undertow.Undertow
 import io.undertow.servlet.api.DeploymentInfo
 import org.springframework.beans.factory.ObjectProvider

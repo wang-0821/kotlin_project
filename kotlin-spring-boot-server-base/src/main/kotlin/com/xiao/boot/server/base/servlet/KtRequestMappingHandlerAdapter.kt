@@ -1,4 +1,4 @@
-package com.xiao.boot.server.base.bean
+package com.xiao.boot.server.base.servlet
 
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter
 

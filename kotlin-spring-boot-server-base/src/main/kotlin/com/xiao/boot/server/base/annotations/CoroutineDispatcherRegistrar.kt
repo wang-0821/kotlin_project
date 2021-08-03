@@ -1,10 +1,10 @@
 package com.xiao.boot.server.base.annotations
 
-import com.xiao.boot.server.base.bean.CoroutineServerArgs
+import com.xiao.boot.base.util.getBeanDefinitionsByType
+import com.xiao.boot.server.base.servlet.CoroutineServerArgs
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor
-import org.springframework.beans.factory.support.BeanNameGenerator
 import org.springframework.beans.factory.support.GenericBeanDefinition
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.context.ApplicationContext
@@ -24,17 +24,21 @@ class CoroutineDispatcherRegistrar : BeanDefinitionRegistryPostProcessor, Applic
     }
 
     override fun postProcessBeanDefinitionRegistry(registry: BeanDefinitionRegistry) {
-
-
-        val beanDefinition = GenericBeanDefinition()
-            .apply {
-                beanClass = CoroutineServerArgs::class.java
-                isPrimary = true
+        synchronized(CoroutineDispatcherRegistrar::class.java) {
+            val coroutineServerArgsBeans = registry.getBeanDefinitionsByType(CoroutineServerArgs::class.java)
+            if (coroutineServerArgsBeans.values.size > 1) {
+                throw IllegalStateException("Duplicate bean type: ${CoroutineServerArgs::javaClass.name}.")
             }
-        val beanName = applicationContext.getBean(BeanNameGenerator::class.java)
-            ?.let {
-                it.generateBeanName(beanDefinition, registry)
-            } ?: beanDefinition.beanClass.name
+            if (coroutineServerArgsBeans.isEmpty()) {
+                val beanDefinition = GenericBeanDefinition()
+                    .apply {
+                        beanClass = CoroutineServerArgs::class.java
+                        isPrimary = true
+                        propertyValues.add("enableGlobalDispatcher", true)
+                    }
+                registry.registerBeanDefinition(CoroutineServerArgs::javaClass.name, beanDefinition)
+            }
+        }
     }
 
     override fun setApplicationContext(context: ApplicationContext) {

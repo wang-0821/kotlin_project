@@ -69,12 +69,19 @@ fun BeanDefinitionRegistry.getBeanDefinitionsByType(type: Class<*>): Map<String,
     }
 }
 
-fun BeanDefinitionRegistry.doFilter(filter: (BeanDefinition) -> Boolean, exec: (String, BeanDefinition) -> Unit) {
+fun BeanDefinitionRegistry.doByBeanClassFilter(
+    filter: (Class<*>) -> Boolean,
+    exec: (String, Class<*>, BeanDefinition) -> Unit
+) {
     beanDefinitionNames
         .forEach { beanName ->
             val beanDefinition = getBeanDefinition(beanName)
-            if (filter(beanDefinition)) {
-                exec(beanName, beanDefinition)
+            if (beanDefinition is AnnotatedBeanDefinition) {
+                val className = beanDefinition.className()
+                val clazz = ClassUtils.forName(className, null)
+                if (filter(clazz)) {
+                    exec(beanName, clazz, beanDefinition)
+                }
             }
         }
 }

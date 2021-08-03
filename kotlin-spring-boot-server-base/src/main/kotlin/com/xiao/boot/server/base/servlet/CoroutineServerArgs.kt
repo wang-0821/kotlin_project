@@ -1,9 +1,9 @@
-package com.xiao.boot.server.base.bean
+package com.xiao.boot.server.base.servlet
 
 /**
  *
  * @author lix wang
  */
-internal class CoroutineServerArgs {
+class CoroutineServerArgs {
     internal var enableGlobalDispatcher: Boolean = false
 }
