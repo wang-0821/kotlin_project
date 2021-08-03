@@ -16,5 +16,5 @@ import java.lang.annotation.Inherited
 @ComponentScan
 @SpringBootConfiguration
 @EnableAutoConfiguration
-@EnableCustomExecutor
-annotation class KtSpringBootApplication
+@EnableCoroutineDispatcher
+annotation class CoroutineSpringBootApplication

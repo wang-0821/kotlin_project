@@ -2,8 +2,11 @@ package com.xiao.boot.base.util
 
 import com.xiao.boot.base.env.ProfileType
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition
+import org.springframework.beans.factory.config.BeanDefinition
+import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.boot.web.context.WebServerApplicationContext
 import org.springframework.core.env.Environment
+import org.springframework.util.ClassUtils
 import org.springframework.util.StringUtils
 
 /**
@@ -32,4 +35,46 @@ fun WebServerApplicationContext.serverName(): String {
     } else {
         "server"
     }
+}
+
+fun BeanDefinitionRegistry.getBeanDifinitionsByFilter(
+    filter: (BeanDefinition) -> Boolean
+): Map<String, BeanDefinition> {
+    val result = mutableMapOf<String, BeanDefinition>()
+    beanDefinitionNames
+        .forEach { beanName ->
+            val beanDifinition = getBeanDefinition(beanName)
+            if (filter(beanDifinition)) {
+                result[beanName] = beanDifinition
+            }
+        }
+    return result
+}
+
+fun BeanDefinitionRegistry.getBeanDefinitionsByBeanClassName(beanClassName: String): Map<String, BeanDefinition> {
+    return getBeanDifinitionsByFilter { beanDefinition ->
+        beanDefinition.beanClassName == beanClassName
+    }
+}
+
+fun BeanDefinitionRegistry.getBeanDefinitionsByType(type: Class<*>): Map<String, BeanDefinition> {
+    return getBeanDifinitionsByFilter { beanDifinition ->
+        if (beanDifinition is AnnotatedBeanDefinition) {
+            val clazz = ClassUtils.forName(beanDifinition.className(), null)
+            if (type.isAssignableFrom(clazz)) {
+                return@getBeanDifinitionsByFilter true
+            }
+        }
+        return@getBeanDifinitionsByFilter false
+    }
+}
+
+fun BeanDefinitionRegistry.doFilter(filter: (BeanDefinition) -> Boolean, exec: (String, BeanDefinition) -> Unit) {
+    beanDefinitionNames
+        .forEach { beanName ->
+            val beanDefinition = getBeanDefinition(beanName)
+            if (filter(beanDefinition)) {
+                exec(beanName, beanDefinition)
+            }
+        }
 }

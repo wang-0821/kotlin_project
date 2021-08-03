@@ -1,10 +1,10 @@
 package com.xiao.boot.server.base
 
-import com.xiao.boot.server.base.annotations.KtSpringBootApplication
+import com.xiao.boot.server.base.annotations.CoroutineSpringBootApplication
 
 /**
  *
  * @author lix wang
  */
-@KtSpringBootApplication
+@CoroutineSpringBootApplication
 class ServerBaseApplication

@@ -1,5 +1,6 @@
 package com.xiao.boot.mybatis.annotation
 
+import com.xiao.boot.base.util.getBeanDefinitionsByBeanClassName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.configurationName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceFactoryMethodName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceName
@@ -78,10 +79,7 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
         registry: BeanDefinitionRegistry
     ): String {
         val beanClassName = importingClassMetadata.className
-        val beanNames = registry.beanDefinitionNames
-            .filter { beanDefinitionName ->
-                registry.getBeanDefinition(beanDefinitionName).beanClassName == beanClassName
-            }
+        val beanNames = registry.getBeanDefinitionsByBeanClassName(beanClassName).keys
         check(beanNames.size == 1)
         return beanNames.first()
     }
