@@ -1,5 +1,6 @@
 package com.xiao.boot.server.base.annotations
 
+import com.xiao.boot.base.thread.KtThreadPool
 import com.xiao.boot.base.util.getBeanDefinitionsByType
 import com.xiao.boot.server.base.servlet.CoroutineServerArgs
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
@@ -35,6 +36,8 @@ class CoroutineDispatcherRegistrar : BeanDefinitionRegistryPostProcessor, Applic
                         beanClass = CoroutineServerArgs::class.java
                         isPrimary = true
                         propertyValues.add("enableGlobalDispatcher", true)
+                        propertyValues.add("coroutineScope", KtThreadPool.globalCoroutineScope)
+                        propertyValues.add("executorService", KtThreadPool.globalPool)
                     }
                 registry.registerBeanDefinition(CoroutineServerArgs::javaClass.name, beanDefinition)
             }

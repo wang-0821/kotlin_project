@@ -9,8 +9,10 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  * @author lix wang
  */
 @ConditionalOnBean(CoroutineServerArgs::class)
-class KtWebMvcRegistrations : WebMvcRegistrations {
+class KtWebMvcRegistrations(
+    private val coroutineServerArgs: CoroutineServerArgs
+) : WebMvcRegistrations {
     override fun getRequestMappingHandlerAdapter(): RequestMappingHandlerAdapter {
-        return KtRequestMappingHandlerAdapter()
+        return KtRequestMappingHandlerAdapter(coroutineServerArgs)
     }
 }

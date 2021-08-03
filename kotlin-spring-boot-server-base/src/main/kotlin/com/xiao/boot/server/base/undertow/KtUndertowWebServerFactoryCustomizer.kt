@@ -39,7 +39,7 @@ class KtUndertowWebServerFactoryCustomizer(
 
     private fun customizeDeploymentInfo(deploymentInfo: DeploymentInfo) {
         deploymentInfo.addInitialHandlerChainWrapper {
-            UndertowRootInitialHttpHandler(it)
+            UndertowRootInitialHttpHandler(it, coroutineServerArgs!!)
         }
     }
 }
