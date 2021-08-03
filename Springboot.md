@@ -4,6 +4,7 @@
 * [4.SpringBoot自动配置](#4)
 * [5.SpringBoot web](#5)
 * [6.SpringBoot异常处理](#6)
+* [7.RequestMappingHandlerMapping](#7)
 
 <h2 id="1">1.SpringBoot模块结构</h2>
 &emsp;&emsp; SpringBoot项目下主要有：buildSrc、spring-boot-project、spring-boot-tests三大模块。
@@ -1941,6 +1942,106 @@ HandlerMethod, Exception)之后，返回的ModelAndView不为空，那么会，�
 					V
 		最终执行BasicErrorController.error(HttpServletRequest)
 					
-					
-					
-					
+<h2 id="7">7.RequestMappingHandlerMapping</h2>
+&emsp;&emsp; 在WebMvcAutoConfiguration中，会创建EnableWebMvcConfiguration Bean，
+EnableWebMvcConfiguration 这个类中包含一个@Bean方法 requestMappingHandlerMapping。
+这个@Bean方法会创建RequestMappingHandlerMapping Bean，
+	
+	synthetic(合成)类型：由编译器生成方法或类。
+
+			RequestMappingHandlerMapping.afterPropertiesSet()
+						|
+						V
+		创建并初始化RequestMappingHandlerMapping.config，包括：trailingSlashMatch、
+		contentNegotiationManager、patternParser、suffixPatternMatch、
+		registeredSuffixPatternMatch、pathMatcher
+						|
+						V
+			执行RequestMappingHandlerMapping.super.afterPropertiesSet()
+						|
+						V
+			执行RequestMappingHandlerMapping.initHandlerMethods()
+						|
+						V
+				遍历ApplicationContext中所有Object类型的Bean
+						|
+						V
+			Bean name不以scopedTarget.前缀开头，不是被代理过的Bean ------
+						|				|
+						V				V
+		执行RequestMappingHandlerMapping.processCandidateBean(beanName)
+						|
+						V
+					获取Bean的Class类型
+						|
+						V
+		    	如果Class被@Controller或者@RequestMapping注解，
+				表明Bean 是Handler Bean。
+						|
+						V
+		执行RequestMappingHandlerMapping.detectHandlerMethods(beanName)
+						|
+						V
+			    	    获取Class的declared methods
+	     --------------------------------->	|
+	    |					V
+	    |	    		如果Method不是桥接方法，并且Method不是合成类型
+	    |					|
+	    |					V
+	    |	执行RequestMappingHandlerMapping.getMappingForMethod(method, class)
+	    |					|
+	    |					V
+	    |	执行createRequestMappingInfo(method)创建RequestMappingInfo methodInfo,
+	    |			根据Method上的@RequestMapping注解作为参数。
+	    |					|
+	    |					V
+	    |	执行createRequestMappingInfo(class)创建RequestMappingInfo typeInfo,
+	    |			根据Class上的@RequestMapping注解作为参数。
+	    |					|
+	    |					V
+	    |		执行typeInfo.combine(methodInfo)获取新的RequestMappingInfo
+	    |					|
+	    |					V
+	    |	向Map<Method, RequestMappingInfo> methodMap中添加method和RequestMappingInfo
+	     -----------------------------------| 
+			loop declared methods	V					  
+		根据methodMap，循环执行RequestMappingHandlerMapping.registerHandlerMethod(   
+				handler, Method, RequestMappingInfo)			   
+						|
+						V
+	执行RequestMappingHandlerMapping.mappingRegistry.register(RequestMappingInfo, handler, Method)
+						|
+						V
+				根据handler和Method创建HandlerMethod
+						|
+						V
+	根据RequestMappingInfo.getDirectPaths()，向MappingRegistry.pathLookup中添加(path, RequestMappingInfo)
+						|
+						V
+			向MappingRegistry.nameLookup中添加(name, List<HandlerMethod>)
+						|
+						V
+		执行initCorsConfiguration(handler, method, RequestMappingInfo)处理跨域,
+		根据controller和method上的@CrossOrigin注解，并向MappingRegistry.corsLookup中
+			添加(HandlerMethod, CorsConfiguration)
+						|
+						V
+	创建MappingRegistration并向MappingRegistry.registry中添加(RequestMappingInfo, MappingRegistration)
+						|
+						V
+	RequestMappingHandlerMapping.registerHandlerMethod(handler, Method, RequestMappingInfo)执行完毕
+						|
+						V
+		RequestMappingHandlerMapping.detectHandlerMethods(beanName)执行完毕
+						|
+						V
+		RequestMappingHandlerMapping.processCandidateBean(beanName)执行完毕
+						|
+						V
+		执行handlerMethodsInitialized(Map<RequestMappingInfo, HandlerMethod>)
+						|
+						V
+			RequestMappingHandlerMapping.initHandlerMethods()执行完毕
+						
+		
+		
