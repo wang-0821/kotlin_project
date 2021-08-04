@@ -11,7 +11,7 @@ import java.lang.reflect.Method
  * @author lix wang
  */
 class CoroutineServletInvocableHandlerMethod : ServletInvocableHandlerMethod {
-    internal var coroutineServerArgs: CoroutineServerArgs? = null
+    internal var ktServerArgs: KtServerArgs? = null
 
     constructor(handler: Any, method: Method) : super(handler, method)
     constructor(handlerMethod: HandlerMethod) : super(handlerMethod)
@@ -27,9 +27,9 @@ class CoroutineServletInvocableHandlerMethod : ServletInvocableHandlerMethod {
 
     private fun isSuspendInvoke(method: Method): Boolean {
         return if (KotlinDetector.isSuspendingFunction(method)) {
-            coroutineServerArgs
+            ktServerArgs
                 ?.let {
-                    it.enableGlobalDispatcher && it.coroutineScope != null
+                    it.enableCoroutineDispatcher && it.coroutineScope != null
                 } ?: throw IllegalStateException("Suspend method ${method.name} can't find target CoroutineScope.")
         } else false
     }

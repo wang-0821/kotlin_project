@@ -1,10 +1,10 @@
 package com.xiao.boot.mybatis.factory
 
 import com.xiao.boot.base.env.ProfileType
-import com.xiao.boot.base.util.activeProfileType
 import org.mybatis.spring.mapper.MapperFactoryBean
 import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
+import util.activeProfileType
 import java.lang.reflect.Proxy
 
 /**

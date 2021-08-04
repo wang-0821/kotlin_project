@@ -9,12 +9,12 @@ import org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHan
  * @author lix wang
  */
 class KtRequestMappingHandlerAdapter(
-    private val coroutineServerArgs: CoroutineServerArgs
+    private val serverArgs: KtServerArgs
 ) : RequestMappingHandlerAdapter() {
     override fun createInvocableHandlerMethod(handlerMethod: HandlerMethod): ServletInvocableHandlerMethod {
         return CoroutineServletInvocableHandlerMethod(handlerMethod)
             .apply {
-                coroutineServerArgs = coroutineServerArgs
+                ktServerArgs = serverArgs
             }
     }
 }

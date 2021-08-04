@@ -1,4 +1,4 @@
-package com.xiao.boot.base.util
+package util
 
 import com.xiao.boot.base.env.ProfileType
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition

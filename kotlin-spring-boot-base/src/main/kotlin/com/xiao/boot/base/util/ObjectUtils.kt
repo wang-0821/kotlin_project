@@ -1,4 +1,4 @@
-package com.xiao.boot.base.util
+package util
 
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type

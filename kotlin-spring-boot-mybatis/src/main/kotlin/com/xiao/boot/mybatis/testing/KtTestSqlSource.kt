@@ -1,11 +1,11 @@
 package com.xiao.boot.mybatis.testing
 
-import com.xiao.boot.base.util.isViewable
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.DATABASE_NAME_KEY
 import org.apache.ibatis.exceptions.PersistenceException
 import org.apache.ibatis.mapping.BoundSql
 import org.apache.ibatis.mapping.SqlSource
 import org.apache.ibatis.session.Configuration
+import util.isViewable
 
 class KtTestSqlSource(
     private val configuration: Configuration,

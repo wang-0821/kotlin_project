@@ -1,6 +1,6 @@
 package com.xiao.boot.server.base.undertow
 
-import com.xiao.boot.server.base.servlet.CoroutineServerArgs
+import com.xiao.boot.server.base.servlet.KtServerArgs
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import io.undertow.util.AttachmentKey
@@ -12,10 +12,10 @@ import java.util.concurrent.Executor
  */
 class UndertowRootInitialHttpHandler(
     private val httpHandler: HttpHandler,
-    private val coroutineServerArgs: CoroutineServerArgs
+    private val ktServerArgs: KtServerArgs
 ) : HttpHandler {
     private val coroutineExecutor = Executor { runnable ->
-        coroutineServerArgs.coroutineScope!!.launch {
+        ktServerArgs.coroutineScope!!.launch {
             runnable.run()
         }
     }

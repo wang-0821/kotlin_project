@@ -1,6 +1,5 @@
 package com.xiao.boot.mybatis.annotation
 
-import com.xiao.boot.base.util.getBeanDefinitionsByBeanClassName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.configurationName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceFactoryMethodName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceName
@@ -17,6 +16,7 @@ import org.springframework.core.annotation.AnnotationAttributes
 import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.core.type.AnnotationMetadata
 import org.springframework.util.StringUtils
+import util.getBeanDefinitionsByBeanClassName
 
 /**
  *

@@ -1,12 +1,12 @@
 package com.xiao.boot.base.property
 
-import com.xiao.boot.base.util.doByBeanClassFilter
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
 import org.springframework.beans.factory.config.ConstructorArgumentValues
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor
 import org.springframework.beans.factory.support.GenericBeanDefinition
 import org.springframework.stereotype.Component
+import util.doByBeanClassFilter
 
 /**
  *

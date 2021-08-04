@@ -1,6 +1,5 @@
 package com.xiao.boot.server.base.servlet
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcRegistrations
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter
 
@@ -8,11 +7,12 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  *
  * @author lix wang
  */
-@ConditionalOnBean(CoroutineServerArgs::class)
 class KtWebMvcRegistrations(
-    private val coroutineServerArgs: CoroutineServerArgs
+    private val ktServerArgs: KtServerArgs
 ) : WebMvcRegistrations {
-    override fun getRequestMappingHandlerAdapter(): RequestMappingHandlerAdapter {
-        return KtRequestMappingHandlerAdapter(coroutineServerArgs)
+    override fun getRequestMappingHandlerAdapter(): RequestMappingHandlerAdapter? {
+        return if (ktServerArgs.enableCoroutineDispatcher) {
+            KtRequestMappingHandlerAdapter(ktServerArgs)
+        } else null
     }
 }

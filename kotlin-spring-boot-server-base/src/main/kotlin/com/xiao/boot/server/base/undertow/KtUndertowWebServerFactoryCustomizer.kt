@@ -1,6 +1,6 @@
 package com.xiao.boot.server.base.undertow
 
-import com.xiao.boot.server.base.servlet.CoroutineServerArgs
+import com.xiao.boot.server.base.servlet.KtServerArgs
 import io.undertow.Undertow
 import io.undertow.servlet.api.DeploymentInfo
 import org.springframework.beans.factory.ObjectProvider
@@ -16,12 +16,12 @@ import org.springframework.stereotype.Component
  */
 @Component
 class KtUndertowWebServerFactoryCustomizer(
-    coroutineServerArgsProvider: ObjectProvider<CoroutineServerArgs>
+    ktServerArgsProvider: ObjectProvider<KtServerArgs>
 ) : WebServerFactoryCustomizer<UndertowServletWebServerFactory>, Ordered {
-    private var coroutineServerArgs: CoroutineServerArgs? = coroutineServerArgsProvider.ifUnique
+    private var ktServerArgs: KtServerArgs? = ktServerArgsProvider.ifUnique
 
     override fun customize(factory: UndertowServletWebServerFactory) {
-        coroutineServerArgs
+        ktServerArgs
             ?.let {
                 factory.addBuilderCustomizers(this::customizeWebServerBuilder)
                 factory.addDeploymentInfoCustomizers(this::customizeDeploymentInfo)
@@ -39,7 +39,7 @@ class KtUndertowWebServerFactoryCustomizer(
 
     private fun customizeDeploymentInfo(deploymentInfo: DeploymentInfo) {
         deploymentInfo.addInitialHandlerChainWrapper {
-            UndertowRootInitialHttpHandler(it, coroutineServerArgs!!)
+            UndertowRootInitialHttpHandler(it, ktServerArgs!!)
         }
     }
 }
