@@ -2,11 +2,11 @@ package com.xiao.boot.base.env
 
 import com.xiao.boot.base.ServerConstants.DEFAULT_SERVER_PORT
 import com.xiao.boot.base.ServerConstants.SERVER_NAME_KEY
-import com.xiao.boot.base.util.activeProfileType
 import org.springframework.context.EnvironmentAware
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.core.env.Environment
+import util.activeProfileType
 import java.net.InetAddress
 
 /**

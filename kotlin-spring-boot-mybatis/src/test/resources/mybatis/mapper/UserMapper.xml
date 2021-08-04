@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="com.xiao.boot.mybatis.mapper.UserMapper">
+<mapper namespace="com.xiao.test.boot.mybatis.mapper.UserMapper">
     <sql id="columns">
         id, username, password
     </sql>
 
-    <select id="selectById" parameterType="long" resultType="com.xiao.boot.mybatis.model.User">
+    <select id="selectById" parameterType="long" resultType="com.xiao.test.boot.mybatis.model.User">
         SELECT
             <include refid="columns"/>
         FROM

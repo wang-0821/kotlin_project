@@ -16,6 +16,7 @@ import org.springframework.core.annotation.AnnotationAttributes
 import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.core.type.AnnotationMetadata
 import org.springframework.util.StringUtils
+import util.getBeanDefinitionsByBeanClassName
 
 /**
  *
@@ -78,10 +79,7 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
         registry: BeanDefinitionRegistry
     ): String {
         val beanClassName = importingClassMetadata.className
-        val beanNames = registry.beanDefinitionNames
-            .filter { beanDefinitionName ->
-                registry.getBeanDefinition(beanDefinitionName).beanClassName == beanClassName
-            }
+        val beanNames = registry.getBeanDefinitionsByBeanClassName(beanClassName).keys
         check(beanNames.size == 1)
         return beanNames.first()
     }

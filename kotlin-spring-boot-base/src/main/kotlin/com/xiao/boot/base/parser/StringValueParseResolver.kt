@@ -1,14 +1,14 @@
 package com.xiao.boot.base.parser
 
-import com.xiao.boot.base.util.isBoolean
-import com.xiao.boot.base.util.isByte
-import com.xiao.boot.base.util.isDouble
-import com.xiao.boot.base.util.isFloat
-import com.xiao.boot.base.util.isInt
-import com.xiao.boot.base.util.isList
-import com.xiao.boot.base.util.isLong
-import com.xiao.boot.base.util.isMap
-import com.xiao.boot.base.util.isShort
+import util.isBoolean
+import util.isByte
+import util.isDouble
+import util.isFloat
+import util.isInt
+import util.isList
+import util.isLong
+import util.isMap
+import util.isShort
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 

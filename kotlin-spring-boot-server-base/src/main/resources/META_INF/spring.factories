@@ -1,4 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.xiao.boot.server.base.properties.ServerArgs,\
-com.xiao.boot.server.base.exception.GlobalRestControllerAdvice,\
-com.xiao.boot.server.base.undertow.KtUndertowWebServerFactoryCustomizer
