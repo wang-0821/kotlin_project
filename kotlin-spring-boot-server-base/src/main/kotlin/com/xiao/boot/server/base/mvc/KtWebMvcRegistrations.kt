@@ -1,4 +1,4 @@
-package com.xiao.boot.server.base.servlet
+package com.xiao.boot.server.base.mvc
 
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcRegistrations
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter
