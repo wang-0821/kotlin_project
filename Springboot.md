@@ -5,6 +5,7 @@
 * [5.SpringBoot web](#5)
 * [6.SpringBoot异常处理](#6)
 * [7.RequestMappingHandlerMapping](#7)
+* [8.HandlerMethodArgumentResolver](#8)
 
 <h2 id="1">1.SpringBoot模块结构</h2>
 &emsp;&emsp; SpringBoot项目下主要有：buildSrc、spring-boot-project、spring-boot-tests三大模块。
@@ -2043,5 +2044,59 @@ EnableWebMvcConfiguration 这个类中包含一个@Bean方法 requestMappingHand
 						V
 			RequestMappingHandlerMapping.initHandlerMethods()执行完毕
 						
+<h2 id="8">8.HandlerMethodArgumentResolver</h2>
+&emsp;&emsp; InvocableHandlerMethod.invokeForRequest(NativeWebRequest, ModelAndViewContainer, provideArgs)
+执行方法获取结果时，会先解析方法的参数列表。先根据MethodParameter参数类型，从provideArgs中获取参数值，
+如果没获取到，则执行HandlerMethodArgumentResolverComposite.resolveArgument(...)来解析参数。
+使用provideArgs时，如果参数列表中有同样类型的参数，那么每次解析出的都是第一个该类型的参数值。
+	
+	HandlerMethodArgumentResolverComposite.argumentResolvers有28种，包含：
+		RequestParamMethodArgumentResolver、
+		RequestParamMapMethodArgumentResolver、
+		PathVariableMethodArgumentResolver、
+		PathVariableMapMethodArgumentResolver、
+		MatrixVariableMethodArgumentResolver、
+		MatrixVariableMapMethodArgumentResolver、
+		ServletModelAttributeMethodProcessor、
+		RequestResponseBodyMethodProcessor、
+		RequestPartMethodArgumentResolver、
+		RequestHeaderMethodArgumentResolver、
+		RequestHeaderMapMethodArgumentResolver、
+		ServletCookieValueMethodArgumentResolver、
+		ExpressionValueMethodArgumentResolver、
+		SessionAttributeMethodArgumentResolver、
+		RequestAttributeMethodArgumentResolver、
+		ServletRequestMethodArgumentResolver、
+		ServletResponseMethodArgumentResolver、
+		HttpEntityMethodProcessor、
+		RedirectAttributesMethodArgumentResolver、
+		ModelMethodProcessor、
+		MapMethodProcessor、
+		ErrorsMethodArgumentResolver、
+		SessionStatusMethodArgumentResolver、
+		UriComponentsBuilderMethodArgumentResolver、
+		ContinuationHandlerMethodArgumentResolver、
+		PrincipalMethodArgumentResolver、
+		RequestParamMethodArgumentResolver、
+		ServletModelAttributeMethodProcessor。
 		
-		
+	HandlerMethodArgumentResolverComposite.resolveArgument(MethodParameter, 
+	ModelAndViewContainer, NativeWebRequest, WebDataBinderFactory)
+					|
+					V
+	执行HandlerMethodArgumentResolverComposite.getArgumentResolver(MethodParameter)获取resolver
+					|
+					V
+	根据HandlerMethodArgumentResolverComposite.argumentResolvers遍历
+					|
+					V
+	执行HandlerMethodArgumentResolver.supportsParameter(MethodParameter)，为true返回resolver
+					|
+					V
+		执行HandlerMethodArgumentResolver.resolveArgument(MethodParameter, 
+		ModelAndViewContainer, NativeWebRequest, WebDataBinderFactory)
+					|
+					V
+				返回执行结果作为参数值
+					
+					
