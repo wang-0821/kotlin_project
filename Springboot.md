@@ -2050,35 +2050,34 @@ EnableWebMvcConfiguration 这个类中包含一个@Bean方法 requestMappingHand
 如果没获取到，则执行HandlerMethodArgumentResolverComposite.resolveArgument(...)来解析参数。
 使用provideArgs时，如果参数列表中有同样类型的参数，那么每次解析出的都是第一个该类型的参数值。
 	
-	HandlerMethodArgumentResolverComposite.argumentResolvers有28种，包含：
-		RequestParamMethodArgumentResolver、
-		RequestParamMapMethodArgumentResolver、
-		PathVariableMethodArgumentResolver、
-		PathVariableMapMethodArgumentResolver、
-		MatrixVariableMethodArgumentResolver、
-		MatrixVariableMapMethodArgumentResolver、
-		ServletModelAttributeMethodProcessor、
-		RequestResponseBodyMethodProcessor、
-		RequestPartMethodArgumentResolver、
-		RequestHeaderMethodArgumentResolver、
-		RequestHeaderMapMethodArgumentResolver、
-		ServletCookieValueMethodArgumentResolver、
-		ExpressionValueMethodArgumentResolver、
-		SessionAttributeMethodArgumentResolver、
-		RequestAttributeMethodArgumentResolver、
-		ServletRequestMethodArgumentResolver、
-		ServletResponseMethodArgumentResolver、
-		HttpEntityMethodProcessor、
-		RedirectAttributesMethodArgumentResolver、
-		ModelMethodProcessor、
-		MapMethodProcessor、
-		ErrorsMethodArgumentResolver、
-		SessionStatusMethodArgumentResolver、
-		UriComponentsBuilderMethodArgumentResolver、
-		ContinuationHandlerMethodArgumentResolver、
-		PrincipalMethodArgumentResolver、
-		RequestParamMethodArgumentResolver、
-		ServletModelAttributeMethodProcessor。
+	HandlerMethodArgumentResolverComposite.argumentResolvers有26种，包含：
+		RequestParamMethodArgumentResolver：处理@RequestParam、MultipartFile、Part，
+		RequestParamMapMethodArgumentResolver：处理@RequestParam，没有指定name的Map类型，
+		PathVariableMethodArgumentResolver：处理@PathVariable，
+		PathVariableMapMethodArgumentResolver：处理@PathVariable，没有指定name的Map类型，
+		MatrixVariableMethodArgumentResolver：处理@MatrixVariable，
+		MatrixVariableMapMethodArgumentResolver：处理@MatrixVariable，没有指定name的Map类型，
+		ServletModelAttributeMethodProcessor：处理@ModelAttribute，
+		RequestResponseBodyMethodProcessor：处理@RequestBody，
+		RequestPartMethodArgumentResolver：处理@RequestPart，
+		RequestHeaderMethodArgumentResolver：处理@RequestHeader，
+		RequestHeaderMapMethodArgumentResolver：处理@RequestHeader，并且是Map类型，
+		ServletCookieValueMethodArgumentResolver：处理@CookieValue，
+		ExpressionValueMethodArgumentResolver：处理@Value，
+		SessionAttributeMethodArgumentResolver：处理@SessionAttribute，
+		RequestAttributeMethodArgumentResolver：处理@RequestAttribute，
+		ServletRequestMethodArgumentResolver：处理WebRequest、ServletRequest、MultipartRequest、
+		    HttpSession、PushBuilder、Principal、InputStream、Reader、HttpMethod、Locale、TimeZone、ZoneId，
+		ServletResponseMethodArgumentResolver：处理ServletResponse、OutputStream、Writer，
+		HttpEntityMethodProcessor：处理HttpEntity、RequestEntity，
+		RedirectAttributesMethodArgumentResolver：处理RedirectAttributes，
+		ModelMethodProcessor：处理Model，
+		MapMethodProcessor：处理没有注解的Map类型，
+		ErrorsMethodArgumentResolver：处理Errors，
+		SessionStatusMethodArgumentResolver：处理SessionStatus，
+		UriComponentsBuilderMethodArgumentResolver：处理UriComponentsBuilder、ServletUriComponentsBuilder，
+		ContinuationHandlerMethodArgumentResolver：处理协程Continuation，
+		PrincipalMethodArgumentResolver：处理Principal。
 		
 	HandlerMethodArgumentResolverComposite.resolveArgument(MethodParameter, 
 	ModelAndViewContainer, NativeWebRequest, WebDataBinderFactory)
