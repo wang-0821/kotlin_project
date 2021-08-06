@@ -2,6 +2,8 @@ package com.xiao.boot.server.base.exception
 
 import com.xiao.base.logging.Logging
 import com.xiao.boot.base.env.EnvInfoProvider
+import com.xiao.boot.server.base.mvc.RequestContainer
+import com.xiao.boot.server.base.mvc.RequestInfo
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -16,6 +18,8 @@ import javax.servlet.http.HttpServletResponse
 class GlobalRestControllerAdvice(
     private val envInfoProvider: EnvInfoProvider
 ) {
+    private val requestInfo = RequestContainer.getRequestValue(RequestInfo.KEY)
+
     // unexpected exceptions
     @ExceptionHandler(value = [Exception::class, Error::class])
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -67,6 +71,7 @@ class GlobalRestControllerAdvice(
                 this.errorCode = errorCode ?: "server.exception"
                 this.message = message
                 this.server = envInfoProvider.serverName()
+                this.uuid = requestInfo?.getRequestUuid()
             }
     }
 

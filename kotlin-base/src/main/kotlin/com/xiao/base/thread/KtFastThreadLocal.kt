@@ -73,7 +73,7 @@ class KtFastThreadLocal<T> {
         }
     }
 
-    fun release() {
+    fun reset() {
         get()?.let {
             if (it is AutoCloseable) {
                 it.close()

@@ -9,9 +9,9 @@ import java.util.concurrent.ConcurrentHashMap
  * @author lix wang
  */
 object MetricsUtils {
-    const val STATE_SUCCESS = "success"
-    const val STATE_FAIL = "fail"
-    const val STATE_SLOW = "slow"
+    const val STATE_SUCCESS = "SUCCEED"
+    const val STATE_FAIL = "FAILED"
+    const val STATE_SLOW = "SLOW"
 
     const val TYPE_API = "API"
     const val TYPE_DB = "DB"
