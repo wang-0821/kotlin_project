@@ -3,45 +3,85 @@ package com.xiao.boot.server.base.mvc
 import com.xiao.base.logging.Logging
 import kotlinx.coroutines.runBlocking
 import org.springframework.core.KotlinDetector
+import org.springframework.core.MethodParameter
 import org.springframework.util.ReflectionUtils
+import org.springframework.web.context.request.NativeWebRequest
 import org.springframework.web.method.HandlerMethod
+import org.springframework.web.method.support.ModelAndViewContainer
 import org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod
 import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.reflect.full.callSuspend
 import kotlin.reflect.jvm.kotlinFunction
 
 /**
  * @author lix wang
  */
-class CoroutineServletInvocableHandlerMethod : ServletInvocableHandlerMethod {
+class CoroutineServletInvocableHandlerMethod(
+    handlerMethod: HandlerMethod
+) : ServletInvocableHandlerMethod(handlerMethod) {
     internal var ktServerArgs: KtServerArgs? = null
+    private val isSuspendMethod = KotlinDetector.isSuspendingFunction(bridgedMethod)
 
-    constructor(handler: Any, method: Method) : super(handler, method)
-    constructor(handlerMethod: HandlerMethod) : super(handlerMethod)
+    override fun invokeForRequest(
+        request: NativeWebRequest,
+        mavContainer: ModelAndViewContainer?,
+        vararg providedArgs: Any?
+    ): Any? {
+        return if (isSuspendMethod) {
+            val coroutineContext = ktServerArgs?.coroutineScope?.coroutineContext ?: EmptyCoroutineContext
+            // TODO use coroutine whole request process.
+            runBlocking(coroutineContext) {
+                val args = getMethodArgumentValues(request, mavContainer, *providedArgs)
+                invokeMethodSuspend(*args)
+            }
+        } else {
+            val args = getMethodArgumentValues(request, mavContainer, *providedArgs)
+            invokeMethod(*args)
+        }
+    }
 
-    // TODO use global suspend instead of runBlocking.
-    @Throws(Exception::class)
-    override fun doInvoke(vararg args: Any?): Any? {
+    override fun getMethodParameters(): Array<MethodParameter> {
+        return if (isSuspendMethod) {
+            super.getMethodParameters().copyOfRange(0, super.getMethodParameters().size - 1)
+        } else {
+            super.getMethodParameters()
+        }
+    }
+
+    private fun invokeMethod(vararg args: Any?): Any? {
         val method = bridgedMethod
         ReflectionUtils.makeAccessible(method)
         return try {
-            if (KotlinDetector.isSuspendingFunction(method)) {
-                val useCoroutineCall = ktServerArgs?.let {
-                    it.enableCoroutineDispatcher && it.coroutineScope != null
-                } ?: false
-
-                if (useCoroutineCall) {
-                    runBlocking(ktServerArgs!!.coroutineScope!!.coroutineContext) {
-                        method.kotlinFunction!!.callSuspend(bean, *args)
-                    }
-                } else {
-                    log.warn("Method: ${method.name} is suspend, but don't have valid coroutine scope.")
-                    method.invoke(bean, *args)
+            method.invoke(bean, *args)
+        } catch (ex: IllegalArgumentException) {
+            assertTargetBean(method, bean, args)
+            throw IllegalStateException(formatInvokeError(ex.message ?: "Illegal argument", args), ex)
+        } catch (ex: InvocationTargetException) {
+            // Unwrap for HandlerExceptionResolvers ...
+            when (val targetException = ex.targetException) {
+                is RuntimeException -> {
+                    throw targetException
                 }
-            } else {
-                method.invoke(bean, *args)
+                is Error -> {
+                    throw targetException
+                }
+                is Exception -> {
+                    throw targetException
+                }
+                else -> {
+                    throw IllegalStateException(formatInvokeError("Invocation failure", args), targetException)
+                }
             }
+        }
+    }
+
+    @Throws(Exception::class)
+    private suspend fun invokeMethodSuspend(vararg args: Any?): Any? {
+        val method = bridgedMethod
+        ReflectionUtils.makeAccessible(method)
+        return try {
+            method.kotlinFunction!!.callSuspend(bean, *args)
         } catch (ex: IllegalArgumentException) {
             assertTargetBean(method, bean, args)
             throw IllegalStateException(formatInvokeError(ex.message ?: "Illegal argument", args), ex)

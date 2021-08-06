@@ -29,11 +29,11 @@ class DemoController {
 
     @GetMapping("/throwExceptionSuspend")
     suspend fun throwExceptionSuspend() {
-        throw RuntimeException("thorw exception suspend")
+        throw RuntimeException("throw exception suspend")
     }
 
-    @GetMapping("/helloWorldSuspend")
-    suspend fun helloWorldSuspend(): String {
-        return "hello world"
+    @PostMapping("/printInputSuspend")
+    suspend fun printInputSuspend(@RequestBody input: String): String {
+        return input
     }
 }

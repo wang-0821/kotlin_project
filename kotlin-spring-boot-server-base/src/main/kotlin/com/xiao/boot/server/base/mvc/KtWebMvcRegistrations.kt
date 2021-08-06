@@ -12,7 +12,7 @@ class KtWebMvcRegistrations(
 ) : WebMvcRegistrations {
     override fun getRequestMappingHandlerAdapter(): RequestMappingHandlerAdapter? {
         return if (ktServerArgs.enableCoroutineDispatcher) {
-            KtRequestMappingHandlerAdapter(ktServerArgs)
+            CoroutineRequestMappingHandlerAdapter(ktServerArgs)
         } else null
     }
 }

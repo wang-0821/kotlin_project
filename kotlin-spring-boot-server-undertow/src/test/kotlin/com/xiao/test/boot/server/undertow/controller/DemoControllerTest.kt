@@ -69,11 +69,11 @@ class DemoControllerTest : KtSpringTestBase() {
     }
 
     @Test
-    fun `test get hello world suspend`() {
+    fun `test post request suspend`() {
         val result = RestTemplate().exchange(
-            "http://localhost:${envInfoProvider.port()}/api/v1/demo/helloWorldSuspend",
-            HttpMethod.GET,
-            HttpEntity.EMPTY,
+            "http://localhost:${envInfoProvider.port()}/api/v1/demo/printInputSuspend",
+            HttpMethod.POST,
+            HttpEntity("hello world"),
             String::class.java,
             mapOf<String, String>()
         )
