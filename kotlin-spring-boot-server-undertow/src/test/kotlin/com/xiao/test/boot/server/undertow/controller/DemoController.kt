@@ -1,4 +1,4 @@
-package com.xiao.test.boot.server.base.controller
+package com.xiao.test.boot.server.undertow.controller
 
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -24,6 +24,16 @@ class DemoController {
 
     @GetMapping("/throwException")
     fun throwException() {
-        throw RuntimeException("throw Exception")
+        throw RuntimeException("throw exception")
+    }
+
+    @GetMapping("/throwExceptionSuspend")
+    suspend fun throwExceptionSuspend() {
+        throw RuntimeException("throw exception suspend")
+    }
+
+    @PostMapping("/printInputSuspend")
+    suspend fun printInputSuspend(@RequestBody input: String): String {
+        return input
     }
 }

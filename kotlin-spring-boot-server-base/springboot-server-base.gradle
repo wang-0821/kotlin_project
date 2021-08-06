@@ -1,5 +1,5 @@
 dependencies {
     api project(":kotlin-spring-boot-base")
     api "org.springframework:spring-webmvc"
-    api "org.springframework.boot:spring-boot-starter-undertow"
+    api "jakarta.servlet:jakarta.servlet-api"
 }

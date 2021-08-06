@@ -14,6 +14,7 @@ dependencyManagement {
         dependency "joda-time:joda-time:2.10.10"
         dependency "com.github.ben-manes.caffeine:caffeine:3.0.0"
         dependency "org.apache.commons:commons-lang3:3.12.0"
+        dependency "jakarta.servlet:jakarta.servlet-api:4.0.4"
 
         // logging
         dependency "org.slf4j:slf4j-api:1.7.30"

@@ -1,4 +1,4 @@
-package com.xiao.boot.server.base.servlet
+package com.xiao.boot.server.base.mvc
 
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcRegistrations
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter
@@ -12,7 +12,7 @@ class KtWebMvcRegistrations(
 ) : WebMvcRegistrations {
     override fun getRequestMappingHandlerAdapter(): RequestMappingHandlerAdapter? {
         return if (ktServerArgs.enableCoroutineDispatcher) {
-            KtRequestMappingHandlerAdapter(ktServerArgs)
+            CoroutineRequestMappingHandlerAdapter(ktServerArgs)
         } else null
     }
 }

@@ -1,10 +1,10 @@
-package com.xiao.test.boot.server.base.controller
+package com.xiao.test.boot.server.undertow.controller
 
 import com.xiao.base.util.JsonUtils
 import com.xiao.boot.base.env.EnvInfoProvider
 import com.xiao.boot.base.testing.KtSpringTestBase
 import com.xiao.boot.server.base.exception.KtExceptionResponse
-import com.xiao.test.boot.server.base.ServerBaseApplication
+import com.xiao.test.boot.server.undertow.UndertowServerApplication
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -20,7 +20,7 @@ import org.springframework.web.client.RestTemplate
  * @author lix wang
  */
 @SpringBootTest(
-    classes = [ServerBaseApplication::class],
+    classes = [UndertowServerApplication::class],
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
 class DemoControllerTest : KtSpringTestBase() {
@@ -65,6 +65,35 @@ class DemoControllerTest : KtSpringTestBase() {
 
         Assertions.assertEquals(exception.statusCode.value(), HttpStatus.INTERNAL_SERVER_ERROR.value())
         val exceptionResponse = JsonUtils.deserialize(exception.responseBodyAsString, KtExceptionResponse::class.java)
-        Assertions.assertEquals(exceptionResponse.message, "throw Exception")
+        Assertions.assertEquals(exceptionResponse.message, "throw exception")
+    }
+
+    @Test
+    fun `test post request suspend`() {
+        val result = RestTemplate().exchange(
+            "http://localhost:${envInfoProvider.port()}/api/v1/demo/printInputSuspend",
+            HttpMethod.POST,
+            HttpEntity("hello world"),
+            String::class.java,
+            mapOf<String, String>()
+        )
+        Assertions.assertEquals(result.body, "hello world")
+    }
+
+    @Test
+    fun `test throw exception suspend`() {
+        val exception = assertThrows<HttpServerErrorException.InternalServerError> {
+            RestTemplate().exchange(
+                "http://localhost:${envInfoProvider.port()}/api/v1/demo/throwExceptionSuspend",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                String::class.java,
+                mapOf<String, String>()
+            )
+        }
+
+        Assertions.assertEquals(exception.statusCode.value(), HttpStatus.INTERNAL_SERVER_ERROR.value())
+        val exceptionResponse = JsonUtils.deserialize(exception.responseBodyAsString, KtExceptionResponse::class.java)
+        Assertions.assertEquals(exceptionResponse.message, "throw exception suspend")
     }
 }

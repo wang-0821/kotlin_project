@@ -1,4 +1,4 @@
-package com.xiao.test.boot.server.base
+package com.xiao.test.boot.server.undertow
 
 import com.xiao.boot.server.base.annotations.CoroutineSpringBootApplication
 
@@ -7,4 +7,4 @@ import com.xiao.boot.server.base.annotations.CoroutineSpringBootApplication
  * @author lix wang
  */
 @CoroutineSpringBootApplication
-class ServerBaseApplication
+class UndertowServerApplication

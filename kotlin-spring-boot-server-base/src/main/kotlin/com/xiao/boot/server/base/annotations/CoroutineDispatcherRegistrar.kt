@@ -1,8 +1,8 @@
 package com.xiao.boot.server.base.annotations
 
 import com.xiao.boot.base.thread.KtThreadPool
-import com.xiao.boot.server.base.servlet.KtServerArgs
-import com.xiao.boot.server.base.servlet.KtWebMvcRegistrations
+import com.xiao.boot.server.base.mvc.KtServerArgs
+import com.xiao.boot.server.base.mvc.KtWebMvcRegistrations
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
 import org.springframework.beans.factory.config.ConstructorArgumentValues
 import org.springframework.beans.factory.config.RuntimeBeanReference

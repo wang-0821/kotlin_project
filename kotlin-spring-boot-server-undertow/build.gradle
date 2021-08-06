@@ -1,0 +1,4 @@
+dependencies {
+    api project(":kotlin-spring-boot-server-base")
+    api "org.springframework.boot:spring-boot-starter-undertow"
+}

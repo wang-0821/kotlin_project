@@ -1,4 +1,4 @@
-package com.xiao.boot.server.base.servlet
+package com.xiao.boot.server.base.mvc
 
 import kotlinx.coroutines.CoroutineScope
 import org.springframework.stereotype.Component
