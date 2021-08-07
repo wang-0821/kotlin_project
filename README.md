@@ -95,10 +95,11 @@ fun getIoEventLoopGroup(ioThreads: Int): EventLoopGroup {
 ```
 
 ### 堆内存及堆外内存的使用
-&emsp;&emsp; 堆外内存在传输字节流时，能够减少数据从用户进程内存中到内核内存中的CPU拷贝过程，
-而且堆外内存手动释放，这样减轻了JVM GC的压力。但是堆外内存一旦管理不当，会导致内存泄漏。
-Undertow中ByteBufferPool和Netty中的ByteBuf在使用堆外内存时，都采用引用计数的方式
-来实现堆外内存的复用。区别在于Undertow
+&emsp;&emsp; 堆外内存在传输字节流时，能够减少数据从用户进程内存中到内核内存中的CPU拷贝过程，而且堆外内存手动释放，
+这样减轻了JVM GC的压力。但是堆外内存一旦管理不当，会导致内存泄漏。Undertow中ByteBufferPool和Netty中的ByteBuf在使用堆外内存时，
+都采用引用计数的方式来实现堆外内存的复用。区别在于Undertow中ByteBufferPool创建的PooledByteBuffer都是固定大小的，
+没有Netty灵活，而且没有Netty功能强大。
+
 
 <h2 id="8">8.代码规范及测试</h2>
 &emsp;&emsp; 本项目使用ktlint来进行代码格式校验及自动纠正。定义gradle ktlintCheck 任务来校验kotlin代码格式，并将ktlintCheck任务放置在
