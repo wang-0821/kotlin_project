@@ -57,7 +57,7 @@ Java异步导致的问题在于：异步执行一个方法，后续等待获取�
 verification check任务之前，那么在执行gradle build之前就会先执行ktlintCheck。还定义了一个 gradle ktlintFormat 任务，这个任务是单独的，
 执行这个任务可以根据代码规范，自动进行格式纠正。
 
-    ···Groovy
+    ```Groovy
     task ktlintCheck(type: JavaExec, group: "verification") {
         description = "Gradle check kotlin verification."
         classpath = configurations.ktlint
@@ -73,7 +73,7 @@ verification check任务之前，那么在执行gradle build之前就会先执�
         main = "com.pinterest.ktlint.Main"
         args "-F", "src/**/*.kt"
     }
-    ···
+    ```
 
 ### 测试
 &emsp;&emsp; 本项目使用Github Action配合Junit5执行测试。单测很重要，通过单测能够发现bug，
