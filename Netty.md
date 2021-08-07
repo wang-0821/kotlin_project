@@ -1,6 +1,9 @@
 ## Netty notes.
 
-### Server端
+* [1.Netty结构](#1)
+* [2.Netty内存管理](#2)
+
+<h2 id="1">1.Netty结构</h2>
 &emsp;&emsp; Netty启动过程中，涉及到ServerBootstrap、EventLoopGroup(group、childGroup)、Channel、
 ChannelHandler(childHandler、handler)。
 
@@ -266,3 +269,18 @@ config.getRecvByteBufAllocator()也可以用来自定义RecvByteBufAllocator，�
            | 包含
            V
      EventExecutor(NioEventLoop) 
+     
+<h2 id="2">2.Netty内存管理</h2>
+&emsp;&emsp; Netty采用引用计数的方式来实现内存的复用，这需要正确的使用引用计数，否则可能导致内存泄漏。
+在非安卓平台，并且存在Cleaner来释放直接内存，且io.netty.noPreferDirect没有被设置为false，
+那么此时PooledByteBufAllocator.DEFAULT会默认使用堆外内存。对于堆内存，如果使用PooledByteBufAllocator，
+那么会将创建的字节数组放在FastThreadLocal中。堆内数组由于会被JVM回收，可以自己管理，感觉可以不需要Netty
+提供的丰富的功能。
+            
+            PooledByteBufAllocator.DEFAULT.buffer(capacity)创建ByteBuf
+                                    |
+                                    V
+                                    
+                                                
+                                                
+                                                
