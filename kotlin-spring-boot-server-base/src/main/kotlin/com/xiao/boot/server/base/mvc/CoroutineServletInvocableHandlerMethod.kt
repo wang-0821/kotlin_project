@@ -75,12 +75,8 @@ class CoroutineServletInvocableHandlerMethod(
         } catch (ex: InvocationTargetException) {
             // Unwrap for HandlerExceptionResolvers ...
             when (val targetException = ex.targetException) {
-                is RuntimeException -> {
-                    throw targetException
-                }
-                is Error -> {
-                    throw targetException
-                }
+                is RuntimeException,
+                is Error,
                 is Exception -> {
                     throw targetException
                 }
@@ -103,12 +99,8 @@ class CoroutineServletInvocableHandlerMethod(
         } catch (ex: InvocationTargetException) {
             // Unwrap for HandlerExceptionResolvers ...
             when (val targetException = ex.targetException) {
-                is RuntimeException -> {
-                    throw targetException
-                }
-                is Error -> {
-                    throw targetException
-                }
+                is RuntimeException,
+                is Error,
                 is Exception -> {
                     throw targetException
                 }
