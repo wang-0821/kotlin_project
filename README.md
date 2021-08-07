@@ -26,7 +26,7 @@
                 
             kotlin-log4j2: 本项目全局使用slf4j，因此把log4j2单独拆分为一个模块，可以根据需求替换成其他的日志框架。
             
-            kotlin-metrics：利用kotlin-base中的定时任务及堆外内存基本数据类型数组，实现了简单的运行指标的间隔输出的功能。
+            kotlin-metrics：利用kotlin-base中的定时任务及堆外内存基本数据类型数组，实现了简单的运行指标的间隔输出功能。
                 
             kotlin-redis：基于Lettuce实现支持Kotlin协程的RedisService，并且基于Redis实现分布式锁。
             
