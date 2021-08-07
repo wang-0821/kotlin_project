@@ -1,4 +1,4 @@
-package com.xiao.boot.server.undertow.customizer
+package com.xiao.boot.server.undertow.common
 
 import com.xiao.boot.server.base.mvc.KtServerArgs
 import com.xiao.boot.server.undertow.handler.UndertowCoroutineInitialHttpHandler

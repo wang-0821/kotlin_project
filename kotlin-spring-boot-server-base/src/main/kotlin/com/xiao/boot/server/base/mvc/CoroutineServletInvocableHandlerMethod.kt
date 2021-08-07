@@ -10,6 +10,7 @@ import org.springframework.web.method.HandlerMethod
 import org.springframework.web.method.support.ModelAndViewContainer
 import org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod
 import java.lang.reflect.InvocationTargetException
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.reflect.full.callSuspend
 import kotlin.reflect.jvm.kotlinFunction
@@ -29,9 +30,8 @@ class CoroutineServletInvocableHandlerMethod(
         vararg providedArgs: Any?
     ): Any? {
         return if (isSuspendMethod) {
-            val coroutineContext = ktServerArgs?.coroutineScope?.coroutineContext ?: EmptyCoroutineContext
             // TODO use coroutine whole request process.
-            runBlocking(coroutineContext) {
+            runBlocking(getCoroutineContext()) {
                 val args = getMethodArgumentValues(request, mavContainer, *providedArgs)
                 invokeMethodSuspend(*args)
             }
@@ -39,6 +39,21 @@ class CoroutineServletInvocableHandlerMethod(
             val args = getMethodArgumentValues(request, mavContainer, *providedArgs)
             invokeMethod(*args)
         }
+    }
+
+    // TODO replace with one coroutine, otherwise each coroutine need set threadContextElement once.
+    private fun getCoroutineContext(): CoroutineContext {
+        var coroutineContext = ktServerArgs?.coroutineScope?.coroutineContext ?: EmptyCoroutineContext
+        RequestContainer.getRequestValue(RequestInfo.KEY)
+            ?.let { requestInfo ->
+                if (requestInfo is CoroutineRequestInfo) {
+                    requestInfo.getThreadContextElement()
+                        ?.let { threadContextElement ->
+                            coroutineContext += threadContextElement
+                        }
+                }
+            }
+        return coroutineContext
     }
 
     override fun getMethodParameters(): Array<MethodParameter> {
