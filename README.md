@@ -70,23 +70,23 @@ Kotlin协程通过挂起和恢复简化了回调的复杂度，并且Kotlin是�
 verification check任务之前，那么在执行gradle build之前就会先执行ktlintCheck。还定义了一个 gradle ktlintFormat 任务，这个任务是单独的，
 执行这个任务可以根据代码规范，自动进行格式纠正。
 
-        ```groovy
-        task ktlintCheck(type: JavaExec, group: "verification") {
-        description = "Gradle check kotlin verification."
-        classpath = configurations.ktlint
-        main = "com.pinterest.ktlint.Main"
-        args "src/**/*.kt"
-        }
+```groovy
+task ktlintCheck(type: JavaExec, group: "verification") {
+description = "Gradle check kotlin verification."
+classpath = configurations.ktlint
+main = "com.pinterest.ktlint.Main"
+args "src/**/*.kt"
+}
 
-        check.dependsOn ktlintCheck
+check.dependsOn ktlintCheck
 
-        task ktlintFormat(type: JavaExec, group: "formatting") {
-        description = "Gradle check kotlin formatting."
-        classpath = configurations.ktlint
-        main = "com.pinterest.ktlint.Main"
-        args "-F", "src/**/*.kt"
-        }
-        ```
+task ktlintFormat(type: JavaExec, group: "formatting") {
+description = "Gradle check kotlin formatting."
+classpath = configurations.ktlint
+main = "com.pinterest.ktlint.Main"
+args "-F", "src/**/*.kt"
+}
+```
 
 ### 测试
 &emsp;&emsp; 本项目使用Github Action配合Junit5执行测试。单测很重要，通过单测能够发现bug，
@@ -95,79 +95,78 @@ verification check任务之前，那么在执行gradle build之前就会先执�
 通常直接以API为切入点进行单测的编写，对于复杂的方法或者Mapper这种API单测可能覆盖不到的，
 才会逐个进行测试。对于紧急需求，可以先不写单测，但需要有个时间节点来补上。本项目单测覆盖率100%。
     
-    Github workflow CI：
-    ```groovy
-    name: Build CI
+```groovy
+name: Build CI
 
-    # Controls when the action will run. 
-    on: [push, pull_request]
+# Controls when the action will run. 
+on: [push, pull_request]
 
-    # Run jobs automatically.
-    # A workflow run is made up of one or more jobs that can run sequentially or in parallel
-    jobs:
-      # This workflow contains a single job called "build"
-      build:
-        # The type of runner that the job will run on
-        runs-on: ubuntu-latest
+# Run jobs automatically.
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+# This workflow contains a single job called "build"
+build:
+# The type of runner that the job will run on
+runs-on: ubuntu-latest
 
-        # Service containers to run with the job
-        services:
-          # mysql service
-          mysql:
-            image: mysql:5.7
-            env:
-              MYSQL_ROOT_PASSWORD: 123456
-            ports:
-              - "3306:3306"
-            options: >-
-              --health-cmd "mysqladmin ping"
-              --health-interval 10s
-              --health-timeout 5s
-              --health-retries 3
+# Service containers to run with the job
+services:
+  # mysql service
+  mysql:
+    image: mysql:5.7
+    env:
+      MYSQL_ROOT_PASSWORD: 123456
+    ports:
+      - "3306:3306"
+    options: >-
+      --health-cmd "mysqladmin ping"
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 3
 
-          # redis service
-          redis:
-            # Docker Hub image
-            image: redis
-            ports:
-              - "6379:6379"
-            # Set health checks to wait until redis has started
-            options: >-
-              --health-cmd "redis-cli ping"
-              --health-interval 10s
-              --health-timeout 5s
-              --health-retries 5
+  # redis service
+  redis:
+    # Docker Hub image
+    image: redis
+    ports:
+      - "6379:6379"
+    # Set health checks to wait until redis has started
+    options: >-
+      --health-cmd "redis-cli ping"
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5
 
-        # Steps represent a sequence of tasks that will be executed as part of the job
-        steps:
-          # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-          - uses: actions/checkout@v2
+# Steps represent a sequence of tasks that will be executed as part of the job
+steps:
+  # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+  - uses: actions/checkout@v2
 
-          # Set up jdk version
-          - uses: actions/setup-java@v1
-            with:
-              java-version: 1.8
+  # Set up jdk version
+  - uses: actions/setup-java@v1
+    with:
+      java-version: 1.8
 
-          # use dependencies cache to speed up
-          - uses: actions/cache@v2
-            with:
-              path: |
-                ~/.gradle/caches
-                ~/.gradle/wrapper
-              key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-              restore-keys: |
-                ${{ runner.os }}-gradle-
+  # use dependencies cache to speed up
+  - uses: actions/cache@v2
+    with:
+      path: |
+        ~/.gradle/caches
+        ~/.gradle/wrapper
+      key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+      restore-keys: |
+        ${{ runner.os }}-gradle-
 
-          # Runs build
-          - run: |
-              echo "Build start..."
-              ./gradlew build
-              echo "Bulid finished."
+  # Runs build
+  - run: |
+      echo "Build start..."
+      ./gradlew build
+      echo "Bulid finished."
 
-          # cleanup gradle cache
-          # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
-          # Restoring these files from a GitHub Actions cache might cause problems for future builds.
-          - run: |
-              rm -f ~/.gradle/caches/modules-2/modules-2.lock
-              rm -f ~/.gradle/caches/modules-2/gc.properties
-    ```
+  # cleanup gradle cache
+  # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
+  # Restoring these files from a GitHub Actions cache might cause problems for future builds.
+  - run: |
+      rm -f ~/.gradle/caches/modules-2/modules-2.lock
+      rm -f ~/.gradle/caches/modules-2/gc.properties
+```
