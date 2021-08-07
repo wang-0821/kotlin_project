@@ -63,7 +63,37 @@ Java异步导致的问题在于：异步执行一个方法，后续等待获取�
 Kotlin协程通过挂起和恢复简化了回调的复杂度，并且Kotlin是完全非阻塞的，不会导致CPU自旋，从而来提升CPU效率。
 
 <h2 id="2">2.IO</h2>
-&emsp;&emsp; 
+&emsp;&emsp; Redis客户端Lettuce、Undertow、HttpClient都采用了IO多路复用，Selector.select()会去遍历
+描述符集，但是如果描述符很多，那么每次遍历开销很大，因此我们在Server中通常使用KQueue或Epoll。
+Netty使用时我们应该优先选择KQueueEventLoopGroup或EpollEventLoopGroup。
+
+```kotlin
+fun getIoEventLoopGroup(ioThreads: Int): EventLoopGroup {
+    var group: EventLoopGroup? = null
+    if (PlatformDependent.isOsx()) {
+        if (KQueue.isAvailable()) {
+            group = KQueueEventLoopGroup(
+                ioThreads,
+                NamedThreadFactory("netty-kqueue-thread")
+            )
+        }
+    } else {
+        if (!PlatformDependent.isWindows()) {
+            if (Epoll.isAvailable()) {
+                group = EpollEventLoopGroup(
+                    ioThreads,
+                    NamedThreadFactory("netty-epoll-thread")
+                )
+            }
+        }
+    }
+    return group ?: NioEventLoopGroup(
+        ioThreads,
+        NamedThreadFactory("netty-nio-thread")
+    )
+}
+```
+
 
 <h2 id="8">8.代码规范及测试</h2>
 &emsp;&emsp; 本项目使用ktlint来进行代码格式校验及自动纠正。定义gradle ktlintCheck 任务来校验kotlin代码格式，并将ktlintCheck任务放置在
