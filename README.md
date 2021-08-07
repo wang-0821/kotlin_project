@@ -16,7 +16,7 @@
             kotlin-beans：仿spring-beans实现了一个简单的对象管理及依赖注入的容器。
             
             kotlin-database：基于MyBatis简化了mapper interface和xml的扫描，实现了一个简单的TransactionHelper，
-                可以实现一个transaction block中多个dataSource的事务提交和回滚，并且基于Junit5Extension 
+                可以实现一个transaction block中多个dataSource的事务提交和回滚，并且基于Junit5 Extension 
                 和Flyway实现了测试时自动执行数据库迁移。
             
             kotlin-demo：kotlin模块使用demo。
