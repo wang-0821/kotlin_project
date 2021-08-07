@@ -70,6 +70,13 @@ Kotlin协程通过挂起和恢复简化了回调的复杂度，并且Kotlin是�
 verification check任务之前，那么在执行gradle build之前就会先执行ktlintCheck。还定义了一个 gradle ktlintFormat 任务，这个任务是单独的，
 执行这个任务可以根据代码规范，自动进行格式纠正。
 
+        ```ruby
+        require 'redcarpet'
+        markdown = Redcarpet.new("Hello World!")
+        puts markdown.to_html
+        puts markdown.to_html
+        ```
+
         ```groovy
         task ktlintCheck(type: JavaExec, group: "verification") {
         description = "Gradle check kotlin verification."
