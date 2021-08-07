@@ -28,7 +28,7 @@
             
             kotlin-metrics：利用kotlin-base中的定时任务及堆外内存基本数据类型数组，实现了简单的运行指标的间隔输出功能。
                 
-            kotlin-redis：基于Lettuce实现支持Kotlin协程的RedisService，并且基于Redis实现分布式锁。
+            kotlin-redis：基于Lettuce实现支持Kotlin协程的RedisService，IO多路复用使用Epoll或KQueue，并且实现基于Redis的分布式锁。
             
             kotlin-spring-boot-base：实现基于注解的环境变量配置，自定义以下Bean：AutoConfigurationImportFilter 处理自动配置、
                 DefaultTestExecutionListenersPostProcessor处理SpringBoot Test中的TestExecutionListener。
