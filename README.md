@@ -10,39 +10,51 @@
 包括：数据库交互、RPC调用、HttpServlet处理、Redis交互，凡是涉及到IO的地方都希望能使用Kotlin协程。
 
         本项目模块：
-            kotlin-base：实现了一些基本的功能，如异步队列、基于堆外内存的基本数据类型数组、slfj4日志、
+            kotlin-base：
+                实现了一些基本的功能，如异步队列、基于堆外内存的基本数据类型数组、slfj4日志、
                 基于ScheduledExecutorService的定时任务、自定义FastThreadLocal、CoroutineFastThreadLocal等。
                 
-            kotlin-beans：仿spring-beans实现了一个简单的对象管理及依赖注入的容器。
+            kotlin-beans：
+                仿spring-beans实现了一个简单的对象管理及依赖注入的容器。
             
-            kotlin-database：基于MyBatis简化了mapper interface和xml的扫描，实现了一个简单的TransactionHelper，
+            kotlin-database：
+                基于MyBatis简化了mapper interface和xml的扫描，实现了一个简单的TransactionHelper，
                 可以实现一个transaction block中多个dataSource的事务提交和回滚，并且基于Junit5 Extension 
                 和Flyway实现了测试时自动执行数据库迁移。
             
-            kotlin-demo：kotlin模块使用demo。
+            kotlin-demo：
+                kotlin模块使用demo。
             
-            kotlin-http：不借助框架，仿OkHttp实现的一个Http client，支持Transfer-Encoding: gzip, chunked，
+            kotlin-http：
+                不借助框架，仿OkHttp实现的一个Http client，用以加深Http理解。本Http Client支持Transfer-Encoding: gzip, chunked，
                 支持HTTP/1.0、HTTP/1.1，支持Socket连接池，支持域名解析InetAddress复用，支持Kotlin协程，不支持IO多路复用。
                 
-            kotlin-log4j2: 本项目全局使用slf4j，因此把log4j2单独拆分为一个模块，可以根据需求替换成其他的日志框架。
+            kotlin-log4j2: 
+                本项目全局使用slf4j，因此把log4j2单独拆分为一个模块，可以根据需求替换成其他的日志框架。
             
-            kotlin-metrics：利用kotlin-base中的定时任务及堆外内存基本数据类型数组，实现了简单的运行指标的间隔输出功能。
+            kotlin-metrics：
+                利用kotlin-base中的定时任务及堆外内存基本数据类型数组，实现了简单的运行指标的间隔输出功能。
                 
-            kotlin-redis：基于Lettuce实现支持Kotlin协程的RedisService，IO多路复用使用Epoll或KQueue，并且实现基于Redis的分布式锁。
+            kotlin-redis：
+                基于Lettuce实现支持Kotlin协程的RedisService，IO多路复用使用Epoll或KQueue，并且实现基于Redis的分布式锁。
             
-            kotlin-spring-boot-base：实现基于注解的环境变量配置，自定义以下Bean：AutoConfigurationImportFilter 处理自动配置、
+            kotlin-spring-boot-base：
+                实现基于注解的环境变量配置，自定义以下Bean：AutoConfigurationImportFilter 处理自动配置、
                 DefaultTestExecutionListenersPostProcessor处理SpringBoot Test中的TestExecutionListener。
                 SpringBoot中很多AutoConfiguration并不符合我们的业务需求，例如：FlywayAutoConfiguration，
                 我们可以根据业务需求，自定义AutoConfiguration。SpringBoot的EnableAutoConfiguration机制是核心。
                 
-            kotlin-spring-boot-mybatis：基于MyBatis和SpringBoot @Import，实现数据源自动配置，基于注解和Flyway实现数据自动迁移，
+            kotlin-spring-boot-mybatis：
+                基于MyBatis和SpringBoot @Import，实现数据源自动配置，基于注解和Flyway实现数据自动迁移，
                 改造测试环境MyBatis的XMLLanguageDriver及SqlSource，实现自动监控缺失的数据迁移。
                 
-            kotlin-spring-boot-servre-base：提供了WebServer支持Kotlin协程的能力，利用@RestControllerAdvice实现了全局异常处理，
+            kotlin-spring-boot-servre-base：
+                提供了WebServer支持Kotlin协程的能力，利用@RestControllerAdvice实现了全局异常处理，
                 自定义RequestMappingHandlerAdapter、ServletInvocableHandlerMethod，实现支持Http Servlet协程执行。
                 
-            kotlin-spring-boot-server-undertow：利用全局线程池替换掉Undertow默认的线程池，用来提升性能。
-                自定义WebServerFactoryCustomizer和UndertowRootInitialHttpHandler，实现利用Kotlin协程来执行请求。
+            kotlin-spring-boot-server-undertow：
+                利用全局线程池替换掉Undertow默认的线程池，用来提升性能。自定义WebServerFactoryCustomizer
+                和UndertowRootInitialHttpHandler，实现利用Kotlin协程来执行请求。
 
 ### Kotlin协程是什么？解决了什么问题？
 &emsp;&emsp; Kotlin协程基于状态机的原理实现，将协程挂起恢复后要执行的逻辑，都封装到了resumeWith方法中，根据不同的状态执行不同的逻辑。
