@@ -70,23 +70,23 @@ Kotlin协程通过挂起和恢复简化了回调的复杂度，并且Kotlin是�
 verification check任务之前，那么在执行gradle build之前就会先执行ktlintCheck。还定义了一个 gradle ktlintFormat 任务，这个任务是单独的，
 执行这个任务可以根据代码规范，自动进行格式纠正。
 
-    ```groovy
-    task ktlintCheck(type: JavaExec, group: "verification") {
+        ```groovy
+        task ktlintCheck(type: JavaExec, group: "verification") {
         description = "Gradle check kotlin verification."
         classpath = configurations.ktlint
         main = "com.pinterest.ktlint.Main"
         args "src/**/*.kt"
-    }
+        }
 
-    check.dependsOn ktlintCheck
+        check.dependsOn ktlintCheck
 
-    task ktlintFormat(type: JavaExec, group: "formatting") {
+        task ktlintFormat(type: JavaExec, group: "formatting") {
         description = "Gradle check kotlin formatting."
         classpath = configurations.ktlint
         main = "com.pinterest.ktlint.Main"
         args "-F", "src/**/*.kt"
-    }
-    ```
+        }
+        ```
 
 ### 测试
 &emsp;&emsp; 本项目使用Github Action配合Junit5执行测试。单测很重要，通过单测能够发现bug，
