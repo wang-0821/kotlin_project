@@ -70,7 +70,7 @@ Kotlin协程通过挂起和恢复简化了回调的复杂度，并且Kotlin是�
 verification check任务之前，那么在执行gradle build之前就会先执行ktlintCheck。还定义了一个 gradle ktlintFormat 任务，这个任务是单独的，
 执行这个任务可以根据代码规范，自动进行格式纠正。
 
-    ```Groovy
+    ```groovy
     task ktlintCheck(type: JavaExec, group: "verification") {
         description = "Gradle check kotlin verification."
         classpath = configurations.ktlint
@@ -96,7 +96,7 @@ verification check任务之前，那么在执行gradle build之前就会先执�
 才会逐个进行测试。对于紧急需求，可以先不写单测，但需要有个时间节点来补上。本项目单测覆盖率100%。
     
     Github workflow CI：
-    ```Groovy
+    ```groovy
     name: Build CI
 
     # Controls when the action will run. 
