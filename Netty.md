@@ -446,3 +446,62 @@ config.getRecvByteBufAllocator()也可以用来自定义RecvByteBufAllocator，�
 
 ### DirectArena.allocate(PoolThreadCache, PooledUnsafeDirectByteBuf, reqCapacity)
 &emsp;&emsp; 在执行分配直接内存时，根据requestCapacity，会有small、normal、huge三种不同的分配方式。
+对于Netty分配单位，每4个为一组，每组以2的幂次进行增长，只有第一组比较特殊。4096(4KB index <= 39)及以下为small，
+4096 - 16777216(2MB index <= 75)为normal，大于2MB归为huge，对于huge类型Netty会直接分配堆外内存，不会进行池化处理。
+Netty默认的一个page的大小为8192bit(1KB)，默认的一个chunk的大小为1677721bit(2MB)。
+
+    Netty内存分配策略：
+        根据reqCapacity也就是size会计算出一个index，index对应的isSubPage为true，则为small(4KB)，
+        如果reqCapacity大于2MB，则为huge，其余为normal。
+        index           Dsize       size        isSubPage
+        0               0           16          1
+        1               16          32          1
+        2               16          48          1
+        3               16          64          1
+        4               16          80          1
+        5               16          96          1
+        6               16          112         1
+        7               16          128         1
+        8               32          160         1
+        9               32          192         1
+        10              32          224         1
+        11              32          256         1
+        12              64          320         1
+        13              64          384         1
+        14              64          448         1
+        15              64          512         1
+        16              128         640         1
+                       ......
+        38              4096        28672(3.5KB)1
+        39              4096        32768(4KB)  0
+        40              8192        40960(5KB)  0
+                       ......
+        75             2097152     16777216     0
+                                                
+      PoolThreadCache.allocateSmall(DirectArena, PooledUnsafeDirectByteBuf, reqCapacity, sizeIdx)
+                                                |
+                                                V
+      根据PooledThreadCache.smallSubPageDirectCaches数组，用sizeIdx作为索引，获取SubPageMemoryRegionCache
+                                                |
+                                                V
+         执行PoolThreadCache.allocate(MemoryRegionCache, PooledUnsafeDirectByteBuf, reqCapacity)
+                                                |
+                                                V
+       执行SubPageMemoryRegionCache.allocate(PooledUnsafeDirectByteBuf, reqCapacity, PoolThreadCache)
+                                                |
+                                                V
+                             如果通过SubPageMemoryRegionCache分配失败
+                                                |
+                                                V
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+                                                
+      
+      
+      
