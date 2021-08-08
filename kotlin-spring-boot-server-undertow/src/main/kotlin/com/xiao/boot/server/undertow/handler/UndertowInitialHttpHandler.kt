@@ -5,8 +5,8 @@ import com.xiao.boot.server.base.mvc.RequestContainer
 import com.xiao.boot.server.base.mvc.RequestInfo
 import com.xiao.boot.server.undertow.common.UndertowRequestInfo
 import com.xiao.boot.server.undertow.common.UndertowThreadLocalRequestInfo
+import com.xiao.boot.server.undertow.handler.UndertowExchangeAttachment.Companion.UNDERTOW_SERVLET_ATTACHMENT
 import com.xiao.boot.server.undertow.interceptor.UndertowInterceptor
-import com.xiao.boot.server.undertow.utils.UndertowUtils.UNDERTOW_SERVLET_ATTACHMENT
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import org.springframework.context.ApplicationContext

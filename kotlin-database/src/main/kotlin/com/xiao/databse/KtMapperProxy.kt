@@ -1,10 +1,10 @@
 package com.xiao.databse
 
+import com.xiao.databse.annotation.KtRetry
 import com.xiao.base.logging.KtLogger
 import com.xiao.base.logging.LoggerType
 import com.xiao.base.logging.Logging
 import com.xiao.base.util.ProxyUtils
-import com.xiao.base.util.extractRetryTimes
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 
@@ -14,7 +14,7 @@ import java.lang.reflect.Method
  */
 open class KtMapperProxy<T>(val clazz: Class<T>, private val mapper: T) : InvocationHandler {
     override fun invoke(proxy: Any, method: Method, args: Array<Any?>?): Any? {
-        val executeTimes = method.extractRetryTimes() + 1
+        val executeTimes = extractRetryTimes(method) + 1
         return execute(mapper as Any, method, args, executeTimes)
     }
 
@@ -36,6 +36,12 @@ open class KtMapperProxy<T>(val clazz: Class<T>, private val mapper: T) : Invoca
         }
         log.error("Mapper ${clazz.simpleName}.${method.name} failed.", exception)
         throw exception!!
+    }
+
+    private fun extractRetryTimes(method: Method): Int {
+        val retryAnnotation = method.getAnnotation(KtRetry::class.java)
+            ?: this::class.java.getAnnotation(KtRetry::class.java)
+        return retryAnnotation?.times ?: 0
     }
 
     @KtLogger(LoggerType.DATA_SOURCE)
