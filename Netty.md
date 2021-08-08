@@ -305,6 +305,10 @@ config.getRecvByteBufAllocator()也可以用来自定义RecvByteBufAllocator，�
                 如果没有配置io.netty.allocator.directMemoryCacheAlignment，默认为0。
             DEFAULT_MAX_CACHED_BYTEBUFFERS_PER_CHUNK:
                 如果没有配置io.netty.allocator.maxCachedByteBuffersPerChunk，默认为1023。
+            DEFAULT_SAMPLING_INTERVAL:
+                如果没有配置io.netty.leakDetection.samplingInterval，默认为128。
+            DEFAULT_LEVEL:
+                如果没有配置io.netty.leakDetection.level，默认为Level.SIMPLE。
             
             
                         PooledByteBufAllocator.DEFAULT.buffer(capacity)创建ByteBuf
@@ -356,11 +360,89 @@ config.getRecvByteBufAllocator()也可以用来自定义RecvByteBufAllocator，�
           默认的initialValue()会返回null，这里执行PoolThreadLocalCache.initialValue()获取PoolThreadCache
                                                 |
                                                 V
-           执行leastUsedArena(heapArenas)，获取其中HeapArena.numThreadCaches最小的HeapArena
+           执行leastUsedArena(heapArenas)，获取其中HeapArena.numThreadCaches最小的HeapArena heapArena
                                                 |
                                                 V
-           执行leastUsedArena(directArenas)，获取其中DirectArena.numThreadCaches最小的DirectArena
+           执行leastUsedArena(directArenas)，获取其中DirectArena.numThreadCaches最小的DirectArena directArena
                                                 |
                                                 V
-                                                
+                 如果useCacheForAllThreads或者当前线程为FastThreadLocalThread，
+                 创建PoolThreadCache(heapArena, directArena, smallCacheSize, normalCacheSize, 
+                     DEFAULT_MAX_CACHED_BUFFER_CAPACITY, DEFAULT_CACHE_TRIM_INTERVAL)，
+                 并且如果DEFAULT_CACHE_TRIM_INTERVAL_MILLIS > 0 ThreadExecutorMap.currentExecutor()有值，
+                 启动异步定时任务executor.scheduleAtFixedRate(trimTask, DEFAULT_CACHE_TRIM_INTERVAL_MILLIS,
+                     DEFAULT_CACHE_TRIM_INTERVAL_MILLIS, TimeUnit.MILLISECONDS)
+                                                |
+                                                V
+                      否则创建PoolThreadCache(heapArena, directArena, 0, 0, 0, 0)
+                                                |
+                                                V
+                        PoolThreadLocalCache.get()执行完毕，获取到PoolThreadCache
+                                                |
+                                                V
+        根据PoolThreadCache.directArena，执行DirectArena.allocate(PoolThreadCache, initialCapacity, maxCapacity)
+                                                |
+                                                V
+                 执行PooledUnsafeDirectByteBuf.newInstance(maxCapacity)获取PooledByteBuf
+                                                |
+                                                V
+                           执行RECYCLER.get()获取PooledUnsafeDirectByteBuf
+                                                |
+                                                V
+               根据Recycler中的FastThreadLocal<Stack<PooledUnsafeDirectByteBuf>>，获取Stack
+                                                |
+                                                V
+              如果Stack.pop() DefaultHandle<T>为空，则执行Stack.newHandle()创建DefaultHandle(Stack)，
+              并创建PooledUnsafeDirectByteBuf(DefaultHandle, 0)，将其赋值给DefaultHandle.value。
+                        返回DefaultHandle.value PooledUnsafeDirectByteBuf。
+                                                |
+                                                V
+                                       RECYCLER.get()执行完毕
+                                                |
+                                                V
+                 执行PooledUnsafeDirectByteBuf.reuse(maxCapacity)，这一步会设置maxCapacity，
+                 执行updater.resetRefCnt(this)，将当前PooledUnsafeDirectByteBuf的引用次数设置为2，
+                 设置readerIndex和writerIndex为0，设置markedReaderIndex、markedWriterIndex为0。
+                                                |
+                                                V
+           PooledUnsafeDirectByteBuf.newInstance(maxCapacity)执行完毕，得到PooledUnsafeDirectByteBuf对象
+                                                |
+                                                V
+              执行DirectArena.allocate(PoolThreadCache, PooledUnsafeDirectByteBuf, reqCapacity)
+                                                |
+                                                V
+              使用size2SizeIdx(reqCapacity)获取sizeIdx，如果 sizeIdx <= smallMaxSizeIdx，
+              执行tcacheAllocateSmall(cache, buf, reqCapacity, sizeIdx)；如果sizeIdx < nSizes，
+         执行tcacheAllocateNormal(cache, buf, reqCapacity, sizeIdx)，否则执行allocateHuge(buf, normCapacity)
+                                                |
+                                                V
+          DirectArena.allocate(PoolThreadCache, initialCapacity, maxCapacity)执行完毕，获得PooledUnsafeDirectByteBuf
+                                                |
+                                                V
+                执行PooledByteBufAllocator.toLeakAwareBuffer(PooledUnsafeDirectByteBuf)
+                                                |
+                                                V
+                执行AbstractByteBuf.leakDetector.track(PooledUnsafeDirectByteBuf)
+                                                |
+                                                V
+              根据samplingInterval为界限获取随机数，只有0该PooledUnsafeDirectByteBuf才会被进行内存泄漏检测，
+              被检测的ByteBuf会创建DefaultResourceLeak(ByteBuf, ReferenceQueue, allLeaks)并返回。
+                                                |
+                                                V
+         AbstractByteBuf.leakDetector.track(PooledUnsafeDirectByteBuf)执行完毕，获取ResourceLeakTracker leak
+                                                |
+                                                V
+              如果ByteBuf会进行内存泄露检测，那么会根据内存检测的Level，创建SimpleLeakAwareByteBuf(buf, leak)或者
+                        AdvancedLeakAwareByteBuf(buf, leak)，返回ByteBuf。
+                                                |
+                                                V
+                PooledByteBufAllocator.newDirectBuffer(capacity, Int.MAX_VALUE)执行完毕
+                                                |
+                                                V
+                           PooledByteBufAllocator.directBuffer(capacity)执行完毕
+                                                |
+                                                V
+             PooledByteBufAllocator.DEFAULT.buffer(capacity)执行完毕，获取到PooledUnsafeDirectByteBuf
 
+### DirectArena.allocate(PoolThreadCache, PooledUnsafeDirectByteBuf, reqCapacity)
+&emsp;&emsp; 在执行分配直接内存时，根据requestCapacity，会有small、normal、huge三种不同的分配方式。
