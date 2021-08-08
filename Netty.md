@@ -276,11 +276,91 @@ config.getRecvByteBufAllocator()也可以用来自定义RecvByteBufAllocator，�
 那么此时PooledByteBufAllocator.DEFAULT会默认使用堆外内存。对于堆内存，如果使用PooledByteBufAllocator，
 那么会将创建的字节数组放在FastThreadLocal中。堆内数组由于会被JVM回收，可以自己管理，感觉可以不需要Netty
 提供的丰富的功能。
+
+            DEFAULT_PAGE_SIZE:
+                如果没有配置io.netty.allocator.pageSize，默认为8192，pageSize不能小于4096，
+                且pageSize必须是2的幂。
+            DEFAULT_MAX_ORDER:
+                如果没有配置io.netty.allocator.maxOrder，默认为11，maxOrder不能大于14，
+                DEFAULT_PAGE_SIZE * (2^maxOrder)，不能大于Int.MAX_VALUE。
+            DEFAULT_NUM_HEAP_ARENA:
+                如果没有配置io.netty.allocator.numHeapArenas，取min(处理器数 * 2, 
+                Runtime.maxMemory() / (DEFAULT_PAGE_SIZE << DEFAULT_MAX_ORDER) / 6)。
+            DEFAULT_NUM_DIRECT_ARENA:
+                如果没有配置io.netty.allocator.numDirectArenas，取min(处理器数 * 2, 
+                PlatformDependent.maxDirectMemory() / (DEFAULT_PAGE_SIZE << DEFAULT_MAX_ORDER) / 6)。
+            DEFAULT_SMALL_CACHE_SIZE:
+                如果没有配置io.netty.allocator.smallCacheSize，默认为256.
+            DEFAULT_NORMAL_CACHE_SIZE:
+                如果没有配置io.netty.allocator.normalCacheSize，默认为64.
+            DEFAULT_MAX_CACHED_BUFFER_CAPACITY:
+                如果没有配置io.netty.allocator.maxCachedBufferCapacity，默认为32 * 1024。
+            DEFAULT_CACHE_TRIM_INTERVAL:
+                如果没有配置io.netty.allocator.cacheTrimInterval，默认为8192。
+            DEFAULT_CACHE_TRIM_INTERVAL_MILLIS:
+                如果没有配置io.netty.allocator.cacheTrimIntervalMillis，默认为0。
+            DEFAULT_USE_CACHE_FOR_ALL_THREADS:
+                如果没有配置io.netty.allocator.useCacheForAllThreads，默认为true。
+            DEFAULT_DIRECT_MEMORY_CACHE_ALIGNMENT:
+                如果没有配置io.netty.allocator.directMemoryCacheAlignment，默认为0。
+            DEFAULT_MAX_CACHED_BYTEBUFFERS_PER_CHUNK:
+                如果没有配置io.netty.allocator.maxCachedByteBuffersPerChunk，默认为1023。
             
-            PooledByteBufAllocator.DEFAULT.buffer(capacity)创建ByteBuf
-                                    |
-                                    V
-                                    
+            
+                        PooledByteBufAllocator.DEFAULT.buffer(capacity)创建ByteBuf
+                                                |
+                                                V
+            创建PooledByteBufAllocator(preferDirect, nHeapArena, nDirectArena, pageSize, 
+        maxOrder, smallCacheSize, normalCacheSize, useCacheForAllThreads, directMemoryCacheAlignment)
+                                                |
+                                                V
+            根据nHeapArena创建PoolArena<byte[]>数组赋值给PooledByteBufAllocator.heapArenas，
+        数组中的对象类型为PoolArena.HeapArena，设置heapArenaMetrics为heapArenas中的对象集合
+                                                |
+                                                V
+                    根据nDirectArena创建PoolArena<ByteBuffer>数组，赋值给directArenas，
+            数组中的对象类型为PoolArena.DirectArena，设置directArenaMetrics为directArenas中的对象集合
+                                                |
+                                                V
+                    设置PooledByteBufAllocator.metric为PooledByteBufAllocatorMetric(this)
+                                                |
+                                                V
+                                 PooledByteBufAllocator对象创建完毕
+                                                |
+                                                V
+                       执行PooledByteBufAllocator.directBuffer(capacity)获取ByteBuf
+                                                |
+                                                V
+                   执行PooledByteBufAllocator.newDirectBuffer(capacity, Int.MAX_VALUE)
+                                                |
+                                                V
+                           执行PoolThreadLocalCache.get()获取PoolThreadCache
+                                                |
+                                                V
+                      执行InternalThreadLocalMap.get()获取InternalThreadLocalMap，
+                    这一步首先从FastThreadLocal或者ThreadLocal中获取，没有则创建并设置进去。
+                InternalThreadLocalMap维护一个object数组indexedVariables，数组中初始值都为UNSET
+                                                |
+                                                V
+                先根据FastThreadLocal.index从InternalThreadLocalMap.indexedVariables中获取对象
+                                                |
+                                                V
+          如果获取到的对象为UNSET，则执行FastThreadLocal.initialize(InternalThreadLocalMap)，否则返回对象
+                                                |
+                                                V
+              执行initialValue()获取对象，将对象设置到InternalThreadLocalMap.indexedVariables中，
+                    并将当前FastThreadLocal放到InternalThreadLocalMap index为0的位置，
+                        这个位置存放了当前线程中所有FastThreadLocal的实例对象
+                                                |
+                                                V
+          默认的initialValue()会返回null，这里执行PoolThreadLocalCache.initialValue()获取PoolThreadCache
+                                                |
+                                                V
+           执行leastUsedArena(heapArenas)，获取其中HeapArena.numThreadCaches最小的HeapArena
+                                                |
+                                                V
+           执行leastUsedArena(directArenas)，获取其中DirectArena.numThreadCaches最小的DirectArena
+                                                |
+                                                V
                                                 
-                                                
-                                                
+
