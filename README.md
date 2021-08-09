@@ -163,19 +163,19 @@ verification check任务之前，那么在执行gradle build之前就会先执�
 
 ```groovy
 task ktlintCheck(type: JavaExec, group: "verification") {
-description = "Gradle check kotlin verification."
-classpath = configurations.ktlint
-main = "com.pinterest.ktlint.Main"
-args "src/**/*.kt"
+    description = "Gradle check kotlin verification."
+    classpath = configurations.ktlint
+    main = "com.pinterest.ktlint.Main"
+    args "src/**/*.kt"
 }
 
 check.dependsOn ktlintCheck
 
 task ktlintFormat(type: JavaExec, group: "formatting") {
-description = "Gradle check kotlin formatting."
-classpath = configurations.ktlint
-main = "com.pinterest.ktlint.Main"
-args "-F", "src/**/*.kt"
+    description = "Gradle check kotlin formatting."
+    classpath = configurations.ktlint
+    main = "com.pinterest.ktlint.Main"
+    args "-F", "src/**/*.kt"
 }
 ```
 
