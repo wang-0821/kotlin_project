@@ -446,9 +446,16 @@ config.getRecvByteBufAllocator()也可以用来自定义RecvByteBufAllocator，�
 
 ### DirectArena.allocate(PoolThreadCache, PooledUnsafeDirectByteBuf, reqCapacity)
 &emsp;&emsp; 在执行分配直接内存时，根据requestCapacity，会有small、normal、huge三种不同的分配方式。
-对于Netty分配单位，每4个为一组，每组以2的幂次进行增长，只有第一组比较特殊。4096(4KB index <= 39)及以下为small，
-4096 - 16777216(2MB index <= 75)为normal，大于2MB归为huge，对于huge类型Netty会直接分配堆外内存，不会进行池化处理。
-Netty默认的一个page的大小为8192bit(1KB)，默认的一个chunk的大小为1677721bit(2MB)。
+对于Netty分配单位，每4个为一组，每组以2的幂次进行增长，只有第一组比较特殊。reqCapacity在28672(3.5KB index <= 38)及以下为small，
+28672(> 3.5KB index >= 39) - 16777216(<= 2MB index <= 75)为normal，大于2MB归为huge，
+对于huge类型Netty会直接分配堆外内存，不会进行池化处理。Netty默认的一个page的大小为8192bit(1KB)，默认的一个chunk的大小为1677721bit(2MB)。
+
+   Netty PoolArena包含一个smallSubPagePools，一个smallSubPagePools包含39个PoolSubpage，负责维护small内存块。
+   PoolArena中包含qInit、q000、q025、q050、q075、q100六个PoolChunkList，根据内存使用率的不同，维护PoolChunk。
+   Netty每次分配内存时，由PoolChunk向操作系统申请内存，PoolSubpage需要从PoolChunk中分配，small级别的内存从PoolSubpage中分配。
+   
+   尝试在线程缓存上分配内存 -> 根据sizeIdx获取PoolSubpage -> 如果没有可用的PoolSubpage，需要申请一个normal级的内存块
+   -> 依次从q050、q025、q000、qinit、q075上分配内存。
 
     Netty内存分配策略：
         根据reqCapacity也就是size会计算出一个index，index对应的isSubPage为true，则为small(4KB)，
@@ -490,18 +497,73 @@ Netty默认的一个page的大小为8192bit(1KB)，默认的一个chunk的大小
        执行SubPageMemoryRegionCache.allocate(PooledUnsafeDirectByteBuf, reqCapacity, PoolThreadCache)
                                                 |
                                                 V
-                             如果通过SubPageMemoryRegionCache分配失败
+                     如果通过SubPageMemoryRegionCache，根据线程small级内存缓存分配内存失败
                                                 |
                                                 V
+                     根据sizeIdx，在DirectArena.smallSubpagePools中获取一个PoolSubpage，
+                  如果PoolSubpage.next指向自身，说明没有创建过PoolSubpage，此时需要分配一个normal
+                                                |
+                                                V
+                 如果需要分配normal级内存，执行 allocateNormal(buf, reqCapacity, sizeIdx, cache)
+                                                |
+                                                V
+                        依次从q050、q025、q000、qInit、q075 PoolChunkList中分配内存
+                                                |
+                                                V
+              如果分配失败，执行DirectArena.newChunk(pageSize, nPSize, pageShifts, chunkSize)创建PoolChunk
+                                                |
+                                                V
+                    执行PlatformDependent.allocateDirectNoCleaner(capacity)创建ByteBuffer
+                                                |
+                                                V
+          利用Unsafe.allocateMemory(capacity)分配堆外内存，获取地址address，然后创建DirectByteBuffer(address, capacity)
+                                                |
+                                                V
+           创建PoolChunk(DirectArena, DirectByteBuffer, pageSize, pageShifts, chunkSize, maxPageIdx, offset)
+                                                |
+                                                V
+                DirectArena.newChunk(pageSize, nPSize, pageShifts, chunkSize)执行完毕，返回PoolChunk
+                                                |
+                                                V
+           执行PoolChunk<DirectByteBuffer>.allocate(PooledUnsafeDirectByteBuf, reqCapacity, sizeIdx, PoolThreadCache)
+                                                |
+                                                V
+                                 执行PoolChunk.allocateSubpage(sizeIdx)
+                                                |
+                                                V
+                         根据sizeIdx，从DirectArena.smallSubpagePools中获取Poolsubpage head
+                                                |
+                                                V
+                     创建一个新的PoolSubpage，并将新的PoolSubpage设置为head的next节点，
+                PoolSubpage(head, PoolChunk, pageShifts, runOffset, runSize, elemSize)
+                                                |
+                                                V
+              对新创建的PoolSubpage，将其放入到PoolChunk.subpages中，并执行PoolSubpage.allocate() 
+                                                |
+                                                V
+        执行PoolChunk.initBuf(PooledUnsafeDirectByteBuf, bytebuffer, handle, reqCapacity, PoolThreadCache)
+                                                |
+                                                V
+        执行PooledUnsafeDirectByteBuf.init(PoolChunk, nioBuffer, handle, offset, length, maxLength, PoolThreadCache),
+        设置PooledUnsafeDirectByteBuf参数：chunk = PoolChunk, memory = chunk.memory, allocator = arena.allocator,
+            设置handle、offset、length、maxLength，并根据memory的address + offset设置memoryAddress
+                                                |
+                                                V
+           PoolChunk.initBuf(PooledUnsafeDirectByteBuf, bytebuffer, handle, reqCapacity, PoolThreadCache)执行完毕
+                                                |
+                                                V
+         PoolChunk<DirectByteBuffer>.allocate(PooledUnsafeDirectByteBuf, reqCapacity, sizeIdx, PoolThreadCache)执行完毕
+                                                |
+                                                V
+                        执行PoolChunkList qInit.add(PoolChunk)将创建的PoolChunk放置到PoolChunkList中，
+                        每当PoolChunk分配过内存后，都会计算使用率，进而将其分配到对应的PoolChunkList中
+                                                |
+                                                V
+                        allocateNormal(buf, reqCapacity, sizeIdx, cache)执行完毕
+                                                |
+                                                V
+                                  DiretArena.allocationsSmall自增
+                                                |
+                                                V
+          DirectArena.tcacheAllocateSmall(PoolThreadCache, PooledUnsafeDirectByteBuf, reqCapacity)执行完毕
                                                 
-                                                
-                                                
-                                                
-                                                
-                                                
-                                                
-                                                
-                                                
-      
-      
-      
