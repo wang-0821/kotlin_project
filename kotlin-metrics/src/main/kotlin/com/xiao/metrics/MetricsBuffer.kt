@@ -1,6 +1,6 @@
 package com.xiao.metrics
 
-import com.xiao.base.io.UnsafeChunkedIntArray
+import com.xiao.base.io.UnsafeChunkedDirectIntArray
 import com.xiao.base.lock.SpinLock
 import kotlin.math.max
 import kotlin.math.min
@@ -12,7 +12,7 @@ import kotlin.math.min
 class MetricsBuffer(
     private val capacity: Int = DEFAULT_CAPACITY
 ) : AutoCloseable {
-    private var buffer = UnsafeChunkedIntArray(MAX_TOTAL_CAPACITY, capacity)
+    private var buffer = UnsafeChunkedDirectIntArray(MAX_TOTAL_CAPACITY, capacity)
     private val lock = SpinLock()
     var lastUpdateTime: Long = System.currentTimeMillis()
         private set

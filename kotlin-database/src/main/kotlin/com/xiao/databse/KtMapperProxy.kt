@@ -1,10 +1,10 @@
 package com.xiao.databse
 
-import com.xiao.databse.annotation.KtRetry
 import com.xiao.base.logging.KtLogger
 import com.xiao.base.logging.LoggerType
 import com.xiao.base.logging.Logging
 import com.xiao.base.util.ProxyUtils
+import com.xiao.databse.annotation.KtRetry
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 

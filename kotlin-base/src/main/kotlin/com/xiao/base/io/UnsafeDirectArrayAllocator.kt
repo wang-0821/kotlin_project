@@ -4,6 +4,6 @@ package com.xiao.base.io
  *
  * @author lix wang
  */
-interface UnsafeArrayAllocator<T : UnsafeArray<*>> {
+interface UnsafeDirectArrayAllocator<T : UnsafeDirectArray<*>> {
     fun allocate(capacity: Int): T
 }

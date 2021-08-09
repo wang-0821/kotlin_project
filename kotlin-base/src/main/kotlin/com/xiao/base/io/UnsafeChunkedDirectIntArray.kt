@@ -7,11 +7,11 @@ import kotlin.math.min
  *
  * @author lix wang
  */
-class UnsafeChunkedIntArray(
+class UnsafeChunkedDirectIntArray(
     capacity: Int = Int.MAX_VALUE,
     chunkCapacity: Int = CommonConstants.KILO_BUFFER_SIZE,
-    allocator: UnsafeArrayAllocator<UnsafeIntArray> = defaultUnsafeIntArrayAllocator
-) : UnsafeChunkedArray<Int, UnsafeIntArray>(capacity, chunkCapacity, allocator) {
+    allocatorDirectInt: UnsafeDirectArrayAllocator<UnsafeDirectIntArray> = defaultUnsafeIntArrayAllocator
+) : UnsafeChunkedDirectArray<Int, UnsafeDirectIntArray>(capacity, chunkCapacity, allocatorDirectInt) {
     override fun toList(): List<Int> {
         return toArray().toList()
     }
@@ -30,9 +30,9 @@ class UnsafeChunkedIntArray(
     }
 
     companion object {
-        val defaultUnsafeIntArrayAllocator = object : UnsafeArrayAllocator<UnsafeIntArray> {
-            override fun allocate(capacity: Int): UnsafeIntArray {
-                return UnsafeIntArray(capacity)
+        val defaultUnsafeIntArrayAllocator = object : UnsafeDirectArrayAllocator<UnsafeDirectIntArray> {
+            override fun allocate(capacity: Int): UnsafeDirectIntArray {
+                return UnsafeDirectIntArray(capacity)
             }
         }
     }

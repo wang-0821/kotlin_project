@@ -6,16 +6,16 @@ import java.nio.CharBuffer
  *
  * @author lix wang
  */
-class UnsafeCharArrayBuffer(private val capacity: Int) : AutoCloseable {
+class UnsafeDirectCharArrayBuffer(private val capacity: Int) : AutoCloseable {
     private var index = 0
-    private var unsafeCharArrayBuf: UnsafeCharArray? = null
+    private var unsafeCharArrayBuf: UnsafeDirectCharArray? = null
 
     fun append(charBuffer: CharBuffer): Int {
         val charBufferRemaining = charBuffer.remaining()
         if (charBufferRemaining <= 0) {
             return 0
         }
-        unsafeCharArrayBuf = unsafeCharArrayBuf ?: UnsafeCharArray(capacity)
+        unsafeCharArrayBuf = unsafeCharArrayBuf ?: UnsafeDirectCharArray(capacity)
         val currentRemaining = remaining()
         return if (charBufferRemaining <= currentRemaining) {
             unsafeCharArrayBuf!!.readFrom(charBuffer.array(), charBuffer.position(), index, charBufferRemaining)

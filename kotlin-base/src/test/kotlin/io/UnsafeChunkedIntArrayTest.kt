@@ -1,6 +1,6 @@
 package io
 
-import com.xiao.base.io.UnsafeChunkedIntArray
+import com.xiao.base.io.UnsafeChunkedDirectIntArray
 import com.xiao.base.testing.KtTestBase
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test
 class UnsafeChunkedIntArrayTest : KtTestBase() {
     @Test
     fun `test unsafeChunkedIntArray to array`() {
-        UnsafeChunkedIntArray(10, 5)
+        UnsafeChunkedDirectIntArray(10, 5)
             .use { unsafeChunkedIntArray ->
                 (0..20).forEach {
                     if (unsafeChunkedIntArray.isWriteable()) {
@@ -28,7 +28,7 @@ class UnsafeChunkedIntArrayTest : KtTestBase() {
 
     @Test
     fun `test unsafeChunkedIntArray to list`() {
-        UnsafeChunkedIntArray(10, 5)
+        UnsafeChunkedDirectIntArray(10, 5)
             .use { unsafeChunkedIntArray ->
                 (0..20).forEach {
                     if (unsafeChunkedIntArray.isWriteable()) {

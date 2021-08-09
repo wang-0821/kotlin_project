@@ -10,11 +10,11 @@ import java.nio.CharBuffer
 class DefaultCharBufferAdapter(
     private val bufferSize: Int = CommonConstants.BUFFER_SIZE
 ) : CharBufferAdapter {
-    private val buffers = mutableListOf<UnsafeCharArrayBuffer>()
-    private var currentBuf: UnsafeCharArrayBuffer
+    private val buffers = mutableListOf<UnsafeDirectCharArrayBuffer>()
+    private var currentBuf: UnsafeDirectCharArrayBuffer
 
     init {
-        this.currentBuf = UnsafeCharArrayBuffer(this.bufferSize)
+        this.currentBuf = UnsafeDirectCharArrayBuffer(this.bufferSize)
         buffers.add(currentBuf)
     }
 
@@ -55,9 +55,9 @@ class DefaultCharBufferAdapter(
             }
     }
 
-    private fun ensureCurrentBuffer(): UnsafeCharArrayBuffer {
+    private fun ensureCurrentBuffer(): UnsafeDirectCharArrayBuffer {
         if (currentBuf.remaining() <= 0) {
-            currentBuf = UnsafeCharArrayBuffer(this.bufferSize)
+            currentBuf = UnsafeDirectCharArrayBuffer(this.bufferSize)
             buffers.add(currentBuf)
         }
         return currentBuf
