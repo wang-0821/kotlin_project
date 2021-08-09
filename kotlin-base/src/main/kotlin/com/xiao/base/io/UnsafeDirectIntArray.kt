@@ -7,7 +7,7 @@ import sun.misc.Unsafe
  *
  * @author lix wang
  */
-class UnsafeIntArray(private val capacity: Int) : UnsafeArray<Int>(capacity, Unsafe.ARRAY_INT_INDEX_SCALE) {
+class UnsafeDirectIntArray(capacity: Int) : UnsafeDirectArray<Int>(capacity, Unsafe.ARRAY_INT_INDEX_SCALE) {
     override fun get(index: Int): Int {
         check(index < capacity)
         return UnsafeUtils.UNSAFE.getInt(address + getOffset(index))

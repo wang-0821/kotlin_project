@@ -1,4 +1,4 @@
-package com.xiao.base.annotation
+package com.xiao.databse.annotation
 
 /**
  * 可以添加在Mapper method上，用以处理SQL执行重试。

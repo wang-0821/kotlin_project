@@ -1,8 +1,8 @@
 package com.xiao.database.mybatis.mapper.common
 
-import com.xiao.base.annotation.KtRetry
 import com.xiao.database.model.User
 import com.xiao.databse.annotation.KtMapperTables
+import com.xiao.databse.annotation.KtRetry
 import org.apache.ibatis.annotations.Param
 
 /**

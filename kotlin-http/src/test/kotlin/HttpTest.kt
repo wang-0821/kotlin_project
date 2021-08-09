@@ -8,6 +8,7 @@ import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
@@ -33,17 +34,15 @@ class HttpTest : KtTestBase() {
 
     @Test
     fun `test http coroutine`() {
-        val job = DEFAULT_SCOPE.launch {
+        val completable = CompletableFuture<Unit>()
+        DEFAULT_SCOPE.launch {
             val completableDeferred = Http.deferred(request)
             val response = completableDeferred.awaitNanos()
             assertEquals(response.status, 200)
             assertTrue(response.asString()!!.isNotBlank())
+            completable.complete(Unit)
         }
-        while (true) {
-            if (job.isCompleted) {
-                break
-            }
-        }
+        completable.get()
     }
 
     companion object {

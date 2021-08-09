@@ -36,12 +36,8 @@ class ExecutionQueue(
      * If task is been canceled while mayInterruptIfRunning is false,
      * [taskCount] will decrease but task is still running.
      */
-    override fun taskCount(): Int {
+    fun taskCount(): Int {
         return taskCount
-    }
-
-    override fun taskCapacity(): Int {
-        return taskMaxCount
     }
 
     override fun fastShutdown(): Future<Unit> {
