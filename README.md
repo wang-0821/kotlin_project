@@ -1,524 +1,263 @@
 [读书笔记](ReadingNotes.md)
 
-## 项目简介
-* [1.日志](#1)
-* [2.对象容器](#2)
-* [3.资源扫描与处理](#3)
-* [4.Http](#4)
-* [5.数据源](#5)
-* [6.事务](#6)
-* [7.测试](#7)
-* [8.代码规范](#8)
+* [1.项目简介](#1)
+* [2.IO](#3)
+* [8.代码规范及测试](#8)
 
-<h2 id="1">1.日志</h2>
-&emsp;&emsp; 本项目使用Slf4j门面模式来使用日志。使用slf4j，可以根据具体的需求，自主选择具体的日志框架。本项目中使用log4j2，也可以exclude掉，
-用其他日志框架替换掉。并且可以根据@KtLogger注解，来选择使用具体的Logger，避免无意义的多个相似Logger对象的创建。
-    
-    // logging 抽象类
-    abstract class Logging {
-        val log = logger()
-    
-        private fun logger(): Logger {
-            val loggerName = loggerName()
-            val logger = LoggerFactory.getLogger(loggerName)
-            if (logger == NOPLogger.NOP_LOGGER) {
-                Util.report("There is no available logger named {$loggerName}, please implement it.")
-            }
-            return logger
+<h2 id="1">1.项目简介</h2>
+&emsp;&emsp; 本项目中包含一些源码阅读笔记和技术书阅读笔记。本项目分为12个子模块，两个大类，一类单纯做了一些功能，
+没有集成SpringBoot，另一类是基于SpringBoot实现了一些功能。本项目最终目标是全面运用kotlin协程，
+包括：数据库交互、RPC调用、HttpServlet处理、Redis交互，凡是涉及到IO的地方都希望能使用Kotlin协程。
+
+        本项目模块：
+            kotlin-base：
+                实现了一些基本的功能，如异步队列、基于堆外内存的基本数据类型数组、slfj4日志、
+                基于ScheduledExecutorService的定时任务、自定义FastThreadLocal、CoroutineFastThreadLocal等。
+                
+            kotlin-beans：
+                仿spring-beans实现了一个简单的对象管理及依赖注入的容器。
+            
+            kotlin-database：
+                基于MyBatis简化了mapper interface和xml的扫描，实现了一个简单的TransactionHelper，
+                可以实现一个transaction block中多个dataSource的事务提交和回滚，并且基于Junit5 Extension 
+                和Flyway实现了测试时自动执行数据库迁移。
+            
+            kotlin-demo：
+                kotlin模块使用demo。
+            
+            kotlin-http：
+                不借助框架，仿OkHttp实现的一个Http client，用以加深Http理解。本Http Client支持Transfer-Encoding: gzip, chunked，
+                支持HTTP/1.0、HTTP/1.1，支持Socket连接池，支持域名解析InetAddress复用，支持Kotlin协程，不支持IO多路复用。
+                
+            kotlin-log4j2: 
+                本项目全局使用slf4j，因此把log4j2单独拆分为一个模块，可以根据需求替换成其他的日志框架。
+            
+            kotlin-metrics：
+                利用kotlin-base中的定时任务及堆外内存基本数据类型数组，实现了简单的运行指标的间隔输出功能。
+                
+            kotlin-redis：
+                基于Lettuce实现支持Kotlin协程的RedisService，IO多路复用使用Epoll或KQueue，并且实现基于Redis的分布式锁。
+            
+            kotlin-spring-boot-base：
+                实现基于注解的环境变量配置，自定义以下Bean：AutoConfigurationImportFilter 处理自动配置、
+                DefaultTestExecutionListenersPostProcessor处理SpringBoot Test中的TestExecutionListener。
+                SpringBoot中很多AutoConfiguration并不符合我们的业务需求，例如：FlywayAutoConfiguration，
+                我们可以根据业务需求，自定义AutoConfiguration。SpringBoot的EnableAutoConfiguration机制是核心。
+                
+            kotlin-spring-boot-mybatis：
+                基于MyBatis和SpringBoot @Import，实现数据源自动配置，基于注解和Flyway实现数据自动迁移，
+                改造测试环境MyBatis的XMLLanguageDriver及SqlSource，实现自动监控缺失的数据迁移。
+                
+            kotlin-spring-boot-servre-base：
+                提供了WebServer支持Kotlin协程的能力，利用@RestControllerAdvice实现了全局异常处理，
+                自定义RequestMappingHandlerAdapter、ServletInvocableHandlerMethod，实现支持Http Servlet协程执行。
+                
+            kotlin-spring-boot-server-undertow：
+                利用全局线程池替换掉Undertow默认的线程池，用来提升性能。自定义WebServerFactoryCustomizer
+                和UndertowRootInitialHttpHandler，实现利用Kotlin协程来执行请求。
+
+### Kotlin协程是什么？解决了什么问题？
+&emsp;&emsp; Kotlin协程基于状态机的原理实现，将协程挂起恢复后要执行的逻辑，都封装到了resumeWith方法中，根据不同的状态执行不同的逻辑。
+Java异步导致的问题在于：异步执行一个方法，后续等待获取结果时，通常使用Future.get()，这个方法会使CPU自旋等待异步任务结束，
+这会导致CPU执行效率会降低。如果想要解决这个问题，可以每一步都采用callback回调，但Java中全局使用callback回调，会导致代码非常复杂。
+Kotlin协程通过挂起和恢复简化了回调的复杂度，并且Kotlin是完全非阻塞的，不会导致CPU自旋，从而来提升CPU效率。
+
+<h2 id="2">2.IO</h2>
+&emsp;&emsp; Redis客户端Lettuce、Undertow、HttpClient都采用了IO多路复用，Selector.select()会去遍历
+描述符集，但是如果描述符很多，那么每次遍历开销很大，因此我们在Server中通常使用KQueue或Epoll。
+Netty使用时我们应该优先选择KQueueEventLoopGroup或EpollEventLoopGroup。
+
+```kotlin
+fun getIoEventLoopGroup(ioThreads: Int): EventLoopGroup {
+    var group: EventLoopGroup? = null
+    if (PlatformDependent.isOsx()) {
+        if (KQueue.isAvailable()) {
+            group = KQueueEventLoopGroup(
+                ioThreads,
+                NamedThreadFactory("netty-kqueue-thread")
+            )
         }
-    
-        private fun loggerName(): String {
-            val annotation = this::class.java.getAnnotation(KtLogger::class.java) ?: return this::class.java.name
-            if (annotation.value != LoggerType.NULL) {
-                return annotation.value.text
-            }
-            if (annotation.name.isNotBlank()) {
-                return annotation.name
-            }
-    
-            return this::class.java.name
-        }
-    }
-    
-    // 用法一
-    class LoggerTest {
-        ......
-    
-        @KtLogger(LoggerType.DATA_SOURCE)
-        companion object : Logging()
-    }
-    
-    // 用法二
-    @KtLogger(LoggerType.DATA_SOURCE)
-    object LoggerTestHelper : Logging() {
-        ......
-    }
-
-<h2 id="2">2.对象容器</h2>
-&emsp;&emsp; 实现了一个简易的对象容器，用于管理运行时对象，类似Spring。与Spring不同的是，本项目中对象容器使用Key来进行隔离，
-使得同Key的对象可以用来放在同一个子容器中，不同的Key来进行隔离，不同Key的子容器互不关联。Context作为外层容器，包含多个子容器。
-
-<br>
-&emsp;&emsp; kotlin-http模块中，ClientContextPool是一个Context，表示一个http客户端上下文，这个上下文可以注入到Context.container中，
-而ConnectionContext和RouteContext，都是上下文中的元素，而且上下文中还可以有多种元素，那么就可以把这些元素都声明为Context，通过这种抽象的
-方式，就可以把所有的元素都放在上下文元素容器中，并且由于不同的Context有不同的Key，可以很容易的对各种元素进行区分。
-
-    // ClientContextPool中，包含多种类型的Context元素。
-    private val clientContextContainer = mutableMapOf<Context.Key<*>, Context>()
-    
-    // 可以将元素声明成Context，既能进行抽象也能进行区分。
-    class RouteContext(private val contextConfig: ClientContextConfig) : Context, Cleaner {
-        companion object Key : Context.Key<RouteContext>, Logging()
-        override val key: Context.Key<RouteContext>
-            get() = Key
-    
-        private var routePool = ConcurrentHashMap<Address, MutableList<Route>>()
-        ......
-
-&emsp;&emsp; 可以使用BeanRegistry容器里面的对象，实现依赖注入。只需要在类上加@KtComponent注解即可。
-    
-    // 对@KtComponent注解的类进行Bean的生成和注入。
-    object ComponentResourceHandler : AnnotationHandler, BeanRegistryAware {
-        override fun invoke(p1: AnnotatedKtResource) {
-            val component = p1.annotationsByType(Component::class).first()
-            val obj = BeanHelper.newInstance<Any>(p1.classResource.clazz.java)
-            getByType(p1.classResource.clazz.java) ?: kotlin.run {
-                if (component.value.isBlank()) {
-                    registerSingleton(obj)
-                } else {
-                    registerSingleton(component.value, obj)
-                }
+    } else {
+        if (!PlatformDependent.isWindows()) {
+            if (Epoll.isAvailable()) {
+                group = EpollEventLoopGroup(
+                    ioThreads,
+                    NamedThreadFactory("netty-epoll-thread")
+                )
             }
         }
     }
-    
-    // 根据Class，即可通过构造器的解析，进行对象的创建和构造函数的填充。构造参数来自于BeanRegistry子容器。
-    @Suppress("UNCHECKED_CAST")
-    fun <E> newInstance(clazz: Class<*>): E {
-        val constructors = clazz.constructors
-        check(constructors.size == 1) {
-            "${clazz.simpleName} should have only one constructor."
-        }
-        val constructor = constructors[0]
-        val parameterTypes = constructor.parameterTypes
-        val parameters = arrayOfNulls<Any>(parameterTypes.size)
-        for (i in parameterTypes.indices) {
-            parameters[i] = getByType(parameterTypes[i])
-            check(parameters[i] != null) {
-                "${clazz.simpleName} constructor parameterType ${parameterTypes[i].simpleName} can't find value."
-            }
-        }
-        return constructor.newInstance(*parameters) as E
-    }
-        
-<h2 id="3">3.资源扫描与处理</h2>
-
-### 自定义ClassLoader
-&emsp;&emsp; 类加载使用双亲委派机制，利用ClassLoader.loadClass(name)时，会先查询当前类是否被加载，如果没有的话，会先用父类来尝试加载类，
-如果父类加载失败，才会用子类加载类。而且由于ClassLoader.loadClass(name)返回值为Class<?>，由于泛型擦除，在编译后实际返回类型为Class<Object>。
-通常默认的ClassLoader为：AppClassLoader -> ExtClassLoader -> BootstrapClassLoader。
-
-    // 自定义ClassLoader。
-    class CustomClassLoader : ClassLoader() {
-        override fun loadClass(name: String): Class<*> {
-            synchronized(getClassLoadingLock(name)) {
-                var c = findLoadedClass(name)
-                if (c == null) {
-                    // 这里之所以需要进行条件判断，是由于类型擦除导致，在加载对应的类时，还会加载Object类。
-                    if (name.startsWith("com.xiao")) {
-                        c = findClass(name)
-                    }
-    
-                    if (c == null) {
-                        try {
-                            if (parent != null) {
-                                c = parent.loadClass(name)
-                            }
-                        } catch (e: ClassNotFoundException) {
-                            // ClassNotFoundException thrown if class not found
-                            // from the non-null parent class loader
-                        }
-                    }
-                }
-                return c
-            }
-        }
-    
-        override fun findClass(name: String): Class<*> {
-            val classInputStream = getClassfile(name) ?: throw ClassNotFoundException(name)
-            val bytes = classInputStream.readBytes()
-            return defineClass(name, bytes, 0, bytes.size) ?: throw ClassNotFoundException(name)
-        }
-    
-        private fun getClassfile(name: String): FileInputStream? {
-            var resourceName = name.replace(".", File.separator)
-            if (resourceName.endsWith(File.separator)) {
-                return null
-            }
-            resourceName = ThreadUtils.rootPath() + resourceName
-            resourceName += CommonConstants.CLASS_SUFFIX
-            val file = File(resourceName)
-            if (!file.exists()) {
-                return null
-            }
-            return FileInputStream(file)
-        }
-    }
-    
-    // 测试用例
-    @Test
-    fun `test load same class with different classLoaders`() {
-        val classLoader = Thread.currentThread().contextClassLoader ?: ClassLoader.getSystemClassLoader()
-        val customClassLoader = CustomClassLoader()
-        val ktClass1 = customClassLoader.loadClass(CLASSNAME)
-        val ktClass2 = classLoader.loadClass(CLASSNAME)
-        Assertions.assertSame(ktClass1.classLoader, customClassLoader)
-        Assertions.assertNotSame(ktClass1, ktClass2)
-    }
-
-&emsp;&emsp; 可以通过指定包名，ClassLoader，ResourceMatcher的方式来扫描资源。
-
-    // 默认的ClassLoader
-    private val defaultClassLoader = Thread.currentThread().contextClassLoader ?: ClassLoader.getSystemClassLoader()
-    
-    // 扫描class资源，并利用指定的ClassLoader加载扫描出来的类。
-    fun scanClassResources(
-        basePackage: String,
-        classLoader: ClassLoader = defaultClassLoader
-    ): List<KtClassResource> {
-        if (basePackage.isBlank()) {
-            return emptyList()
-        }
-        return retrieveClassResources(
-            scanFileResources(basePackage, ClassResourceMatcher, classLoader),
-            classLoader
-        )
-    }
-    
-    // 扫描特定后缀的文件资源。
-    fun scanFileResourcesWithSuffix(basePackage: String, suffix: String): List<KtFileResource> {
-        return scanFileResources(
-            basePackage,
-            object : ResourceMatcher {
-                override fun matchingDirectory(file: File): Boolean {
-                    return true
-                }
-
-                override fun matchingFile(file: File): Boolean {
-                    return file.name.endsWith(suffix)
-                }
-            }
-        )
-    }
-    
-    // 用法一，扫描MyBatis interface mappers。
-    PathResourceScanner.scanClassResources(mapperPath)
-    
-    // 用法二，扫描MyBatis XML mappers。
-    PathResourceScanner.scanFileResourcesWithSuffix(path, ".xml")
-    
-    
-### 注解类扫描与处理
-&emsp;&emsp; ContextScanner.scanAnnotatedResources(basePackage: String)可以通过包名，扫描出所有被@AnnotationScan注解的Class。
-ContextScanner.processAnnotatedResources(annotatedKtResources: List<AnnotatedKtResource>)会处理所有的注解类。
-
-    @AnnotationScan     被其注解的类，会被扫描出来。
-    @KtComponent        被其注解的类，会生成实例对象，并以单例的方式注入到BeanRegistry
-    @ContextInject      被其注解的类，会生成Context上下文实例对象，并注册到Context.container中。
-    @KtLogger           被其注解的Logging对象，会根据注解获取对应名称的Logger对象。
-    
-<h2 id="4">4.Http</h2>
-&emsp;&emsp; 本项目kotlin-http模块实现了简易的Http客户端。支持http、https、多路复用http、http dns缓存、http connection缓存、
-io字节数组及字符数组复用。该客户端可以使用 chunked transfer-encoding方式，可以使用 gzip content-encoding方式。
-而且提供了基于线程的异步请求方式和基于kotlin协程的异步请求方式。
-
-### http缓存
-&emsp;&emsp; http dns域名解析会消耗大量时间，http刚建立连接时，tcp慢启动会导致传输速度很慢，因此持久连接会加快字节流的传输速度。
-采用RouteContext、ConnectionContext提高同一server的重复请求性能。
-
-### io字节数组字符数组复用
-&emsp;&emsp; 一次http请求中，会涉及多次header、content的读取，每次都生成字节数组和字符数组，会消耗一定的资源。
-因此可以通过ThreadLocal实现资源复用。io时，我们需要先读取字节集合，然后再转化为字符集合。如果把解析后的字符内容都放在一个字符数组中，
-那么随着解析内容的增多，需要不断的对数组进行扩容并拷贝，这样会消耗资源，因此我们可以将每次解析后的内容放入多个字符数组，
-最后再对多个字符数组进行合并，这样可以避免大量的字符数组内容拷贝。
-
-    // readLine时，复用CharArray和ByteArray
-    fun readPlainTextLine(
-        inputStream: InputStream,
-        charset: Charset = Charsets.UTF_8
-    ): String {
-        val byteArray = getByteArray()
-        val charArray = getCharArray()
-        val result = readLine(inputStream, byteArray, charArray, charset)
-        cacheByteArray(byteArray)
-        cacheCharArray(charArray)
-        return result
-    }
-
-    // PooledBuffer中包含多个PooledCharArrayBuffer，每个PooledCharArrayBuffer中存储CharArray。
-    class PooledBuffer {
-        private val buffers = mutableListOf<PooledCharArrayBuffer>()
-        private var currentBuffer: PooledCharArrayBuffer
-        private val pooledCharArrayBuffer = object : RpcContextKey<PooledCharArrayBuffer> {}
-        private val maxCacheSize = 32
-    
-        constructor() {
-            this.currentBuffer = PooledCharArrayBuffer(IoHelper.BUFFER_SIZE)
-            buffers.add(currentBuffer)
-        }
-        ......
-        
-    // 在PooledBuffer asString时，会将所有的PooledCharArrayBuffer合并成一个CharArray。
-    fun asString(): String {
-        val count = (buffers.size - 1) * IoHelper.BUFFER_SIZE + currentBuffer.index
-        val charArray = CharArray(count)
-        var pos = 0
-        for (buffer in buffers) {
-            System.arraycopy(buffer.charArray, 0, charArray, pos, buffer.index)
-            pos += buffer.index
-            cachePooledCharArrayBuffer(buffer)
-        }
-        return String(charArray)
-    }
-
-### 自定义异步callback
-&emsp;&emsp; 在执行Callback任务时，我们需要在任务完成后，返回一个Future或者Deferred，因此本项目中使用简单的自定义CompletableCallback来对
-原始的Callback进行封装，在执行完Callback后，将结果填入Future或者Deferred中。
-
-    class CompletableCallback(
-        private val callable: Callable<Any?>,
-        private val future: CompletableFuture<Any?>?,
-        private val deferred: CompletableDeferred<Any?>?
-    ) : Runnable {
-        override fun run() {
-            if ((future == null && deferred == null) || (future != null && deferred != null)) {
-                throw IllegalArgumentException(
-                    "${this::class.java.simpleName} future and deferred must have one and only one not null.")
-            }
-            try {
-                completeResult(callable.call())
-            } catch (throwable: Throwable) {
-                completeThrowable(throwable)
-            }
-        }
-    
-        private fun completeResult(result: Any?) {
-            var completed = future?.complete(result) ?: false
-            completed = completed || deferred?.complete(result) ?: false
-            if (!completed) {
-                throw IllegalStateException("Complete result failed.")
-            }
-        }
-    
-        private fun completeThrowable(throwable: Throwable) {
-            future?.completeExceptionally(throwable)
-            deferred?.completeExceptionally(throwable)
-        }
-    }
-
-### 异步http
-&emsp;&emsp; 使用Rpc对象，可以简单的进行同步、线程异步、kotlin协程异步http请求。并且可以打印出每次请求的执行信息，包括执行次数、重试次数、
-每次执行花费的时间。由于CompletableFuture相比传统的Future功能更丰富，因此我们在执行异步Callable任务时，返回CompletableFuture，
-在协程中返回CompletableDeferred。
-
-    @JvmStatic
-    fun async(name: String, request: Request): CompletableFuture<Response> {
-        return AsyncUtil.executor.async(queueItem(name, request))
-    }
-
-    @JvmStatic
-    fun sync(name: String, request: Request): Response {
-        return queueItem(name, request).call()
-    }
-
-    @JvmOverloads
-    suspend fun deferred(
-        name: String,
-        request: Request,
-        scope: CoroutineScope? = null
-    ): CompletableDeferred<Response> {
-        return scope?.coroutineContext?.let {
-            withContext(it) {
-                deferred(queueItem(name, request))
-            }
-        } ?: kotlin.run {
-            coroutineScope {
-                deferred(queueItem(name, request))
-            }
-        }
-    }
-
-### 自定义Http-client测试
-&emsp;&emsp; 对于本项目中自己编写的简易Http-client，分别使用同步、线程异步、协程异步的方式进行了测试。测试用例如下。
-    
-    @Test
-    fun `test rpc sync`() {
-        val response = Rpc.sync("GetBaiduSync", request)
-        assertEquals(response.status, 200)
-        assertFalse(response.asString().isNullOrBlank())
-    }
-
-    @Test
-    fun `test rpc future`() {
-        val future = Rpc.async("GetBaiduAsync", request)
-        val response = future.get(timeout, TimeUnit.MILLISECONDS)
-        assertEquals(response.status, 200)
-        assertFalse(response.asString().isNullOrBlank())
-    }
-
-    @Test
-    fun `test rpc coroutine`() {
-        var response: Response? = null
-        val completableDeferred = AsyncUtil.coroutineScope.launch {
-            response = Rpc.deferred("GetBaiduDeferred", request).result(timeout, TimeUnit.MILLISECONDS)
-        }
-        while (true) {
-            if (completableDeferred.isCompleted) {
-                break
-            }
-        }
-        assertEquals(response!!.status, 200)
-        assertFalse(response!!.asString().isNullOrBlank())
-    }
-
-<h2 id="5">5.数据源</h2>
-&emsp;&emsp; 利用了Mybatis + HikariCP框架，自定义@KtDatabase注解用来配置数据源。自定义了Transaction及SqlSessionFactory，
-实现了数据库查询的重试，并实现测试时，使用flyway只进行一次数据库DDL迁移，每个测试用例执行前利用MyBatis ScriptRunner进行一次表级的DML迁移。
-本项目自定义了一个TransactionHelper，可以很简易的使用数据库事务。
-
-### 数据库配置
-&emsp;&emsp; 使用自定义的@KtDatabase注解，即可快捷的配置数据源。如果单纯使用flyway来进行数据迁移，那么每次先执行clean再执行migrate，
-会将所有的数据都迁移一遍，即使很多表并没有使用到，但是也会进行迁移。在测试类上使用自定义的@KtTestDatabase注解，即可配置测试类使用到的数据库和表。
-这样在所有测试进行前会进行一次DDL整体迁移，然后在每个测试用例执行前，只会执行特定表的DML，这样可以缩短测试时间，提高测试性能。
-    
-    // 数据库配置
-    @KtDatabase(
-        name = DemoDatabase.NAME,
-        mapperPath = DemoDatabase.MAPPER_PATH,
-        mapperXmlPath = DemoDatabase.MAPPER_XML_PATH,
-        dataSetPath = DemoDatabase.DATASET_PATH
+    return group ?: NioEventLoopGroup(
+        ioThreads,
+        NamedThreadFactory("netty-nio-thread")
     )
-    class DemoDatabase : MyBatisDatabase(URL, USERNAME, PASSWORD) {
-        companion object {
-            const val NAME = "demo"
-            const val MAPPER_PATH = "com.xiao.database.mybatis.mapper"
-            const val MAPPER_XML_PATH = "classpath*:mybatis/mapper/"
-            const val DATASET_PATH = "db/demo"
-            const val URL = "jdbc:mysql://localhost:3306/lix_database_demo"
-            const val USERNAME = "root"
-            const val PASSWORD = "123456"
-        }
-    }
-    
-    // 测试类数据源配置
-    @KtTestDatabases([
-        KtTestDatabase(
-            database = DemoDatabase::class,
-            mappers = [
-                UserMapper::class,
-                UserMapperV2::class
-            ]
-        )
-    ])
-    
-    // MyBatis mapper注解，可以使用@KtMapperRetry实现方法重试。
-    @KtMapperTables(["users"])
-    interface UserMapperV2 {
-        @KtMapperRetry
-        @Select("SELECT * FROM users WHERE id = #{id}")
-        fun getById(@Param("id") id: Long): User
-    }
-    
-<h2 id="6">6.事务</h2>
-&emsp;&emsp; 本项目中自定义了TransactionHelper，可以很容易使用事务。使用BaseDatabase配置数据源，使用KtMapperProxy作为MyBatis mapper代理类，
-就可以直接在TransactionHelper中执行事务。
-    
-    // 不使用事务
-    @Test
-    fun `test mapper query exception without transaction`() {
-        val sqlSession = sqlSessionFactory.openSession()
-        val userMapper = sqlSessionFactory.configuration.getMapper(UserMapper::class.java, sqlSession)
+}
+```
 
-        assertEquals(userMapper.getById(1L).password, "password_1")
-        val exception = assertThrows<IllegalStateException> {
-            userMapper.updatePasswordById(1L, "password_temp")
-            throw IllegalStateException("throws exception.")
-        }
-        assertEquals("throws exception.", exception.message)
-        assertEquals(userMapper.getById(1L).password, "password_temp")
-    }
-    
-    // 利用TransactionHelper实现事务
-    @Test
-    fun `test rollback with transaction`() {
-        val userMapper = MapperUtils.getTestMapper(UserMapper::class.java)
-        Assertions.assertEquals(userMapper.getById(1L).password, "password_1")
-        val exception = assertThrows<IllegalStateException> {
-            TransactionHelper.doInTransaction {
-                Assertions.assertEquals(userMapper.getById(1L).password, "password_1")
-                userMapper.updatePasswordById(1L, "password_temp")
-                Assertions.assertEquals(userMapper.getById(1L).password, "password_temp")
-                throw IllegalStateException("throws exception.")
-            }
-        }
-        Assertions.assertEquals("throws exception.", exception.message)
-        Assertions.assertEquals(userMapper.getById(1L).password, "password_1")
-    }
-    
-<h2 id="7">7.测试</h2>
-&emsp;&emsp; 使用KtTestDataSourceBase抽象类，实现在所有测试类执行前，利用flyway执行一次DDL迁移，在每个测试方法执行前，
-利用MyBatis ScriptRunner执行表数据的迁移。这里用到了Junit5的BeforeAllCallback Extension及BeforeEachCallback Extension。
+### 堆内存及堆外内存的使用
+&emsp;&emsp; 堆外内存某些情况下可以减少内核空间与用户进程空间之间的数据交换带来的CPU拷贝，
+而且堆外空间可以减轻JVM垃圾回收的压力，但是堆外空间需要手动释放，如果没有管理好堆外空间，
+可能会引起内存泄漏。堆外空间使用建议使用Netty的ByteBuf，Netty能够先分配Chunk，
+然后从Chunk中再次分配具体大小，这样可以避免内存浪费，而且Netty使用内存池化，
+可以避免内存重复分配及释放。对于堆内内存，可以直接放到FastThreadLocal中复用。
 
-    @ExtendWith(
-        FlywayMigrateExtension::class,
-        TablesMigrateExtension::class
-    )
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-    abstract class KtTestDataSourceBase
-    
-&emsp;&emsp; 利用自定义注解实现数据库有关测试，在执行每个方法前会使用flyway来进行数据迁移。而且可以使用TransactionHelper，很方便的实现
-事务。在测试环境中，我们可以直接使用MapperUtils.getTestMapper(clazz: Class<T>) 来获取MyBatis mapper的测试代理对象。
-    
-    @KtTestDatabases([
-        KtTestDatabase(
-            database = DemoDatabase::class,
-            mappers = [
-                UserMapper::class,
-                UserMapperV2::class
-            ]
-        )
-    ])
-    class MyBatisUsageTest : KtTestDataSourceBase() {
-        @Test
-        fun `test commit with transaction`() {
-            val userMapper = MapperUtils.getTestMapper(UserMapper::class.java)
-            Assertions.assertEquals(userMapper.getById(1L).password, "password_1")
-            TransactionHelper.doInTransaction {
-                Assertions.assertEquals(userMapper.getById(1L).password, "password_1")
-                userMapper.updatePasswordById(1L, "password_temp")
-                Assertions.assertEquals(userMapper.getById(1L).password, "password_temp")
-            }
-            Assertions.assertEquals(userMapper.getById(1L).password, "password_temp")
-        }
+    我们可以利用堆外内存来创建基本数据类型数组：
+```kotlin
+abstract class DirectArray<T>(
+    val capacity: Int,
+    val elementBytes: Int
+) : AutoCloseable {
+    abstract fun get(index: Int): T
+
+    abstract fun set(index: Int, value: T)
+
+    protected fun getOffset(index: Int): Long {
+        return index.toLong() * elementBytes
     }
+}
+
+```
+
+    基于Unsafe的堆外基本数据类型数组：
+```kotlin
+abstract class UnsafeDirectArray<T>(
+    capacity: Int,
+    elementBytes: Int
+) : DirectArray<T>(capacity, elementBytes) {
+    val address = UnsafeUtils.UNSAFE.allocateMemory(getOffset(capacity))
+
+    override fun close() {
+        UnsafeUtils.UNSAFE.freeMemory(address)
+    }
+}
+```
     
-<h2 id="8">8.代码规范</h2>
+    基于Netty的堆外基本数据类型数组：
+```kotlin
+abstract class NettyDirectArray<T>(
+    capacity: Int,
+    elementSize: Int
+) : DirectArray<T>(capacity, elementSize) {
+    private val byteBuf = PooledByteBufAllocator.DEFAULT.directBuffer(checkCapacity())
+
+    override fun close() {
+        ReferenceCountUtil.release(byteBuf)
+    }
+
+    private fun checkCapacity(): Int {
+        val totalCapacity = getOffset(capacity)
+        if (totalCapacity > Int.MAX_VALUE) {
+            throw IllegalArgumentException(
+                "Out of bounds of ${Int.MAX_VALUE}, capacity: $capacity, elementSize: $elementBytes."
+            )
+        }
+        return totalCapacity.toInt()
+    }
+}
+```
+
+<h2 id="8">8.代码规范及测试</h2>
 &emsp;&emsp; 本项目使用ktlint来进行代码格式校验及自动纠正。定义gradle ktlintCheck 任务来校验kotlin代码格式，并将ktlintCheck任务放置在
 verification check任务之前，那么在执行gradle build之前就会先执行ktlintCheck。还定义了一个 gradle ktlintFormat 任务，这个任务是单独的，
 执行这个任务可以根据代码规范，自动进行格式纠正。
 
-    task ktlintCheck(type: JavaExec, group: "verification") {
-        description = "Gradle check kotlin verification."
-        classpath = configurations.ktlint
-        main = "com.pinterest.ktlint.Main"
-        args "src/**/*.kt"
-    }
+```groovy
+task ktlintCheck(type: JavaExec, group: "verification") {
+description = "Gradle check kotlin verification."
+classpath = configurations.ktlint
+main = "com.pinterest.ktlint.Main"
+args "src/**/*.kt"
+}
+
+check.dependsOn ktlintCheck
+
+task ktlintFormat(type: JavaExec, group: "formatting") {
+description = "Gradle check kotlin formatting."
+classpath = configurations.ktlint
+main = "com.pinterest.ktlint.Main"
+args "-F", "src/**/*.kt"
+}
+```
+
+### 测试
+&emsp;&emsp; 本项目使用Github Action配合Junit5执行测试。单测很重要，通过单测能够发现bug，
+更重要的是当需要重构你的代码或者业务变更时，单测在确保逻辑正确方面能发挥很大的作用。
+通常建议在开发完功能后，立即完成所有逻辑分支的单测编写。在我们实际开发过程中，鉴于时间关系，
+通常直接以API为切入点进行单测的编写，对于复杂的方法或者Mapper这种API单测可能覆盖不到的，
+才会逐个进行测试。对于紧急需求，可以先不写单测，但需要有个时间节点来补上。本项目单测覆盖率100%。
     
-    check.dependsOn ktlintCheck
-    
-    task ktlintFormat(type: JavaExec, group: "formatting") {
-        description = "Gradle check kotlin formatting."
-        classpath = configurations.ktlint
-        main = "com.pinterest.ktlint.Main"
-        args "-F", "src/**/*.kt"
-    }
+```groovy
+name: Build CI
+
+# Controls when the action will run. 
+on: [push, pull_request]
+
+# Run jobs automatically.
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+# This workflow contains a single job called "build"
+build:
+# The type of runner that the job will run on
+runs-on: ubuntu-latest
+
+# Service containers to run with the job
+services:
+  # mysql service
+  mysql:
+    image: mysql:5.7
+    env:
+      MYSQL_ROOT_PASSWORD: 123456
+    ports:
+      - "3306:3306"
+    options: >-
+      --health-cmd "mysqladmin ping"
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 3
+
+  # redis service
+  redis:
+    # Docker Hub image
+    image: redis
+    ports:
+      - "6379:6379"
+    # Set health checks to wait until redis has started
+    options: >-
+      --health-cmd "redis-cli ping"
+      --health-interval 10s
+      --health-timeout 5s
+      --health-retries 5
+
+# Steps represent a sequence of tasks that will be executed as part of the job
+steps:
+  # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+  - uses: actions/checkout@v2
+
+  # Set up jdk version
+  - uses: actions/setup-java@v1
+    with:
+      java-version: 1.8
+
+  # use dependencies cache to speed up
+  - uses: actions/cache@v2
+    with:
+      path: |
+        ~/.gradle/caches
+        ~/.gradle/wrapper
+      key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+      restore-keys: |
+        ${{ runner.os }}-gradle-
+
+  # Runs build
+  - run: |
+      echo "Build start..."
+      ./gradlew build
+      echo "Bulid finished."
+
+  # cleanup gradle cache
+  # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
+  # Restoring these files from a GitHub Actions cache might cause problems for future builds.
+  - run: |
+      rm -f ~/.gradle/caches/modules-2/modules-2.lock
+      rm -f ~/.gradle/caches/modules-2/gc.properties
+```
