@@ -95,13 +95,13 @@ fun getIoEventLoopGroup(ioThreads: Int): EventLoopGroup {
 ```
 
 ### 堆内存及堆外内存的使用
-&emsp;&emsp; 堆外内存某些情况下可以减少内核空间与用户进程空间之间的数据交换带来的CPU拷贝，
+&emsp;&emsp; 堆外内存某些情况下可以减少内核空间与用户进程空间之间的数据交换带来的CPU拷贝和上下文切换，
 而且堆外空间可以减轻JVM垃圾回收的压力，但是堆外空间需要手动释放，如果没有管理好堆外空间，
 可能会引起内存泄漏。堆外空间使用建议使用Netty的ByteBuf，Netty能够先分配Chunk，
 然后从Chunk中再次分配具体大小，这样可以避免内存浪费，而且Netty使用内存池化，
 可以避免内存重复分配及释放。对于堆内内存，可以直接放到FastThreadLocal中复用。
 
-    我们可以利用堆外内存来创建基本数据类型数组：
+我们可以利用堆外内存来创建基本数据类型数组：
 ```kotlin
 abstract class DirectArray<T>(
     val capacity: Int,
@@ -118,7 +118,7 @@ abstract class DirectArray<T>(
 
 ```
 
-    基于Unsafe的堆外基本数据类型数组：
+基于Unsafe的堆外基本数据类型数组：
 ```kotlin
 abstract class UnsafeDirectArray<T>(
     capacity: Int,
@@ -132,7 +132,7 @@ abstract class UnsafeDirectArray<T>(
 }
 ```
     
-    基于Netty的堆外基本数据类型数组：
+基于Netty的堆外基本数据类型数组：
 ```kotlin
 abstract class NettyDirectArray<T>(
     capacity: Int,
