@@ -95,11 +95,66 @@ fun getIoEventLoopGroup(ioThreads: Int): EventLoopGroup {
 ```
 
 ### 堆内存及堆外内存的使用
-&emsp;&emsp; 堆外内存在传输字节流时，能够减少数据从用户进程内存中到内核内存中的CPU拷贝过程，而且堆外内存手动释放，
-这样减轻了JVM GC的压力。但是堆外内存一旦管理不当，会导致内存泄漏。Undertow中ByteBufferPool和Netty中的ByteBuf在使用堆外内存时，
-都采用引用计数的方式来实现堆外内存的复用。区别在于Undertow中ByteBufferPool创建的PooledByteBuffer都是固定大小的，
-没有Netty灵活，而且没有Netty功能强大。
+&emsp;&emsp; 堆外内存某些情况下可以减少内核空间与用户进程空间之间的数据交换带来的CPU拷贝，
+而且堆外空间可以减轻JVM垃圾回收的压力，但是堆外空间需要手动释放，如果没有管理好堆外空间，
+可能会引起内存泄漏。堆外空间使用建议使用Netty的ByteBuf，Netty能够先分配Chunk，
+然后从Chunk中再次分配具体大小，这样可以避免内存浪费，而且Netty使用内存池化，
+可以避免内存重复分配及释放。对于堆内内存，可以直接放到FastThreadLocal中复用。
 
+    我们可以利用堆外内存来创建基本数据类型数组：
+```kotlin
+abstract class DirectArray<T>(
+    val capacity: Int,
+    val elementBytes: Int
+) : AutoCloseable {
+    abstract fun get(index: Int): T
+
+    abstract fun set(index: Int, value: T)
+
+    protected fun getOffset(index: Int): Long {
+        return index.toLong() * elementBytes
+    }
+}
+
+```
+
+    基于Unsafe的堆外基本数据类型数组：
+```kotlin
+abstract class UnsafeDirectArray<T>(
+    capacity: Int,
+    elementBytes: Int
+) : DirectArray<T>(capacity, elementBytes) {
+    val address = UnsafeUtils.UNSAFE.allocateMemory(getOffset(capacity))
+
+    override fun close() {
+        UnsafeUtils.UNSAFE.freeMemory(address)
+    }
+}
+```
+    
+    基于Netty的堆外基本数据类型数组：
+```kotlin
+abstract class NettyDirectArray<T>(
+    capacity: Int,
+    elementSize: Int
+) : DirectArray<T>(capacity, elementSize) {
+    private val byteBuf = PooledByteBufAllocator.DEFAULT.directBuffer(checkCapacity())
+
+    override fun close() {
+        ReferenceCountUtil.release(byteBuf)
+    }
+
+    private fun checkCapacity(): Int {
+        val totalCapacity = getOffset(capacity)
+        if (totalCapacity > Int.MAX_VALUE) {
+            throw IllegalArgumentException(
+                "Out of bounds of ${Int.MAX_VALUE}, capacity: $capacity, elementSize: $elementBytes."
+            )
+        }
+        return totalCapacity.toInt()
+    }
+}
+```
 
 <h2 id="8">8.代码规范及测试</h2>
 &emsp;&emsp; 本项目使用ktlint来进行代码格式校验及自动纠正。定义gradle ktlintCheck 任务来校验kotlin代码格式，并将ktlintCheck任务放置在
