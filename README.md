@@ -1,7 +1,8 @@
 [读书笔记](ReadingNotes.md)
 
 * [1.项目简介](#1)
-* [2.IO](#3)
+* [2.IO](#2)
+* [3.协程](#3)
 * [8.代码规范及测试](#8)
 
 <h2 id="1">1.项目简介</h2>
@@ -153,6 +154,41 @@ abstract class NettyDirectArray<T>(
         }
         return totalCapacity.toInt()
     }
+}
+```
+
+<h2 id="3>3.协程</h2>
+&emsp;&emsp; 协程是非阻塞的，我们可以在会发生CPU自旋的地方使用协程。利用异步回调的思想，
+可以很简单的将阻塞线程转化为非阻塞的Kotlin协程。
+
+可以利用CompletableDeferred将非suspend lambda块转化为协程执行。
+```kotlin
+@Suppress("UNCHECKED_CAST")
+fun <T> CoroutineScope.deferred(block: () -> T): SafeDeferred<T> {
+    val deferred = CompletableDeferred<T>()
+    val result = SafeCompletableDeferred(deferred)
+    val job = launch {
+        CoroutineCompletableCallback(block, null, deferred as CompletableDeferred<Any?>).run()
+    }
+    result.putJob(job)
+    return result
+}
+```
+
+将Lettuce阻塞的RedisFuture转化为非阻塞的Coroutine Deferred。
+```kotlin
+// add suspend modifier, because we expect this method used in coroutine.
+@Suppress("UNCHECKED_CAST", "RedundantSuspendModifier")
+suspend fun <T : Any?> RedisFuture<T>.suspend(): SafeDeferred<T> {
+    val deferred = CompletableDeferred<T>()
+    val result = SafeCompletableDeferred(deferred)
+    whenComplete { value, throwable ->
+        throwable?.also {
+            throw it
+        }
+        CoroutineCompletableCallback({ value }, null, deferred as CompletableDeferred<Any?>).run()
+    }
+    return result
 }
 ```
 
