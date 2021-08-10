@@ -368,9 +368,8 @@ class UndertowCoroutineInitialHttpHandler(
     private fun createCoroutineThreadLocal(): CoroutineThreadLocal<UndertowRequestInfo> {
         val requestInfo = UndertowRequestInfo()
             .apply {
-                val uuid = UUID.randomUUID().toString()
                 requestStartMills = System.currentTimeMillis()
-                requestUuid = uuid
+                requestUuid = UUID.randomUUID().toString()
             }
         return CoroutineThreadLocal(
             threadLocal,
