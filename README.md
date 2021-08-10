@@ -169,7 +169,7 @@ abstract class NettyDirectArray<T>(
 
 ### ThreadLocal
 &emsp;&emsp; ThreadLocal使用很频繁，但有弊端：1，每次通过Hash值读写，可能导致hash冲突。
-2，需要动态扩容。3，key使用弱引用，导致可能有些value对应的key变为null。4，虽然每次访问会清理null，
+2，key使用弱引用，导致可能有些value对应的key变为null。3，虽然每次访问会清理null，
 但如果长时间不访问，且对应的value占了较大内存，可能导致内存泄漏。Netty的FastThreadLocal，使用自增的index，
 避免动态扩容，避免了hash冲突，且index访问更快，但缺点在于占用空间更多，是典型的空间换时间，且只支持FastThreadLocalThread。
 
