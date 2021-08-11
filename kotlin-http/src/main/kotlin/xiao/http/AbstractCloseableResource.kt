@@ -4,14 +4,14 @@ package xiao.http
  *
  * @author lix wang
  */
-abstract class AbstractCloseableResource(private val runningState: xiao.http.RunningState) : xiao.http.CloseableResource {
+abstract class AbstractCloseableResource(private val runningState: RunningState) : CloseableResource {
     override fun tryClose(keepAliveMills: Long): Boolean {
         synchronized(runningState) {
-            return if (runningState.state() == xiao.http.RunningState.Companion.RUNNING) {
+            return if (runningState.state() == RunningState.RUNNING) {
                 false
             } else {
                 if (System.currentTimeMillis() - runningState.lastUsingMills > keepAliveMills) {
-                    runningState.updateState(xiao.http.RunningState.Companion.TERMINATE)
+                    runningState.updateState(RunningState.TERMINATE)
                     true
                 } else {
                     false
@@ -22,11 +22,11 @@ abstract class AbstractCloseableResource(private val runningState: xiao.http.Run
 
     override fun tryUse(): Boolean {
         val originState = runningState.state()
-        if (originState > xiao.http.RunningState.Companion.READY) {
+        if (originState > RunningState.READY) {
             return false
         }
         synchronized(runningState) {
-            val result = runningState.updateState(originState, xiao.http.RunningState.Companion.RUNNING)
+            val result = runningState.updateState(originState, RunningState.RUNNING)
             if (result) {
                 runningState.lastUsingMills = System.currentTimeMillis()
             }
@@ -36,11 +36,11 @@ abstract class AbstractCloseableResource(private val runningState: xiao.http.Run
 
     override fun unUse(): Boolean {
         val originState = runningState.state()
-        if (originState != xiao.http.RunningState.Companion.RUNNING) {
+        if (originState != RunningState.RUNNING) {
             return false
         }
         synchronized(runningState) {
-            return runningState.updateState(originState, xiao.http.RunningState.Companion.READY)
+            return runningState.updateState(originState, RunningState.READY)
         }
     }
 }

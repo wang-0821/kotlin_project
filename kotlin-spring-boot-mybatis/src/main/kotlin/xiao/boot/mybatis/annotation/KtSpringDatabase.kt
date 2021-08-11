@@ -10,7 +10,7 @@ import java.lang.annotation.Inherited
 @Inherited
 @Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
-@Import(xiao.boot.mybatis.annotation.KtSpringDatabaseRegistrar::class)
+@Import(KtSpringDatabaseRegistrar::class)
 annotation class KtSpringDatabase(
     val name: String,
     val mapperBasePackage: String = "",

@@ -29,7 +29,7 @@ object NettyUtils {
             if (KQueue.isAvailable()) {
                 group = KQueueEventLoopGroup(
                     ioThreads,
-                    NamedThreadFactory("netty-kqueue-xiao.base.thread")
+                    NamedThreadFactory("netty-kqueue-thread")
                 )
             }
         } else {
@@ -37,14 +37,14 @@ object NettyUtils {
                 if (Epoll.isAvailable()) {
                     group = EpollEventLoopGroup(
                         ioThreads,
-                        NamedThreadFactory("netty-epoll-xiao.base.thread")
+                        NamedThreadFactory("netty-epoll-thread")
                     )
                 }
             }
         }
         return group ?: NioEventLoopGroup(
             ioThreads,
-            NamedThreadFactory("netty-nio-xiao.base.thread")
+            NamedThreadFactory("netty-nio-thread")
         )
     }
 

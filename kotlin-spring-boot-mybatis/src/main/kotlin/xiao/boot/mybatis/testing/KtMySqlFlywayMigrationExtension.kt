@@ -5,6 +5,7 @@ import org.flywaydb.core.api.exception.FlywayValidateException
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.springframework.test.context.TestContext
+import xiao.boot.base.ServerConstants
 import xiao.boot.base.testing.TestSpringContextUtils
 
 /**
@@ -28,16 +29,16 @@ class KtMySqlFlywayMigrationExtension : BeforeAllCallback {
     private fun doMigrate(testContext: TestContext) {
         val environment = testContext.applicationContext.environment
         val testDatabaseUrl = environment.getProperty(
-            xiao.boot.base.ServerConstants.TEST_MYSQL_URL,
-            xiao.boot.base.ServerConstants.DEFAULT_TEST_MYSQL_URL
+            ServerConstants.TEST_MYSQL_URL,
+            ServerConstants.DEFAULT_TEST_MYSQL_URL
         )
         val testDatabaseUsername = environment.getProperty(
-            xiao.boot.base.ServerConstants.TEST_MYSQL_USERNAME,
-            xiao.boot.base.ServerConstants.DEFAULT_TEST_MYSQL_USERNAME
+            ServerConstants.TEST_MYSQL_USERNAME,
+            ServerConstants.DEFAULT_TEST_MYSQL_USERNAME
         )
         val testDatabasePassword = environment.getProperty(
-            xiao.boot.base.ServerConstants.TEST_MYSQL_PASSWORD,
-            xiao.boot.base.ServerConstants.DEFAULT_TEST_MYSQL_PASSWORD
+            ServerConstants.TEST_MYSQL_PASSWORD,
+            ServerConstants.DEFAULT_TEST_MYSQL_PASSWORD
         )
 
         Flyway

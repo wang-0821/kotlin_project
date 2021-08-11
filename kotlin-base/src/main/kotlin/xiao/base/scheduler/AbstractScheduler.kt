@@ -1,5 +1,6 @@
 package xiao.base.scheduler
 
+import xiao.base.executor.AbstractExecutorService
 import java.time.Duration
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
@@ -13,7 +14,7 @@ import java.util.concurrent.TimeUnit
 abstract class AbstractScheduler(
     val name: String,
     val scheduledExecutorService: ScheduledExecutorService
-) : xiao.base.executor.AbstractExecutorService(scheduledExecutorService) {
+) : AbstractExecutorService(scheduledExecutorService) {
     /**
      * Execute once when delay end.
      */

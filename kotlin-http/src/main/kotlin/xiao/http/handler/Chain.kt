@@ -1,5 +1,6 @@
 package xiao.http.handler
 
+import xiao.http.Address
 import xiao.http.Client
 import xiao.http.factory.ChainHandlerFactorySelector
 import xiao.http.io.Exchange
@@ -43,7 +44,7 @@ class Chain(val client: Client, val request: Request) {
         }
     }
 
-    private fun createAddress(request: Request): xiao.http.Address {
-        return xiao.http.Address(request.host()!!, request.scheme()!!, request.port())
+    private fun createAddress(request: Request): Address {
+        return Address(request.host()!!, request.scheme()!!, request.port())
     }
 }
