@@ -76,7 +76,7 @@ fun getIoEventLoopGroup(ioThreads: Int): EventLoopGroup {
         if (KQueue.isAvailable()) {
             group = KQueueEventLoopGroup(
                 ioThreads,
-                NamedThreadFactory("netty-kqueue-thread")
+                NamedThreadFactory("netty-kqueue-xiao.base.thread")
             )
         }
     } else {
@@ -84,14 +84,14 @@ fun getIoEventLoopGroup(ioThreads: Int): EventLoopGroup {
             if (Epoll.isAvailable()) {
                 group = EpollEventLoopGroup(
                     ioThreads,
-                    NamedThreadFactory("netty-epoll-thread")
+                    NamedThreadFactory("netty-epoll-xiao.base.thread")
                 )
             }
         }
     }
     return group ?: NioEventLoopGroup(
         ioThreads,
-        NamedThreadFactory("netty-nio-thread")
+        NamedThreadFactory("netty-nio-xiao.base.thread")
     )
 }
 ```
@@ -182,10 +182,10 @@ class KtFastThreadLocal<T> {
 
     @Suppress("UNCHECKED_CAST")
     fun get(): T? {
-        return when (val thread = Thread.currentThread()) {
+        return when (val xiao.base.thread = Thread.currentThread()) {
             is ThreadLocalValueProvider -> {
-                if (thread.indexedVariables != null && index < thread.indexedVariables!!.size) {
-                    thread.indexedVariables!![index] as T?
+                if (xiao.base.thread.indexedVariables != null && index < xiao.base.thread.indexedVariables!!.size) {
+                    xiao.base.thread.indexedVariables!![index] as T?
                 } else {
                     null
                 }
@@ -202,18 +202,18 @@ class KtFastThreadLocal<T> {
     }
 
     fun set(value: T?) {
-        when (val thread = Thread.currentThread()) {
+        when (val xiao.base.thread = Thread.currentThread()) {
             is ThreadLocalValueProvider -> {
-                if (thread.indexedVariables == null) {
+                if (xiao.base.thread.indexedVariables == null) {
                     // initial
-                    thread.indexedVariables = arrayOfNulls(tableSizeFor(index))
-                    thread.indexedVariables!![index] = value
+                    xiao.base.thread.indexedVariables = arrayOfNulls(tableSizeFor(index))
+                    xiao.base.thread.indexedVariables!![index] = value
                 } else {
                     // out of range, do expand.
-                    if (index >= thread.indexedVariables!!.size) {
-                        thread.indexedVariables = expandIndexVariables(thread.indexedVariables!!, tableSizeFor(index))
+                    if (index >= xiao.base.thread.indexedVariables!!.size) {
+                        xiao.base.thread.indexedVariables = expandIndexVariables(xiao.base.thread.indexedVariables!!, tableSizeFor(index))
                     }
-                    thread.indexedVariables!![index] = value
+                    xiao.base.thread.indexedVariables!![index] = value
                 }
             }
             is FastThreadLocalThread -> {
@@ -359,7 +359,7 @@ class UndertowCoroutineInitialHttpHandler(
 
     // TODO improve handleRequest by replace exchange dispatchTask.
     override fun handleRequest(exchange: HttpServerExchange) {
-        // Use global executor instead of undertow taskPool.
+        // Use global xiao.base.executor instead of undertow taskPool.
         prepareAttachment(exchange)
         exchange.dispatchExecutor = defaultExecutor
         httpHandler.handleRequest(exchange)
@@ -550,6 +550,6 @@ steps:
   # Remove some files from the Gradle cache, so they aren't cached by GitHub Actions.
   # Restoring these files from a GitHub Actions cache might cause problems for future builds.
   - run: |
-      rm -f ~/.gradle/caches/modules-2/modules-2.lock
+      rm -f ~/.gradle/caches/modules-2/modules-2.xiao.base.lock
       rm -f ~/.gradle/caches/modules-2/gc.properties
 ```

@@ -15,6 +15,7 @@ dependencyManagement {
         dependency "com.github.ben-manes.caffeine:caffeine:3.0.0"
         dependency "org.apache.commons:commons-lang3:3.12.0"
         dependency "jakarta.servlet:jakarta.servlet-api:4.0.4"
+        dependency "org.asynchttpclient:async-http-client:2.12.3"
 
         // logging
         dependency "org.slf4j:slf4j-api:1.7.30"

@@ -1,4 +1,4 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.xiao.boot.server.base.exception.GlobalRestControllerAdvice,\
-com.xiao.boot.server.base.mvc.KtServerArgs,\
-com.xiao.boot.server.base.mvc.KtWebMvcConfigurer
+xiao.boot.server.base.exception.GlobalRestControllerAdvice,\
+xiao.boot.server.base.mvc.KtServerArgs,\
+xiao.boot.server.base.mvc.KtWebMvcConfigurer

@@ -510,7 +510,7 @@ final 可以禁止覆盖。可以使用一个var属性覆盖一个val属性，�
 kotlin的泛型类型，也只是在编译期进行类型安全性检查，在运行期，泛型类型的实例不保存关于其类型参数的任何信息，这叫做类型擦除。
 
     <p>
-        void com.xiao.demo(Source<String> strs) {
+        void demo(Source<String> strs) {
             Source<? extends Object> objects = strs; // 在java中需要这么声明
         }
         
@@ -523,7 +523,7 @@ kotlin的泛型类型，也只是在编译期进行类型安全性检查，在�
             abstract fun nextT(): T
         }
         
-        fun com.xiao.demo(strs: Source<String>) {
+        fun demo(strs: Source<String>) {
             val objects: Source<Any> = strs   
         }
         
@@ -531,7 +531,7 @@ kotlin的泛型类型，也只是在编译期进行类型安全性检查，在�
             operator fun compareTo(other: T): Int
         }
         
-        fun com.xiao.demo(x: Comparable<Number>) {
+        fun demo(x: Comparable<Number>) {
             x.compareTo(1.0)
             val y: Comparable<Double> = x
         }
@@ -1166,14 +1166,14 @@ newSingleThreadContext。newSingleThreadContext为协程的运行启动了一个
 也就是非限制协程调度器(Unconfined)会立即被调度执行，运行在当前线程上。
 
     launch(Dispatchers.Unconfined) { // 非受限的——将和主线程一起工作
-        println("Unconfined      : I'm working in thread ${Thread.currentThread().name}")
+        println("Unconfined      : I'm working in xiao.base.thread ${Thread.currentThread().name}")
         delay(500)
-        println("Unconfined      : After delay in thread ${Thread.currentThread().name}")
+        println("Unconfined      : After delay in xiao.base.thread ${Thread.currentThread().name}")
     }
     launch { // 父协程的上下文，主 runBlocking 协程
-        println("main runBlocking: I'm working in thread ${Thread.currentThread().name}")
+        println("main runBlocking: I'm working in xiao.base.thread ${Thread.currentThread().name}")
         delay(1000)
-        println("main runBlocking: After delay in thread ${Thread.currentThread().name}")
+        println("main runBlocking: After delay in xiao.base.thread ${Thread.currentThread().name}")
     }
 
 <br>
@@ -1184,7 +1184,7 @@ newSingleThreadContext。newSingleThreadContext为协程的运行启动了一个
 &emsp;&emsp; 我们可以使用 + 操作符来在协程上下文中定义多个元素。
     
     launch(Dispatchers.Default + CoroutineName("test")) {
-        println("I'm working in thread ${Thread.currentThread().name()}")
+        println("I'm working in xiao.base.thread ${Thread.currentThread().name()}")
     }
     
 <br>
@@ -1324,7 +1324,7 @@ flow构建器中的代码直到流被收集的时候才运行。flowOf构建器�
     sender.cancel() // 取消发送者协程
     
 ### 共享的可变状态与并发
-&emsp;&emsp; 在kotlin中volatile是一种注解。volatile只能保证内存可见性，被volatile修饰的变量，被赋值后，会多执行一行"lock addl $0x0, (%esp)"，
+&emsp;&emsp; 在kotlin中volatile是一种注解。volatile只能保证内存可见性，被volatile修饰的变量，被赋值后，会多执行一行"xiao.base.lock addl $0x0, (%esp)"，
 这个操作相当于内存屏障，重排序时不能把后面的指令重排序到内存屏障之前，因此能保证内存可见性。可以使用原子操作，保证线程安全。
 
     @Volatile // 在 Kotlin 中 `volatile` 是一个注解
@@ -1390,8 +1390,8 @@ flow构建器中的代码直到流被收集的时候才运行。flowOf构建器�
     }
     
 <br>
-&emsp;&emsp; 在协程中可以使用Mutex来代替synchronized或者ReentrantLock。Mutex具有lock和unlock方法，Mutex.lock()是挂起函数，不会阻塞线程。
-Mutex还有withLock扩展函数，用来代替日常用的mutex.lock() try { ... } finally { mutex.unlock() } 模式。
+&emsp;&emsp; 在协程中可以使用Mutex来代替synchronized或者ReentrantLock。Mutex具有lock和unlock方法，Mutex.xiao.base.lock()是挂起函数，不会阻塞线程。
+Mutex还有withLock扩展函数，用来代替日常用的mutex.xiao.base.lock() try { ... } finally { mutex.unlock() } 模式。
 
     val mutex = Mutex()
     var counter = 0

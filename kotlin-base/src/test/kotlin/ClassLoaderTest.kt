@@ -1,8 +1,8 @@
-import com.xiao.base.testing.KtTestBase
-import com.xiao.model.CustomClassLoader
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import xiao.base.model.CustomClassLoader
+import xiao.base.testing.KtTestBase
 
 /**
  *
@@ -50,6 +50,6 @@ class ClassLoaderTest : KtTestBase() {
     }
 
     companion object {
-        private const val CLASSNAME = "com.xiao.model.ClassTarget"
+        private const val CLASSNAME = "xiao.base.model.ClassTarget"
     }
 }

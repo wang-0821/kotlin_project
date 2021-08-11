@@ -21,7 +21,7 @@
     jstack pid(第1步拿到的进程pid) 此时会打印出该进程的线程快照，然后可以根据第2步获取的高CPU使用率的线程16进制id，来查看对应线程的情况。
     
     // jstack (pid) 打印出的进程的线程如下所示：
-    Full thread dump Java HotSpot(TM) 64-Bit Server VM (25.172-b11 mixed mode):
+    Full xiao.base.thread dump Java HotSpot(TM) 64-Bit Server VM (25.172-b11 mixed mode):
     
     "Attach Listener" #15 daemon prio=9 os_prio=31 tid=0x00007f8fa325e000 nid=0x1207 waiting on condition [0x0000000000000000]
        java.lang.Thread.State: RUNNABLE
@@ -33,7 +33,7 @@
     	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
     	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
     	at java.lang.reflect.Method.invoke(Method.java:498)
-    	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:688)
+    	at org.junit.platform.commons.xiao.base.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:688)
     	
 <h2 id="2">2.内存占用率高问题排查</h2>
 &emsp;&emsp; 1，先使用top查看各进程的内存占用率。2，找到内存占用率高的进程。

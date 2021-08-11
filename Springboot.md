@@ -1338,7 +1338,7 @@ NioTcpServerHandle也会以attachment的方式，附着在这个SelectionKey上�
 	|	执行HttpServerExchange.getDispatchtask()获取Runnable dispatchTask
 	|					|
 	|					V
-	|	获取HttpServerExchange.connection.channel.thread.worker作为Executor
+	|	获取HttpServerExchange.connection.channel.xiao.base.thread.worker作为Executor
 	|					|
 	|					V
 	|		执行NioXnioWorker.taskPool.execute(Runnable)

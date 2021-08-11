@@ -24,8 +24,8 @@
                                       V
                                    存储引擎
 <br>
-&emsp;&emsp; 通常解决并发读或写时，通过一个由两种类型的锁组成的锁系统来解决问题。这两种锁被称为共享锁(shared lock)、排他锁(exclusive lock)，
-也被成为读锁(read lock)和写锁(write lock)。                   
+&emsp;&emsp; 通常解决并发读或写时，通过一个由两种类型的锁组成的锁系统来解决问题。这两种锁被称为共享锁(shared xiao.base.lock)、排他锁(exclusive xiao.base.lock)，
+也被成为读锁(read xiao.base.lock)和写锁(write xiao.base.lock)。                   
 
 ### 表锁
 &emsp;&emsp; 表锁是MySQL中最基本的锁策略，是开销最小的策略。表锁会锁定整张表，一个用户在对表进行写操作时，需要先获得写锁，这会阻塞其他用户
@@ -614,7 +614,7 @@ MySQL实现分区的方式--对底层表的封装，意味着索引也是按照�
 表锁特点：开销小、加锁快、无死锁、锁粒度大，发生锁冲突的概率高，并发性低。
 
 ### 表锁上锁/解锁
-&emsp;&emsp; 上锁方式：1，隐式上锁(默认，自动加锁自动释放)，读锁：select。写锁：insert、update、delete。2，显式上锁。lock table tableName read/write;
+&emsp;&emsp; 上锁方式：1，隐式上锁(默认，自动加锁自动释放)，读锁：select。写锁：insert、update、delete。2，显式上锁。xiao.base.lock table tableName read/write;
 解锁方式：1，解锁单表：unlock table tableName; 2，解锁所有表: unlock tables;
 
 ### 表锁问题排查
@@ -652,7 +652,7 @@ innodb_row_lock_time_max表示从系统启动到现在等待最长的一次锁�
 InnoDB会给符合条件的已有记录的索引加锁，对于键值在条件范围内，但是并不存在的记录。Gap Lock解决了事务并发的幻读问题。
 Next-Key Lock：同时锁住数据 + 间隙锁。Repeatable Read隔离级别下，Next-Key Lock算法是默认的行记录锁定算法。
 
-    Record Lock、Gap lock、Next-key Lock都是加在索引上的，如果有记录1、3、5、7，则5上的记录锁会锁住5，5上的gap lock会锁住(3, 5)，
+    Record Lock、Gap xiao.base.lock、Next-key Lock都是加在索引上的，如果有记录1、3、5、7，则5上的记录锁会锁住5，5上的gap lock会锁住(3, 5)，
     5上的next-key lock会锁住(3, 5]。
 
     
@@ -727,7 +727,7 @@ Next-Key Lock：同时锁住数据 + 间隙锁。Repeatable Read隔离级别下�
 <h2 id="9">9.MySQL主备同步</h2>
 &emsp;&emsp; MySQL主从同步事件有三种形式：statement、row、mixed。statement：将对数据库操作的sql语句写入到binlog(binary-log)中；
 row: 将每一条数据的变化写入到binlog中。mixed：statement和row的混合，MySQL决定什么时候写statement格式或row格式。
-MySQL主备同步涉及到三个线程：1，主节点线程：log dump thread。2，从节点I/O线程。3，从节点SQL线程。
+MySQL主备同步涉及到三个线程：1，主节点线程：log dump xiao.base.thread。2，从节点I/O线程。3，从节点SQL线程。
 
     1，当从节点执行start slave明令后，从节点创建一个I/O线程来连接主节点，接收Binlog并解析到各类Events后记录到从服务器本地文件，
         这个文件就是relay log(中继文件)。

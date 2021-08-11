@@ -56,7 +56,7 @@ initialize传true，加载类时会执行初始化。
     
     abstract class Sync extends AbstractQueuedSynchronizer
 
-### ReentrantLock lock()获取锁的流程
+### ReentrantLock xiao.base.lock()获取锁的流程
 &emsp;&emsp; ReentrantLock使用lock()方法获取锁时，实际是使用ReentrantLock中具体的同步锁(公平锁、非公平锁)来执行锁定。
 非公平锁使用了AQS(AbstractQueuedSynchronizer)，AQS提供了一个FIFO的队列，head节点表示当前持有锁的节点，在其他线程竞争锁失败后，
 会加入到队尾。
@@ -67,7 +67,7 @@ initialize传true，加载类时会执行初始化。
         3，CONDITION(-2)，等待条件触发，表示当前节点在等待condition，即在condition队列中。
         4，PROPAGATE(-3)，状态需要向后传播，表示releaseShared需要被传播给后续节点，仅在共享锁模式下使用。
     
-    对于非公平锁，lock()流程如下：
+    对于非公平锁，xiao.base.lock()流程如下：
         1，先判断当前锁是否已经被锁定(state == 0表示未锁定)，如果没有，那么使用CAS将状态设置为1，并设置互斥锁的持有者为当前线程。
         2，如果当前ReentrantLock已经被锁定，那么再次判断是否当前ReentrantLock是否还是处于锁定状态，如果已经被释放锁了，
             那么当前线程获取锁。如果还是处于锁定状态，那么判断是否ReentrantLock锁是当前线程持有的，如果是，那么重入锁，即state值增加。

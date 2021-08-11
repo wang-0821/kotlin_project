@@ -14,7 +14,7 @@ task javadocJar(type: Jar) {
 publishing {
     publications {
         maven(MavenPublication) {
-            groupId "com.xiao"
+            groupId "kotlin.xiao"
             if (project.hasProperty("projectGroup")) {
                 groupId property("projectGroup")
             }

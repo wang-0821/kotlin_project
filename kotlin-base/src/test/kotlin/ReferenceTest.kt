@@ -1,7 +1,7 @@
-import com.xiao.base.testing.KtTestBase
-import com.xiao.model.ClassTarget
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import xiao.base.model.ClassTarget
+import xiao.base.testing.KtTestBase
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicInteger
 

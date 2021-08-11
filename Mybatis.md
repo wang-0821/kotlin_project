@@ -206,7 +206,7 @@ SqlSessionFactoryBuilder可以从XML配置文件或者一个预先配置的Confi
         return returnObject;
       }
       public void setProperties(Properties properties) {
-        this.com.xiao.boot.mybatis.properties = properties;
+        this.properties = properties;
       }
     }
     
@@ -764,7 +764,7 @@ resultMaps、loadedResources、sqlFragments。
                     根据SqlCommand.name获取MappedStatement
                                         |
                                         V
-        执行DefaultSqlSession.executor.query(MappedStatement, parameter, 
+        执行DefaultSqlSession.xiao.base.executor.query(MappedStatement, parameter, 
             RowBounds.DEFAULT, ResultHandler.NO_RESULT_HANDLER)
                                         |
                                         V
@@ -780,11 +780,11 @@ resultMaps、loadedResources、sqlFragments。
        如果resultHandler为空，那么根据CacheKay从Executor.localCache中获取缓存，没有继续执行
                                         |
                                         V                                                 
-                执行configuration.newStatementHandler(executor, ms, 
+                执行configuration.newStatementHandler(xiao.base.executor, ms, 
                    parameter, rowBounds, resultHandler, boundSql)
                                         |
                                         V
-                创建PreparedStatementHandler(executor, ms, parameter, 
+                创建PreparedStatementHandler(xiao.base.executor, ms, parameter, 
                     rowBounds, resultHandler, boundSql)
                                         |
                                         V

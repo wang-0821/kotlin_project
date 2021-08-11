@@ -1,19 +1,19 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.xiao.boot.base.env.EnvInfoConfiguration,\
-com.xiao.boot.base.property.KtConfigurationPostProcessor
+xiao.boot.base.env.EnvInfoConfiguration,\
+xiao.boot.base.property.KtConfigurationPostProcessor
 
 # post process TestExecutionListener list
 org.springframework.boot.test.context.DefaultTestExecutionListenersPostProcessor=\
-com.xiao.boot.base.testing.TestExecutionListenerFilterPostProcessor
+xiao.boot.base.testing.TestExecutionListenerFilterPostProcessor
 
 # set TestExecutionListener
 org.springframework.test.context.TestExecutionListener=\
-com.xiao.boot.base.testing.TestSpringExecutionListener
+xiao.boot.base.testing.TestSpringExecutionListener
 
 # set autoConfiguration filter
 org.springframework.boot.autoconfigure.AutoConfigurationImportFilter=\
-com.xiao.boot.base.filter.AutoConfigurationExcludeFilter
+xiao.boot.base.filter.AutoConfigurationExcludeFilter
 
 # Application Listeners
 org.springframework.context.ApplicationListener=\
-com.xiao.boot.base.listener.SpringContextRefreshedEventListener
+xiao.boot.base.listener.SpringContextRefreshedEventListener
