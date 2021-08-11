@@ -5,6 +5,7 @@ import com.xiao.boot.mybatis.testing.TestMapperTables
 import com.xiao.test.boot.mybatis.model.User
 import org.apache.ibatis.annotations.Param
 import org.apache.ibatis.annotations.Select
+import org.apache.ibatis.annotations.Update
 
 /**
  *
@@ -41,6 +42,18 @@ interface UserMapper {
     )
     @MapperRetry
     fun findByIdWithJoin(@Param("id") id: Long): User?
+
+    @Update(
+        """
+        UPDATE
+            users
+        SET
+            username = #{username}
+        WHERE
+            id = #{id}
+        """
+    )
+    fun updateUsernameById(@Param("id") id: Long, @Param("username") username: String)
 
     companion object {
         private const val TABLE = "users"
