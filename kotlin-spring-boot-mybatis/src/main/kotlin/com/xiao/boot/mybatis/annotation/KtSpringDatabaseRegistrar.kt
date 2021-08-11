@@ -1,12 +1,16 @@
 package com.xiao.boot.mybatis.annotation
 
-import com.xiao.boot.mybatis.database.BaseDatabase.Companion.configurationName
+import com.xiao.boot.mybatis.database.BaseDatabase.Companion.configurationFactoryMethodName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceFactoryMethodName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.sqlSessionFactoryName
+import com.xiao.boot.mybatis.database.BaseDatabase.Companion.transactionManagerName
+import com.xiao.boot.mybatis.database.BaseDatabase.Companion.transactionServiceName
 import com.xiao.boot.mybatis.factory.KtMapperFactoryBean
+import com.xiao.boot.mybatis.tx.SpringPlatformTransactionService
 import org.mybatis.spring.SqlSessionFactoryBean
 import org.mybatis.spring.mapper.ClassPathMapperScanner
+import org.springframework.beans.factory.config.ConstructorArgumentValues
 import org.springframework.beans.factory.config.RuntimeBeanReference
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.beans.factory.support.GenericBeanDefinition
@@ -15,6 +19,7 @@ import org.springframework.context.annotation.ImportBeanDefinitionRegistrar
 import org.springframework.core.annotation.AnnotationAttributes
 import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.core.type.AnnotationMetadata
+import org.springframework.jdbc.datasource.DataSourceTransactionManager
 import org.springframework.util.StringUtils
 import util.getBeanDefinitionsByBeanClassName
 
@@ -52,7 +57,8 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
         val scanner = ClassPathMapperScanner(registry)
         val dataSourceBeanName = dataSourceName(name)
         val sqlSessionFactoryBeanName = sqlSessionFactoryName(name)
-        val configurationBeanName = configurationName(name)
+        val configurationBeanName = configurationFactoryMethodName(name)
+        val transactionManagerBeanName = transactionManagerName(name)
 
         // register mapper beanDefinition list
         registerMapperBeanDefinitions(mapperBasePackages, sqlSessionFactoryBeanName, scanner)
@@ -62,6 +68,12 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
 
         // register configuration beanDefinition
         registerConfigurationBeanDefinition(databaseBeanName, configurationBeanName, registry)
+
+        // register transaction manager for spring tx
+        registerTransactionManager(transactionManagerBeanName, dataSourceBeanName, registry)
+
+        // register transaction service beanDefinition
+        registerTransactionService(transactionServiceName(name), transactionManagerBeanName, registry)
 
         // register sqlSessionFactory beanDefinition
         registerSqlSessionFactoryBeanDefinition(
@@ -123,7 +135,7 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
             GenericBeanDefinition()
                 .apply {
                     factoryBeanName = databaseBeanName
-                    factoryMethodName = configurationName()
+                    factoryMethodName = configurationFactoryMethodName()
                 }
         )
     }
@@ -136,7 +148,6 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
         scanner: ResourcePatternResolver,
         registry: BeanDefinitionRegistry
     ) {
-        val xmlMapperResources = scanner.getResources(mapperXmlPattern)
         registry.registerBeanDefinition(
             beanName,
             GenericBeanDefinition()
@@ -144,7 +155,46 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
                     beanClass = SqlSessionFactoryBean::class.java
                     propertyValues.add("dataSource", RuntimeBeanReference(dataSourceBeanName))
                     propertyValues.add("configuration", RuntimeBeanReference(configurationBeanName))
-                    propertyValues.add("mapperLocations", xmlMapperResources)
+                    if (mapperXmlPattern.isNotEmpty()) {
+                        val xmlMapperResources = scanner.getResources(mapperXmlPattern)
+                        propertyValues.add("mapperLocations", xmlMapperResources)
+                    }
+                }
+        )
+    }
+
+    private fun registerTransactionManager(
+        beanName: String,
+        dataSourceBeanName: String,
+        registry: BeanDefinitionRegistry
+    ) {
+        registry.registerBeanDefinition(
+            beanName,
+            GenericBeanDefinition()
+                .apply {
+                    beanClass = DataSourceTransactionManager::class.java
+                    constructorArgumentValues = ConstructorArgumentValues()
+                        .apply {
+                            addGenericArgumentValue(RuntimeBeanReference(dataSourceBeanName))
+                        }
+                }
+        )
+    }
+
+    private fun registerTransactionService(
+        beanName: String,
+        transactionManagerBeanName: String,
+        registry: BeanDefinitionRegistry
+    ) {
+        registry.registerBeanDefinition(
+            beanName,
+            GenericBeanDefinition()
+                .apply {
+                    beanClass = SpringPlatformTransactionService::class.java
+                    constructorArgumentValues = ConstructorArgumentValues()
+                        .apply {
+                            addGenericArgumentValue(RuntimeBeanReference(transactionManagerBeanName))
+                        }
                 }
         )
     }

@@ -15,6 +15,7 @@ import javax.sql.DataSource
 import kotlin.reflect.KClass
 
 /**
+ * TODO improve performance by coroutine.
  *
  * @author lix wang
  */

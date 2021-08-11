@@ -92,11 +92,13 @@ abstract class BaseDatabase(
     companion object {
         const val DATABASE_NAME_KEY = "KT_MYSQL_DATABASE_NAME"
         fun databaseName(name: String) = "${name}Database"
-        fun configurationName(name: String) = "${name}Configuration"
+        fun configurationFactoryMethodName(name: String) = "${name}Configuration"
         fun sqlSessionFactoryName(name: String) = "${name}SqlSessionFactory"
         fun dataSourceName(name: String) = "${name}DataSource"
+        fun transactionManagerName(name: String) = "${name}TransactionManager"
+        fun transactionServiceName(name: String) = "${name}TransactionService"
         fun dataSourceFactoryMethodName(): String = getDatabaseMethodName("createDataSource")
-        fun configurationName(): String = getDatabaseMethodName("createConfiguration")
+        fun configurationFactoryMethodName(): String = getDatabaseMethodName("createConfiguration")
 
         private fun getDatabaseMethodName(name: String): String {
             val methods = BaseDatabase::class.java.methods

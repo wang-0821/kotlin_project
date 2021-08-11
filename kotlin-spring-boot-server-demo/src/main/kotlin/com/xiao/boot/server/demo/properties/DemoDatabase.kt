@@ -1,4 +1,4 @@
-package com.xiao.test.boot.mybatis.properties
+package com.xiao.boot.server.demo.properties
 
 import com.xiao.boot.mybatis.annotation.KtSpringDatabase
 import com.xiao.boot.mybatis.database.BaseDatabase
@@ -11,17 +11,18 @@ import org.springframework.stereotype.Component
 @Component
 @KtSpringDatabase(
     name = DemoDatabase.NAME,
-    mapperBasePackage = "com.xiao.test.boot.mybatis.mapper",
-    mapperXmlPattern = "classpath*:mybatis/mapper/*.xml",
+    mapperBasePackage = "com.xiao.boot.server.demo.mybatis.mapper",
     dataScriptPattern = "classpath*:db/${DemoDatabase.NAME}/*.sql"
 )
-class DemoDatabase(properties: DemoDatabaseProperties) : BaseDatabase(
+class DemoDatabase(
+    properties: DemoProperties
+) : BaseDatabase(
     properties.databaseUrl,
     properties.databaseUsername,
     properties.databasePassword
 ) {
     companion object {
         const val NAME = "demo"
-        const val transactionServiceName = "demoTransactionService"
+        const val transactionServiceName = "${NAME}TransactionService"
     }
 }
