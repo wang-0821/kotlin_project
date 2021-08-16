@@ -4,7 +4,8 @@
 * [2.IO](#2)
 * [3.线程](#3)
 * [4.Kotlin协程](#4)
-* [5.代码规范及测试](#5)
+* [5.Spring事务](#5)
+* [6.代码规范及测试](#6)
 
 <h2 id="1">1.项目简介</h2>
 &emsp;&emsp; 本项目中包含一些源码阅读笔记和技术书阅读笔记。本项目分为12个子模块，两个大类，一类单纯做了一些功能，
@@ -308,6 +309,7 @@ class CoroutineThreadLocal<T>(
 <h2 id="4">4.Kotlin协程</h2>
 &emsp;&emsp; 协程是非阻塞的，我们可以在会发生CPU自旋的地方使用协程。利用异步回调的思想，
 可以很简单的将阻塞线程转化为非阻塞的Kotlin协程。可以利用CompletableDeferred将非suspend lambda块转化为协程执行。
+
 ```kotlin
 @Suppress("UNCHECKED_CAST")
 fun <T> CoroutineScope.deferred(block: () -> T): SafeDeferred<T> {
@@ -338,7 +340,7 @@ suspend fun <T : Any?> RedisFuture<T>.suspend(): SafeDeferred<T> {
 }
 ```
 
-改造Undertow HttpHandler及RequestMappingHandlerAdapter可以简单的实现，Http请求的协程化，
+改造Undertow HttpHandler及RequestMappingHandlerAdapter，可以简单的实现Http请求的协程化，
 由于这里使用了runBlocking，因此还是会有部分阻塞，可以参考DispatcherServlet执行流程，
 在WebServer处理链最顶层实现一个类DispatcherServlet的协程化处理模型，进而实现全局协程化。
 
@@ -383,27 +385,26 @@ class UndertowCoroutineInitialHttpHandler(
 
 Servlet协程化简单实现：
 ```kotlin
-class CoroutineRequestMappingHandlerAdapter(
-    private val serverArgs: KtServerArgs
-) : RequestMappingHandlerAdapter() {
-    override fun createInvocableHandlerMethod(handlerMethod: HandlerMethod): ServletInvocableHandlerMethod {
-        return CoroutineServletInvocableHandlerMethod(handlerMethod)
-            .apply {
-                ktServerArgs = serverArgs
-            }
-    }
+class CoroutineServletInvocableHandlerMethod(
+    handlerMethod: HandlerMethod
+) : ServletInvocableHandlerMethod(handlerMethod) {
+    internal var ktServerArgs: KtServerArgs? = null
+    private val isSuspendMethod = KotlinDetector.isSuspendingFunction(bridgedMethod)
 
-    @Throws(Exception::class)
-    override fun handleInternal(
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-        handlerMethod: HandlerMethod
-    ): ModelAndView? {
-        try {
-            return super.handleInternal(request, response, handlerMethod)
-        } catch (ex: Exception) {
-            RequestContainer.getRequestValue(RequestInfo.KEY)?.setThrowable(ex)
-            throw ex
+    override fun invokeForRequest(
+        request: NativeWebRequest,
+        mavContainer: ModelAndViewContainer?,
+        vararg providedArgs: Any?
+    ): Any? {
+        return if (isSuspendMethod) {
+            // TODO use coroutine whole request process.
+            runBlocking(getCoroutineContext()) {
+                val args = getMethodArgumentValues(request, mavContainer, *providedArgs)
+                invokeMethodSuspend(*args)
+            }
+        } else {
+            val args = getMethodArgumentValues(request, mavContainer, *providedArgs)
+            invokeMethod(*args)
         }
     }
 }
@@ -447,8 +448,107 @@ class DemoControllerTest : KtSpringTestBase() {
     }
 }
 ```
+<h2 id="5">6.Spring事务</h2>
+&emsp;&emsp; Spring事务基于AOP实现，Spring Aop通过两种代理方式实现：JDK动态代理和CGLIB动态代理。
+JDK动态代理是通过反射生成目标代理接口的匿名实现类，而CGLIB通过继承，使用字节码增强，为目标代理类生成
+代理子类。AOP只有基础功能如日志、鉴权才可能会用到，但是AOP使用复杂，因此推荐使用注解加拦截的方式替代AOP，
+例如有些方法需要鉴权，有些不用，那么可以在@Controller接口方法上添加鉴权注解，
+然后利用Spring的HandlerInterceptor拦截，这样更直观更便捷。
 
-<h2 id="5">5.代码规范及测试</h2>
+@Transactional方法的执行逻辑如下，本质是通过生成的MethodInterceptor Bean，环绕事务方法执行：
+```java
+public Object invoke(MethodInvocation invocation) throws Throwable {
+        // Work out the target class: may be {@code null}.
+        // The TransactionAttributeSource should be passed the target class
+        // as well as the method, which may be from an interface.
+        Class<?> targetClass = (invocation.getThis() != null ? AopUtils.getTargetClass(invocation.getThis()) : null);
+
+        // Adapt to TransactionAspectSupport's invokeWithinTransaction...
+        return invokeWithinTransaction(invocation.getMethod(), targetClass, new CoroutinesInvocationCallback() {
+                @Override
+                @Nullable
+                public Object proceedWithInvocation() throws Throwable {
+                        return invocation.proceed();
+                }
+                @Override
+                public Object getTarget() {
+                        return invocation.getThis();
+                }
+                @Override
+                public Object[] getArguments() {
+                        return invocation.getArguments();
+                }
+        });
+}
+```
+Spring @Transactional的缺点在于：在代理模式下，仅拦截代理传入的外部方法调用，因此对象内部调用@Transactional并不会生效，
+了解了@Transactional工作机制后，我们可以自己写一个TransactionService，在DataSource创建时注入Bean，
+这样可以以方法调用的形式来使用，使用更方便。
+```kotlin
+// 自定义Spring TransactionService实现
+class SpringPlatformTransactionService(
+    private val transactionManager: PlatformTransactionManager
+) : TransactionService {
+    override fun <T> runInTransaction(block: () -> T): T {
+        return runInTransaction(DEFAULT_TRANSACTION_WRAPPER, block)
+    }
+
+    override fun <T> runInTransaction(wrapper: TransactionWrapper, block: () -> T): T {
+        val transactionAttribute = parseTransactionAttribute(wrapper)
+        val transactionStatus = transactionManager.getTransaction(transactionAttribute)
+        val value: T
+        try {
+            value = block()
+        } catch (ex: Throwable) {
+            completeTransactionAfterThrowing(transactionStatus, transactionAttribute, transactionManager, ex)
+            throw ex
+        }
+        transactionManager.commit(transactionStatus)
+        return value
+    }
+}
+
+// TransactionService使用
+@Service
+class TransactionDemoService(
+    private val userMapper: UserMapper,
+    @Qualifier(DemoDatabase.transactionServiceName)
+    private val transactionService: TransactionService
+) {
+    @Transactional(rollbackFor = [Exception::class])
+    fun updateUsernameInTransaction(id: Long, username: String) {
+        userMapper.updateUsernameById(id, username)
+        throw RuntimeException("throw exception")
+    }
+
+    fun rollbackOnTransactionService(id: Long, username: String) {
+        transactionService.runInTransaction {
+            userMapper.updateUsernameById(id, username)
+            throw RuntimeException("throw exception")
+        }
+    }
+}
+
+// TransactionService测试
+@Test
+fun `test rollback on transaction service`() {
+    Assertions.assertEquals(userMapper.selectById(1).username, "user_1")
+    assertThrows<HttpServerErrorException.InternalServerError> {
+        RestTemplate().exchange(
+            "http://localhost:${envInfoProvider.port()}/api/v1/demo/transaction/testTransactionServiceRollback" +
+                "?id=1&username=name123",
+            HttpMethod.POST,
+            HttpEntity.EMPTY,
+            Unit::class.java,
+            mapOf<String, String>()
+        )
+    }
+    Assertions.assertEquals(userMapper.selectById(1).username, "user_1")
+}
+```
+
+
+<h2 id="6">6.代码规范及测试</h2>
 &emsp;&emsp; 本项目使用ktlint来进行代码格式校验及自动纠正。定义gradle ktlintCheck 任务来校验kotlin代码格式，并将ktlintCheck任务放置在
 verification check任务之前，那么在执行gradle build之前就会先执行ktlintCheck。还定义了一个 gradle ktlintFormat 任务，这个任务是单独的，
 执行这个任务可以根据代码规范，自动进行格式纠正。
