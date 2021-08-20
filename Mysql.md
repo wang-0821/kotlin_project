@@ -887,15 +887,39 @@ User Record 用户记录即行记录，Free Space 空闲空间，Page Directory 
             SELECT ... FOR UPDATE;
         
         Record Lock：单个行记录上的锁。总是会锁住索引记录。如果没有设置索引，会使用隐式的主键来进行锁定。
-            只使用唯一索引查询，且只锁定一条记录时，InnoDB会使用行锁。
         
         Gap Lock：间隙锁，锁住一个范围，但不包含记录本身。
-            1，使用普通索引检索时，不管出现何种查询，只要加锁，都会产生间隙锁。
-            2，使用多列唯一索引。
-            3，使用唯一索引锁定多行记录。
         
         Next-Key Lock：锁住一个范围，并且锁住记录本身，范围为前面范围+当前记录。 例如a字段为索引值有：1，2，4。
             可重复读事务下执行 SELECT * FROM t WHERE a < 4 FOR UPDATE; 此时会把 <= 4的都锁住。
+            
+        加锁规则：只有可重复读才回加间隙锁和Next—Key锁。RR级别以下使用行锁。
+          1，原则1: 加锁的基本单位是Next—Key Lock，Next-Key Lock是前开后闭区间。
+          2，原则2: 查找过程中访问到的对象才会加锁。
+          3，优化1: 索引上的等值查询，给唯一索引加锁时，Next-Key Lock退化为行锁。
+          4，优化2: 索引上的等值查询，向右遍历且最后一个值不满足等值条件时，Next-Key Lock退化为间隙锁。
+          5，一个bug：唯一索引上的范围查询会访问到不满足条件的第一个值为止。
+          
+          table t (id INT PRIMARY KEY, c INT KEY, d INT);
+              id    c   d
+              0     0   0
+              5     5   5
+              10    10  10
+              15    15  15
+              20    20  20
+              25    25  25
+              
+          begin; select * from t where id = 10 for update; 只锁住了id = 10这条记录。
+          对主键等值加锁，且值存在时，会对表添加意向锁，并对主键索引添加行锁。
+          
+          begin; select * from t where id = 11 for update; 此时锁住(10, 15)。
+          当数据不存在时，主键等值查询，会锁住该主键查询条件所在的间隙。
+          
+          begin; select * from t where id >= 10 and id < 11 for update; 此时锁住[10, 15)。
+          begin; select * from t where id > 10 and id <= 15 for update; 此时锁住(10, 15]。之前的版本会有bug，
+          会一直向前扫描到第一个不满足条件的行，因此会锁(10, 20]。因此8.0.17版本是前开后闭，8.0.18版本及之后，
+          主键判断不等时，不会锁住后闭的区间。临界 <= 查询时，8.0.17会锁住下一个Next-Key的前开后闭区间，
+          8.0.18及之后修复了这个bug。
             
 ### 事务
 &emsp;&emsp; 事务会把数据库从一种一致状态转换为另一种一致状态。要么确保所有修改都已经保存了，要么所有修改都不保存。
