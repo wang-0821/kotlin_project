@@ -29,7 +29,7 @@ class KtTestSqlSource(
             val notMigratedTables = totalTables.filter { !migratedTables.contains(it) }
             if (notMigratedTables.isNotEmpty()) {
                 throw PersistenceException(
-                    "Forget to migrate tables: ${notMigratedTables.joinToString()} for sql: $sql"
+                    "Forget to migrate tables: ${notMigratedTables.joinToString()} for database: $databaseName."
                 )
             }
         }

@@ -50,15 +50,6 @@ class UserMapperTest : KtSpringMybatisTestBase() {
         val ex = assertThrows<MyBatisSystemException> {
             userMapper.findByIdWithJoin(1)
         }
-        Assertions.assertEquals(
-            ex.cause!!.message,
-            "Forget to migrate tables: user_task for sql: SELECT\n" +
-                "            users.id, users.username, users.password\n" +
-                "        FROM\n" +
-                "            users\n" +
-                "        INNER JOIN user_task ON user_task.user_id = users.id\n" +
-                "        WHERE\n" +
-                "            users.id = ?"
-        )
+        Assertions.assertEquals(ex.cause!!.message, "Forget to migrate tables: user_task for database: demoDatabase.")
     }
 }
