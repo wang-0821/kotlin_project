@@ -29,7 +29,6 @@ object RedisHelper {
     @JvmStatic
     fun getRedisClusterService(urls: Set<String>): RedisClusterService {
         val redisURIs = urls.map { RedisURI.create(it) }
-
         return Proxy.newProxyInstance(
             RedisClusterService::class.java.classLoader,
             arrayOf(RedisClusterService::class.java),
