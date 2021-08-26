@@ -1,5 +1,7 @@
 package com.xiao.redis.client.proxy
 
+import com.xiao.base.logging.KtLogger
+import com.xiao.base.logging.LoggerType
 import com.xiao.base.logging.Logging
 import com.xiao.base.util.ProxyUtils
 import io.lettuce.core.cluster.RedisClusterClient
@@ -19,5 +21,6 @@ class RedisClusterAsyncServiceProxy(redisClient: RedisClusterClient) : BaseRedis
         }
     }
 
+    @KtLogger(LoggerType.REDIS)
     companion object : Logging()
 }
