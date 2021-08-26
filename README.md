@@ -5,7 +5,8 @@
 * [3.线程](#3)
 * [4.Kotlin协程](#4)
 * [5.Spring事务](#5)
-* [6.代码规范及测试](#6)
+* [6.Redis](#6)
+* [7.代码规范及测试](#7)
 
 <h2 id="1">1.项目简介</h2>
 &emsp;&emsp; 本项目中包含一些源码阅读笔记和技术书阅读笔记。本项目分为12个子模块，两个大类，一类单纯做了一些功能，
@@ -323,23 +324,6 @@ fun <T> CoroutineScope.deferred(block: () -> T): SafeDeferred<T> {
 }
 ```
 
-将Lettuce阻塞的RedisFuture转化为非阻塞的Coroutine Deferred。
-```kotlin
-// add suspend modifier, because we expect this method used in coroutine.
-@Suppress("UNCHECKED_CAST", "RedundantSuspendModifier")
-suspend fun <T : Any?> RedisFuture<T>.suspend(): SafeDeferred<T> {
-    val deferred = CompletableDeferred<T>()
-    val result = SafeCompletableDeferred(deferred)
-    whenComplete { value, throwable ->
-        throwable?.also {
-            throw it
-        }
-        CoroutineCompletableCallback({ value }, null, deferred as CompletableDeferred<Any?>).run()
-    }
-    return result
-}
-```
-
 改造Undertow HttpHandler及RequestMappingHandlerAdapter，可以简单的实现Http请求的协程化，
 由于这里使用了runBlocking，因此还是会有部分阻塞，可以参考DispatcherServlet执行流程，
 在WebServer处理链最顶层实现一个类DispatcherServlet的协程化处理模型，进而实现全局协程化。
@@ -448,7 +432,7 @@ class DemoControllerTest : KtSpringTestBase() {
     }
 }
 ```
-<h2 id="5">6.Spring事务</h2>
+<h2 id="5">5.Spring事务</h2>
 &emsp;&emsp; Spring事务基于AOP实现，Spring Aop通过两种代理方式实现：JDK动态代理和CGLIB动态代理。
 JDK动态代理是通过反射生成目标代理接口的匿名实现类，而CGLIB通过继承，使用字节码增强，为目标代理类生成
 代理子类。AOP只有基础功能如日志、鉴权才可能会用到，但是AOP使用复杂，因此推荐使用注解加拦截的方式替代AOP，
@@ -547,8 +531,129 @@ fun `test rollback on transaction service`() {
 }
 ```
 
+<h2 id="6">6.Redis</h2>
+&emsp;&emsp; Redis客户端我们通常采用Lettuce，Lettuce使用Netty，支持同步、异步、响应式模式。
+多个线程可以共享一个连接实例，不必担心多线程并发问题。Redis使用时，我们可以采用主从模式、哨兵模式、
+集群模式。对于数据量比较大的情况下，优先使用集群模式，集群模式扩容更方便。
 
-<h2 id="6">6.代码规范及测试</h2>
+Lettuce集群使用：1，先定义一个基础的抽象代理类，可以缓存连接实例。
+```kotlin
+abstract class AbstractRedisProxy<T : StatefulConnection<String, String>>(
+    private val redisClient: AbstractRedisClient
+) : InvocationHandler {
+    @Volatile private var connection: T? = null
+
+    fun getConnection(): T {
+        return if (isConnectionValid()) {
+            connection!!
+        } else {
+            val oldConnection = connection
+            synchronized(redisClient) {
+                if (isConnectionValid() && oldConnection != connection) {
+                    return connection!!
+                }
+                redisClient.defaultTimeout = RedisHelper.REDIS_TIMEOUT
+                connection = connect()
+                connection!!
+            }
+        }
+    }
+
+    protected abstract fun connect(): T
+
+    private fun isConnectionValid(): Boolean {
+        return connection != null && connection!!.isOpen
+    }
+}
+```
+
+2，定义一个抽象的ClusterClient代理对象，用来存放Redis Client实例。
+```kotlin
+abstract class BaseRedisClusterProxy(
+    private val redisClient: RedisClusterClient
+) : AbstractRedisProxy<StatefulRedisClusterConnection<String, String>>(redisClient) {
+    override fun connect(): StatefulRedisClusterConnection<String, String> {
+        return redisClient.connect()
+    }
+}
+```
+
+3，定义一个具体的Redis Client代理对象
+```kotlin
+class RedisClusterAsyncServiceProxy(redisClient: RedisClusterClient) : BaseRedisClusterProxy(redisClient) {
+    override fun invoke(proxy: Any?, method: Method, args: Array<Any?>?): Any? {
+        try {
+            return ProxyUtils.invoke(getConnection().async(), method, args)
+        } catch (e: Exception) {
+            log.error("Redis cluster async method: ${method.name} failed, ${e.message}.", e)
+            throw e
+        }
+    }
+
+    @KtLogger(LoggerType.REDIS)
+    companion object : Logging()
+}
+```
+
+4，Redis集群异步方法使用
+```kotlin
+@JvmStatic
+fun getRedisClusterAsyncService(urls: Set<String>): RedisClusterAsyncService {
+    val redisURIs = urls.map { RedisURI.create(it) }
+    return Proxy.newProxyInstance(
+        RedisClusterAsyncService::class.java.classLoader,
+        arrayOf(RedisClusterAsyncService::class.java),
+        RedisClusterAsyncServiceProxy(RedisClusterClient.create(clientResources, redisURIs))
+    ) as RedisClusterAsyncService
+}
+```
+
+5，RedisFuture转Kotlin协程Deferred方法。
+```kotlin
+// add suspend modifier, because we expect this method used in coroutine.
+@Suppress("UNCHECKED_CAST", "RedundantSuspendModifier")
+suspend fun <T : Any?> RedisFuture<T>.suspend(): SafeDeferred<T> {
+    val deferred = CompletableDeferred<T>()
+    val result = SafeCompletableDeferred(deferred)
+    whenComplete { value, throwable ->
+        throwable?.also {
+            throw it
+        }
+        CoroutineCompletableCallback({ value }, null, deferred as CompletableDeferred<Any?>).run()
+    }
+    return result
+}
+```
+
+6，Redis基于Kotlin协程的集群异步方法使用及测试
+```kotlin
+class RedisClusterClientTest : KtTestBase() {
+    @Test
+    fun `test redis cluster coroutine commands`() {
+        runBlocking {
+            val clusterAsyncCommands = RedisHelper.getRedisClusterAsyncService(CLUSTER_REDIS_URLS)
+            clusterAsyncCommands.del(KEY).suspend().awaitNanos()
+            clusterAsyncCommands.set(KEY, VALUE).suspend().awaitNanos()
+            Assertions.assertEquals(clusterAsyncCommands.get(KEY).suspend().awaitNanos(), VALUE)
+        }
+    }
+    
+    companion object {
+        private const val KEY = "hello"
+        private const val VALUE = "world"
+        private val CLUSTER_REDIS_URLS = setOf(
+            "redis://localhost:6381",
+            "redis://localhost:6382",
+            "redis://localhost:6383",
+            "redis://localhost:6384",
+            "redis://localhost:6385",
+            "redis://localhost:6386"
+        )
+    }
+}
+````
+
+<h2 id="7">7.代码规范及测试</h2>
 &emsp;&emsp; 本项目使用ktlint来进行代码格式校验及自动纠正。定义gradle ktlintCheck 任务来校验kotlin代码格式，并将ktlintCheck任务放置在
 verification check任务之前，那么在执行gradle build之前就会先执行ktlintCheck。还定义了一个 gradle ktlintFormat 任务，这个任务是单独的，
 执行这个任务可以根据代码规范，自动进行格式纠正。
