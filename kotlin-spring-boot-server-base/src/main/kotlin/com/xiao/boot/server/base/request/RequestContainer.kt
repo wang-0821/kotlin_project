@@ -1,4 +1,4 @@
-package com.xiao.boot.server.base.mvc
+package com.xiao.boot.server.base.request
 
 /**
  * @author lix wang

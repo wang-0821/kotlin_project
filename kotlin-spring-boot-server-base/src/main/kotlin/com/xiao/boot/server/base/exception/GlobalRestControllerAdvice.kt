@@ -2,8 +2,8 @@ package com.xiao.boot.server.base.exception
 
 import com.xiao.base.logging.Logging
 import com.xiao.boot.base.env.EnvInfoProvider
-import com.xiao.boot.server.base.mvc.RequestContainer
-import com.xiao.boot.server.base.mvc.RequestInfo
+import com.xiao.boot.server.base.request.RequestContainer
+import com.xiao.boot.server.base.request.RequestInfo
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus

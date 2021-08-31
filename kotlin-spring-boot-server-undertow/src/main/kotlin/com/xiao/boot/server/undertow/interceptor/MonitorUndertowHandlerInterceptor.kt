@@ -1,8 +1,8 @@
 package com.xiao.boot.server.undertow.interceptor
 
 import com.xiao.base.logging.Logging
-import com.xiao.boot.server.base.mvc.RequestContainer
-import com.xiao.boot.server.base.mvc.RequestInfo
+import com.xiao.boot.server.base.request.RequestContainer
+import com.xiao.boot.server.base.request.RequestInfo
 import io.undertow.server.HttpServerExchange
 import io.undertow.servlet.handlers.ServletRequestContext
 import org.springframework.stereotype.Component

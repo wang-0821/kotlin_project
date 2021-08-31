@@ -1,4 +1,4 @@
-package com.xiao.boot.server.base.mvc
+package com.xiao.boot.server.base.request
 
 import com.xiao.base.thread.KtFastThreadLocal
 
@@ -20,5 +20,6 @@ interface RequestInfo {
 
     companion object {
         val KEY = object : RequestKey<RequestInfo> {}
+        const val KEY_LOG_X_REQUEST_UUID = "KT-REQUEST-UUID"
     }
 }

@@ -1,10 +1,10 @@
 package com.xiao.test.boot.server.undertow
 
-import org.springframework.boot.autoconfigure.SpringBootApplication
+import com.xiao.boot.server.base.annotations.CoroutineSpringBootApplication
 
 /**
  *
  * @author lix wang
  */
-@SpringBootApplication
+@CoroutineSpringBootApplication
 class UndertowCoroutineApplication

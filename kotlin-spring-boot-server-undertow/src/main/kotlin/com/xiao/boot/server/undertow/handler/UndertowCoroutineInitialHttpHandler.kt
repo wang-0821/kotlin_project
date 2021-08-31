@@ -2,13 +2,15 @@ package com.xiao.boot.server.undertow.handler
 
 import com.xiao.base.thread.CoroutineThreadLocal
 import com.xiao.boot.server.base.mvc.KtServerArgs
-import com.xiao.boot.server.undertow.common.UndertowRequestInfo
+import com.xiao.boot.server.base.request.CoroutineLogContext
+import com.xiao.boot.server.undertow.request.UndertowRequestInfo
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import kotlinx.coroutines.launch
 import org.springframework.context.ApplicationContext
 import java.util.UUID
 import java.util.concurrent.Executor
+import kotlin.coroutines.CoroutineContext
 
 /**
  * @author lix wang
@@ -20,7 +22,7 @@ class UndertowCoroutineInitialHttpHandler(
 ) : UndertowInitialHttpHandler(applicationContext, httpHandler) {
     private val defaultExecutor = Executor { runnable ->
         ktServerArgs.coroutineScope!!.launch(
-            createCoroutineThreadLocal()
+            createCoroutineContext()
         ) {
             runnable.run()
         }
@@ -34,7 +36,7 @@ class UndertowCoroutineInitialHttpHandler(
         httpHandler.handleRequest(exchange)
     }
 
-    private fun createCoroutineThreadLocal(): CoroutineThreadLocal<UndertowRequestInfo> {
+    private fun createCoroutineContext(): CoroutineContext {
         val requestInfo = UndertowRequestInfo()
             .apply {
                 val uuid = UUID.randomUUID().toString()
@@ -46,6 +48,6 @@ class UndertowCoroutineInitialHttpHandler(
             requestInfo
         ).apply {
             requestInfo.threadContextElement = this
-        }
+        } + CoroutineLogContext(requestInfo.requestUuid!!)
     }
 }
