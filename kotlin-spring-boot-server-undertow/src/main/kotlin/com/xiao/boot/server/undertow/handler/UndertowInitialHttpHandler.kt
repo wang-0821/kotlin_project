@@ -11,6 +11,7 @@ import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import org.springframework.context.ApplicationContext
 import java.util.UUID
+import java.util.concurrent.Executor
 
 /**
  *
@@ -25,18 +26,7 @@ open class UndertowInitialHttpHandler(
 
     override fun handleRequest(exchange: HttpServerExchange) {
         prepareAttachment(exchange)
-        threadLocal.set(
-            UndertowRequestInfo()
-                .apply {
-                    requestStartMills = System.currentTimeMillis()
-                    requestUuid = UUID.randomUUID().toString()
-                }
-        )
-        try {
-            httpHandler.handleRequest(exchange)
-        } finally {
-            threadLocal.reset()
-        }
+        httpHandler.handleRequest(exchange)
     }
 
     protected fun prepareAttachment(exchange: HttpServerExchange) {

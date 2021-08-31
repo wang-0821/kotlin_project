@@ -58,5 +58,14 @@ dependencyManagement {
             entry "spring-jdbc"
             entry "spring-webmvc"
         }
+
+        // spring boot admin
+        dependencySet(group: "de.codecentric", version: "2.5.1") {
+            entry "spring-boot-admin-server"
+            entry "spring-boot-admin-server-ui"
+            entry "spring-boot-admin-client"
+            entry "spring-boot-admin-starter-server"
+            entry "spring-boot-admin-starter-client"
+        }
     }
 }

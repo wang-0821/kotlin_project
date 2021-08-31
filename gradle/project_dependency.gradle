@@ -47,6 +47,7 @@ compileKotlin {
 
 configurations.all {
     exclude group: "org.springframework.boot", module: "spring-boot-starter-logging"
+    exclude group: "org.springframework.boot", module: "spring-boot-starter-tomcat"
 }
 
 // 配置所有单元测试的任务信息打印到Console

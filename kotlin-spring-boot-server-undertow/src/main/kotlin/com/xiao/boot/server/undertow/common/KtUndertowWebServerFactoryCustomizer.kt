@@ -37,7 +37,7 @@ class KtUndertowWebServerFactoryCustomizer(
     private fun customizeWebServerBuilder(builder: Undertow.Builder) {
         val useCoroutineDispatcher = ktServerArgs?.enableCoroutineDispatcher ?: false
         if (useCoroutineDispatcher) {
-            builder.setWorkerThreads(Runtime.getRuntime().availableProcessors().coerceAtMost(2))
+            builder.setWorkerThreads(Runtime.getRuntime().availableProcessors().coerceAtMost(0))
         }
     }
 
