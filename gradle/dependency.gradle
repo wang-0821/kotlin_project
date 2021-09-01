@@ -64,5 +64,6 @@ dependencyManagement {
             entry "spring-boot-admin-starter-server"
             entry "spring-boot-admin-starter-client"
         }
+        dependency "org.jolokia:jolokia-core:1.7.0"
     }
 }
