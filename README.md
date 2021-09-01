@@ -6,7 +6,9 @@
 * [4.Kotlin协程](#4)
 * [5.Spring事务](#5)
 * [6.Redis](#6)
-* [7.代码规范及测试](#7)
+* [7.SpringBootApplication协程实现](#7)
+* [8.数据源的注入](#8)
+* [9.代码规范及测试](#9)
 
 <h2 id="1">1.项目简介</h2>
 &emsp;&emsp; 本项目中包含一些源码阅读笔记和技术书阅读笔记。本项目分为12个子模块，两个大类，一类单纯做了一些功能，
@@ -653,7 +655,224 @@ class RedisClusterClientTest : KtTestBase() {
 }
 ````
 
-<h2 id="7">7.代码规范及测试</h2>
+<h2 id="7">7.SpringBootApplication协程实现</h2>
+&emsp;&emsp; SpringBoot 的@EnableAutoConfiguration是通过@Import的方式来实现了Bean的注入。
+我们在开启基于协程的SpringBootApplication时，也可以通过这种@Import注解的方式实现。
+
+首先定义一个支持协程的SpringBootApplication注解：
+```kotlin
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.CLASS)
+@Inherited
+@MustBeDocumented
+@ComponentScan
+@SpringBootConfiguration
+@EnableAutoConfiguration
+@EnableCoroutineDispatcher
+annotation class CoroutineSpringBootApplication
+```
+
+再定义一个协程开关注解，用来注入CoroutineDispatcherRegistrar Bean实现协程开关：
+```kotlin
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.CLASS, AnnotationTarget.ANNOTATION_CLASS)
+@Import(CoroutineDispatcherRegistrar::class)
+annotation class EnableCoroutineDispatcher
+```
+
+基于协程开关，来进行不同的配置：
+```kotlin
+@Component
+class KtUndertowWebServerFactoryCustomizer(
+    private val applicationContext: ApplicationContext,
+    ktServerArgsProvider: ObjectProvider<KtServerArgs>
+) : WebServerFactoryCustomizer<UndertowServletWebServerFactory>, Ordered {
+    private var ktServerArgs: KtServerArgs? = ktServerArgsProvider.ifUnique
+
+    override fun customize(factory: UndertowServletWebServerFactory) {
+        factory.addBuilderCustomizers(this::customizeWebServerBuilder)
+        factory.addDeploymentInfoCustomizers(this::customizeDeploymentInfo)
+    }
+
+    override fun getOrder(): Int {
+        return Ordered.LOWEST_PRECEDENCE
+    }
+
+    private fun customizeWebServerBuilder(builder: Undertow.Builder) {
+        val useCoroutineDispatcher = ktServerArgs?.enableCoroutineDispatcher ?: false
+        if (useCoroutineDispatcher) {
+            builder.setWorkerThreads(Runtime.getRuntime().availableProcessors().coerceAtMost(2))
+        }
+    }
+
+    private fun customizeDeploymentInfo(deploymentInfo: DeploymentInfo) {
+        val useCoroutineDispatcher = ktServerArgs?.enableCoroutineDispatcher ?: false
+
+        // config initial handler
+        deploymentInfo.addInitialHandlerChainWrapper {
+            return@addInitialHandlerChainWrapper if (useCoroutineDispatcher) {
+                UndertowCoroutineInitialHttpHandler(applicationContext, it, ktServerArgs!!)
+            } else {
+                UndertowInitialHttpHandler(applicationContext, it)
+            }
+        }
+
+        // config inner handler
+        deploymentInfo.addInnerHandlerChainWrapper {
+            UndertowInnerHttpHandler(it)
+        }
+    }
+}
+```
+
+使用方式：
+```kotlin
+@CoroutineSpringBootApplication
+class UndertowCoroutineApplication
+```
+
+测试用例：
+```kotlin
+@SpringBootTest(
+    classes = [UndertowCoroutineApplication::class],
+    webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
+)
+class CoroutineDemoControllerTest : KtSpringTestBase() {
+    @Autowired
+    lateinit var envInfoProvider: EnvInfoProvider
+
+    @Test
+    fun `test request hello world`() {
+        val result = RestTemplate().exchange(
+            "http://localhost:${envInfoProvider.port()}/api/v1/demo/helloWorld",
+            HttpMethod.GET,
+            HttpEntity.EMPTY,
+            String::class.java,
+            mapOf<String, String>()
+        )
+        Assertions.assertEquals(result.body, "hello world")
+    }
+}
+```
+
+<h2 id="8">8.数据源的注入</h2>
+&emsp;&emsp; 采用@Import的方式进行数据源注入。
+
+```kotlin
+class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
+    override fun registerBeanDefinitions(
+        importingClassMetadata: AnnotationMetadata,
+        registry: BeanDefinitionRegistry
+    ) {
+        AnnotationAttributes.fromMap(
+            importingClassMetadata.getAnnotationAttributes(KtSpringDatabase::class.java.name)
+        )?.let {
+            registerDatabase(importingClassMetadata, it, registry)
+        }
+    }
+
+    private fun registerDatabase(
+        importingClassMetadata: AnnotationMetadata,
+        annotationAttributes: AnnotationAttributes,
+        registry: BeanDefinitionRegistry
+    ) {
+        val name = annotationAttributes.getString("name")
+        val mapperBasePackage = annotationAttributes.getString("mapperBasePackage")
+        val mapperXmlPattern = annotationAttributes.getString("mapperXmlPattern")
+        check(!name.isNullOrEmpty() && !mapperBasePackage.isNullOrEmpty())
+        val mapperBasePackages = StringUtils.tokenizeToStringArray(
+            mapperBasePackage,
+            ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS
+        )
+
+        val databaseBeanName = getDatabaseBeanName(importingClassMetadata, registry)
+        val scanner = ClassPathMapperScanner(registry)
+        val dataSourceBeanName = dataSourceName(name)
+        val sqlSessionFactoryBeanName = sqlSessionFactoryName(name)
+        val configurationBeanName = configurationFactoryMethodName(name)
+        val transactionManagerBeanName = transactionManagerName(name)
+
+        // register mapper beanDefinition list
+        registerMapperBeanDefinitions(mapperBasePackages, sqlSessionFactoryBeanName, scanner)
+
+        // register dataSource beanDefinition
+        registerDataSourceBeanDefinition(databaseBeanName, dataSourceBeanName, registry)
+
+        // register configuration beanDefinition
+        registerConfigurationBeanDefinition(databaseBeanName, configurationBeanName, registry)
+
+        // register transaction manager for spring tx
+        registerTransactionManager(transactionManagerBeanName, dataSourceBeanName, registry)
+
+        // register transaction service beanDefinition
+        registerTransactionService(transactionServiceName(name), transactionManagerBeanName, registry)
+
+        // register sqlSessionFactory beanDefinition
+        registerSqlSessionFactoryBeanDefinition(
+            sqlSessionFactoryBeanName,
+            dataSourceBeanName,
+            configurationBeanName,
+            mapperXmlPattern,
+            scanner.resourceLoader as ResourcePatternResolver,
+            registry
+        )
+    }
+}
+```
+
+测试环境基于Junit5 Extension，采用Flyway数据迁移框架，实现全局只执行一次的数据库Schema迁移：
+```kotlin
+class KtMySqlFlywayMigrationExtension : BeforeAllCallback {
+    override fun beforeAll(context: ExtensionContext) {
+        if (!migrated) {
+            synchronized(KtMySqlFlywayMigrationExtension::class) {
+                if (!migrated) {
+                    doMigrate(TestSpringContextUtils.getTestContext(context.requiredTestClass))
+                }
+            }
+        }
+    }
+
+    private fun doMigrate(testContext: TestContext) {
+        val environment = testContext.applicationContext.environment
+        val testDatabaseUrl = environment.getProperty(
+            ServerConstants.TEST_MYSQL_URL,
+            ServerConstants.DEFAULT_TEST_MYSQL_URL
+        )
+        val testDatabaseUsername = environment.getProperty(
+            ServerConstants.TEST_MYSQL_USERNAME,
+            ServerConstants.DEFAULT_TEST_MYSQL_USERNAME
+        )
+        val testDatabasePassword = environment.getProperty(
+            ServerConstants.TEST_MYSQL_PASSWORD,
+            ServerConstants.DEFAULT_TEST_MYSQL_PASSWORD
+        )
+
+        Flyway
+            .configure()
+            .dataSource(testDatabaseUrl, testDatabaseUsername, testDatabasePassword)
+            .sqlMigrationSuffixes(*MIGRATION_FILE_SUFFIX)
+            .schemas(*MIGRATION_SCHEMAS)
+            .load()
+            .apply {
+                try {
+                    migrate()
+                } catch (e: FlywayValidateException) {
+                    repair()
+                    migrate()
+                }
+            }
+    }
+
+    companion object {
+        @Volatile private var migrated = false
+        val MIGRATION_FILE_SUFFIX = arrayOf(".sql")
+        val MIGRATION_SCHEMAS = arrayOf("testFlywaySchema")
+    }
+}
+```
+
+<h2 id="9">9.代码规范及测试</h2>
 &emsp;&emsp; 本项目使用ktlint来进行代码格式校验及自动纠正。定义gradle ktlintCheck 任务来校验kotlin代码格式，并将ktlintCheck任务放置在
 verification check任务之前，那么在执行gradle build之前就会先执行ktlintCheck。还定义了一个 gradle ktlintFormat 任务，这个任务是单独的，
 执行这个任务可以根据代码规范，自动进行格式纠正。
