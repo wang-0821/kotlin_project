@@ -1,5 +1,7 @@
 package com.xiao.boot.server.base.mvc
 
+import com.xiao.boot.server.base.request.RequestContainer
+import com.xiao.boot.server.base.request.RequestInfo
 import org.springframework.web.method.HandlerMethod
 import org.springframework.web.servlet.ModelAndView
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter

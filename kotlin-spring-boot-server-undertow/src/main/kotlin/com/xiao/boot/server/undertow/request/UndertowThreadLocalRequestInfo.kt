@@ -1,7 +1,7 @@
-package com.xiao.boot.server.undertow.common
+package com.xiao.boot.server.undertow.request
 
 import com.xiao.base.thread.KtFastThreadLocal
-import com.xiao.boot.server.base.mvc.CoroutineRequestInfo
+import com.xiao.boot.server.base.request.CoroutineRequestInfo
 import kotlinx.coroutines.ThreadContextElement
 
 /**

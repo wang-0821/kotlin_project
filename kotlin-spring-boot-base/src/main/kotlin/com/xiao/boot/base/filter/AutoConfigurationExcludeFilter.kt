@@ -22,7 +22,6 @@ class AutoConfigurationExcludeFilter : AutoConfigurationImportFilter {
             "org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration",
             "org.springframework.boot.autoconfigure.context.MessageSourceAutoConfiguration",
             "org.springframework.boot.autoconfigure.dao.PersistenceExceptionTranslationAutoConfiguration",
-            "org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration",
             "org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration",
             "org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration",
             "org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration",
@@ -30,7 +29,6 @@ class AutoConfigurationExcludeFilter : AutoConfigurationImportFilter {
             "org.springframework.boot.autoconfigure.sql.init.SqlInitializationAutoConfiguration",
             "org.springframework.boot.autoconfigure.transaction.TransactionAutoConfiguration",
             "org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration",
-            "org.springframework.boot.autoconfigure.web.client.RestTemplateAutoConfiguration",
             "org.springframework.boot.autoconfigure.websocket.servlet.WebSocketServletAutoConfiguration"
         )
     }

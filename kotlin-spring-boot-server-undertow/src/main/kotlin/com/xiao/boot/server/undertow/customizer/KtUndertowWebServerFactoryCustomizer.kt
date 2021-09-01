@@ -1,9 +1,8 @@
-package com.xiao.boot.server.undertow.common
+package com.xiao.boot.server.undertow.customizer
 
 import com.xiao.boot.server.base.mvc.KtServerArgs
 import com.xiao.boot.server.undertow.handler.UndertowCoroutineInitialHttpHandler
 import com.xiao.boot.server.undertow.handler.UndertowInitialHttpHandler
-import com.xiao.boot.server.undertow.handler.UndertowInnerHttpHandler
 import io.undertow.Undertow
 import io.undertow.servlet.api.DeploymentInfo
 import org.springframework.beans.factory.ObjectProvider
@@ -51,11 +50,6 @@ class KtUndertowWebServerFactoryCustomizer(
             } else {
                 UndertowInitialHttpHandler(applicationContext, it)
             }
-        }
-
-        // config inner handler
-        deploymentInfo.addInnerHandlerChainWrapper {
-            UndertowInnerHttpHandler(it)
         }
     }
 }

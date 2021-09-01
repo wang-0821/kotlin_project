@@ -7,12 +7,9 @@ import org.springframework.boot.SpringApplication
  *
  * @author lix wang
  */
-abstract class BaseSpringApplication {
-    companion object {
-        @JvmStatic
-        fun start(cls: Class<*>, serverName: String, vararg args: String) {
-            System.setProperty(SERVER_NAME_KEY, serverName)
-            SpringApplication.run(cls, *args)
-        }
+abstract class BaseSpringApplication(private val serverName: String) {
+    fun start(vararg args: String) {
+        System.setProperty(SERVER_NAME_KEY, serverName)
+        SpringApplication.run(this::class.java, *args)
     }
 }

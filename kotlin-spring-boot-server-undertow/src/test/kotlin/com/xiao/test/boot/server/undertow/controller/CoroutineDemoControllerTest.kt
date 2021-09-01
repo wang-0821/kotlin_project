@@ -4,7 +4,7 @@ import com.xiao.base.util.JsonUtils
 import com.xiao.boot.base.env.EnvInfoProvider
 import com.xiao.boot.base.testing.KtSpringTestBase
 import com.xiao.boot.server.base.exception.KtExceptionResponse
-import com.xiao.test.boot.server.undertow.UndertowServerApplication
+import com.xiao.test.boot.server.undertow.UndertowCoroutineApplication
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -20,10 +20,10 @@ import org.springframework.web.client.RestTemplate
  * @author lix wang
  */
 @SpringBootTest(
-    classes = [UndertowServerApplication::class],
+    classes = [UndertowCoroutineApplication::class],
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT
 )
-class DemoControllerTest : KtSpringTestBase() {
+class CoroutineDemoControllerTest : KtSpringTestBase() {
     @Autowired
     lateinit var envInfoProvider: EnvInfoProvider
 

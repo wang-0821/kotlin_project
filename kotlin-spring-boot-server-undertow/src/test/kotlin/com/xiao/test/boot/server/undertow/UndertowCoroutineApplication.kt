@@ -7,4 +7,4 @@ import com.xiao.boot.server.base.annotations.CoroutineSpringBootApplication
  * @author lix wang
  */
 @CoroutineSpringBootApplication
-class UndertowServerApplication
+class UndertowCoroutineApplication
