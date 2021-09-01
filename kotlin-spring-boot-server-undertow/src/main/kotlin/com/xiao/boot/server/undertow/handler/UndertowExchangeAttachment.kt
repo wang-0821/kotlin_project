@@ -9,6 +9,7 @@ import io.undertow.util.AttachmentKey
  */
 class UndertowExchangeAttachment {
     var interceptors: List<UndertowInterceptor> = listOf()
+    var requestUuid: String? = null
 
     companion object {
         val UNDERTOW_SERVLET_ATTACHMENT: AttachmentKey<UndertowExchangeAttachment> =

@@ -4,10 +4,10 @@ import com.xiao.base.thread.KtFastThreadLocal
 import com.xiao.boot.server.base.request.RequestContainer
 import com.xiao.boot.server.base.request.RequestInfo
 import com.xiao.boot.server.base.request.RequestInfo.Companion.KEY_LOG_X_REQUEST_UUID
-import com.xiao.boot.server.undertow.request.UndertowRequestInfo
-import com.xiao.boot.server.undertow.request.UndertowThreadLocalRequestInfo
 import com.xiao.boot.server.undertow.handler.UndertowExchangeAttachment.Companion.UNDERTOW_SERVLET_ATTACHMENT
 import com.xiao.boot.server.undertow.interceptor.UndertowInterceptor
+import com.xiao.boot.server.undertow.request.UndertowRequestInfo
+import com.xiao.boot.server.undertow.request.UndertowThreadLocalRequestInfo
 import io.undertow.server.HttpHandler
 import io.undertow.server.HttpServerExchange
 import org.apache.logging.log4j.ThreadContext
@@ -27,44 +27,48 @@ open class UndertowInitialHttpHandler(
         .values.toList()
 
     override fun handleRequest(exchange: HttpServerExchange) {
-        prepareAttachment(exchange)
-        exchange.dispatchExecutor = getExecutor(exchange)
+        val requestUuid = UUID.randomUUID().toString()
+        prepareAttachment(exchange, requestUuid)
+        exchange.dispatchExecutor = getExecutor(exchange, requestUuid)
         httpHandler.handleRequest(exchange)
     }
 
-    private fun getExecutor(exchange: HttpServerExchange): Executor {
-        return Executor { runnable ->
-            val executor = exchange.dispatchExecutor ?: exchange.connection.worker
-            executor.execute {
-                executeDispatchTask(runnable)
-            }
-        }
-    }
-
-    private fun executeDispatchTask(runnable: Runnable) {
-        val requestInfo = UndertowRequestInfo()
-            .apply {
-                requestStartMills = System.currentTimeMillis()
-                requestUuid = UUID.randomUUID().toString()
-            }
-        threadLocal.set(requestInfo)
-        ThreadContext.put(KEY_LOG_X_REQUEST_UUID, requestInfo.requestUuid)
-        try {
-            runnable.run()
-        } finally {
-            threadLocal.set(null)
-            ThreadContext.remove(KEY_LOG_X_REQUEST_UUID)
-        }
-    }
-
-    protected fun prepareAttachment(exchange: HttpServerExchange) {
+    protected fun prepareAttachment(exchange: HttpServerExchange, requestUuid: String) {
         exchange.putAttachment(
             UNDERTOW_SERVLET_ATTACHMENT,
             UndertowExchangeAttachment()
                 .apply {
                     interceptors = undertowHandlers
+                    this.requestUuid = requestUuid
                 }
         )
+    }
+
+    protected fun executeTask(runnable: Runnable, exchange: HttpServerExchange) {
+        undertowHandlers.forEach { it.beforeHandle(exchange) }
+        runnable.run()
+        undertowHandlers.forEach { it.afterCompletion(exchange) }
+    }
+
+    private fun getExecutor(exchange: HttpServerExchange, requestUuid: String): Executor {
+        return Executor { runnable ->
+            val requestInfo = UndertowRequestInfo()
+                .apply {
+                    requestStartMills = System.currentTimeMillis()
+                    this.requestUuid = requestUuid
+                }
+            val executor = exchange.dispatchExecutor ?: exchange.connection.worker
+            executor.execute {
+                threadLocal.set(requestInfo)
+                ThreadContext.put(KEY_LOG_X_REQUEST_UUID, requestInfo.requestUuid)
+                try {
+                    executeTask(runnable, exchange)
+                } finally {
+                    threadLocal.set(null)
+                    ThreadContext.remove(KEY_LOG_X_REQUEST_UUID)
+                }
+            }
+        }
     }
 
     companion object {

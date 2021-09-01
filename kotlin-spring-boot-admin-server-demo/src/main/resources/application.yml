@@ -1,7 +1,0 @@
-server:
-  port: 8083
-spring:
-  application:
-    name: demo-admin-server
-  profiles:
-    active: beta

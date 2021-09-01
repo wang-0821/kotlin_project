@@ -1,14 +1,14 @@
 package com.xiao.boot.admin.server
 
 import com.xiao.boot.base.BaseSpringApplication
+import com.xiao.boot.server.base.annotations.CoroutineSpringBootApplication
 import de.codecentric.boot.admin.server.config.EnableAdminServer
-import org.springframework.boot.autoconfigure.SpringBootApplication
 
 /**
  * @author lix wang
  */
 @EnableAdminServer
-@SpringBootApplication
+@CoroutineSpringBootApplication
 class DemoAdminServer : BaseSpringApplication("demo-admin-server")
 
 fun main() {

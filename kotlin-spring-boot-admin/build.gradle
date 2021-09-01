@@ -1,4 +1,0 @@
-dependencies {
-    api project(":kotlin-spring-boot-server-undertow")
-    api "de.codecentric:spring-boot-admin-starter-client"
-}

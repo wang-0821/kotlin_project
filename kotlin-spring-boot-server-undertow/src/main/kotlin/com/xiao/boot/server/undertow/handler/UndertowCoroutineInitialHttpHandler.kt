@@ -20,28 +20,30 @@ class UndertowCoroutineInitialHttpHandler(
     httpHandler: HttpHandler,
     private val ktServerArgs: KtServerArgs
 ) : UndertowInitialHttpHandler(applicationContext, httpHandler) {
-    private val defaultExecutor = Executor { runnable ->
-        ktServerArgs.coroutineScope!!.launch(
-            createCoroutineContext()
-        ) {
-            runnable.run()
-        }
-    }
-
     // TODO improve handleRequest by replace exchange dispatchTask.
     override fun handleRequest(exchange: HttpServerExchange) {
         // Use global executor instead of undertow taskPool.
-        prepareAttachment(exchange)
-        exchange.dispatchExecutor = defaultExecutor
+        val requestUuid = UUID.randomUUID().toString()
+        prepareAttachment(exchange, requestUuid)
+        exchange.dispatchExecutor = getExecutor(exchange, requestUuid)
         httpHandler.handleRequest(exchange)
     }
 
-    private fun createCoroutineContext(): CoroutineContext {
+    private fun getExecutor(exchange: HttpServerExchange, requestUuid: String): Executor {
+        return Executor { runnable ->
+            ktServerArgs.coroutineScope!!.launch(
+                createCoroutineContext(requestUuid)
+            ) {
+                executeTask(runnable, exchange)
+            }
+        }
+    }
+
+    private fun createCoroutineContext(requestUuid: String): CoroutineContext {
         val requestInfo = UndertowRequestInfo()
             .apply {
-                val uuid = UUID.randomUUID().toString()
                 requestStartMills = System.currentTimeMillis()
-                requestUuid = uuid
+                this.requestUuid = requestUuid
             }
         return CoroutineThreadLocal(
             threadLocal,

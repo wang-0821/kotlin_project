@@ -3,7 +3,6 @@ package com.xiao.boot.server.undertow.customizer
 import com.xiao.boot.server.base.mvc.KtServerArgs
 import com.xiao.boot.server.undertow.handler.UndertowCoroutineInitialHttpHandler
 import com.xiao.boot.server.undertow.handler.UndertowInitialHttpHandler
-import com.xiao.boot.server.undertow.handler.UndertowInnerHttpHandler
 import io.undertow.Undertow
 import io.undertow.servlet.api.DeploymentInfo
 import org.springframework.beans.factory.ObjectProvider
@@ -37,7 +36,7 @@ class KtUndertowWebServerFactoryCustomizer(
     private fun customizeWebServerBuilder(builder: Undertow.Builder) {
         val useCoroutineDispatcher = ktServerArgs?.enableCoroutineDispatcher ?: false
         if (useCoroutineDispatcher) {
-            builder.setWorkerThreads(Runtime.getRuntime().availableProcessors().coerceAtMost(0))
+            builder.setWorkerThreads(Runtime.getRuntime().availableProcessors().coerceAtMost(2))
         }
     }
 
@@ -51,11 +50,6 @@ class KtUndertowWebServerFactoryCustomizer(
             } else {
                 UndertowInitialHttpHandler(applicationContext, it)
             }
-        }
-
-        // config inner handler
-        deploymentInfo.addInnerHandlerChainWrapper {
-            UndertowInnerHttpHandler(it)
         }
     }
 }
