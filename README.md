@@ -8,7 +8,8 @@
 * [6.Redis](#6)
 * [7.SpringBootApplication协程实现](#7)
 * [8.数据源的注入](#8)
-* [9.代码规范及测试](#9)
+* [9.SpringBootAdmin项目监控及配置管理](#9)
+* [10.代码规范及测试](#10)
 
 <h2 id="1">1.项目简介</h2>
 &emsp;&emsp; 本项目中包含一些源码阅读笔记和技术书阅读笔记。本项目分为12个子模块，两个大类，一类单纯做了一些功能，
@@ -871,8 +872,61 @@ class KtMySqlFlywayMigrationExtension : BeforeAllCallback {
     }
 }
 ```
+<h2 id="9">9.SpringBootAdmin项目监控及配置管理</h2>
+&emsp;&emsp; 采用SpringBootAdmin来对项目进行监控，可以监控：进程、内存、线程状态、健康情况、
+垃圾回收、JVM信息、各种配置信息、日志级别等。我们可以将SpringBootAdmin和JMX结合使用，作为配置平台。
 
-<h2 id="9">9.代码规范及测试</h2>
+使用SpringBootAdmin + JMX搭建配置平台，配置项：
+```kotlin
+server.port=8091
+spring.application.name=demo-admin-client
+spring.boot.admin.client.url=http://localhost:8080
+management.endpoints.web.exposure.include=*
+management.endpoint.health.show-details=ALWAYS
+spring.jmx.enabled=true
+```
+
+JMX配置用法：
+```kotlin
+@Configuration
+@ManagedResource("admin-demo:name=KtDemoAdminClientConfig")
+class KtDemoAdminClientConfig {
+    var value: String = "undefined"
+        @ManagedAttribute
+        get
+        @ManagedAttribute(defaultValue = "kt-demo-value")
+        set
+
+    @ManagedOperation
+    fun putValue(value: String) {
+        this.value = value
+    }
+}
+```
+```java
+@Configuration
+@ManagedResource("admin-demo:name=JDemoAdminClientConfig")
+public class JDemoAdminClientConfig {
+    private String value = "undefined";
+
+    @ManagedAttribute
+    public String getValue() {
+        return value;
+    }
+
+    @ManagedAttribute(defaultValue = "j-demo-value")
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    @ManagedOperation
+    public void putValue(String value) {
+        this.value = value;
+    }
+}
+```
+
+<h2 id="10">10.代码规范及测试</h2>
 &emsp;&emsp; 本项目使用ktlint来进行代码格式校验及自动纠正。定义gradle ktlintCheck 任务来校验kotlin代码格式，并将ktlintCheck任务放置在
 verification check任务之前，那么在执行gradle build之前就会先执行ktlintCheck。还定义了一个 gradle ktlintFormat 任务，这个任务是单独的，
 执行这个任务可以根据代码规范，自动进行格式纠正。
