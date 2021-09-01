@@ -1,4 +1,5 @@
 dependencies {
     api project(":kotlin-spring-boot-server-undertow")
     api "de.codecentric:spring-boot-admin-starter-client"
+    api "org.jolokia:jolokia-core"
 }
