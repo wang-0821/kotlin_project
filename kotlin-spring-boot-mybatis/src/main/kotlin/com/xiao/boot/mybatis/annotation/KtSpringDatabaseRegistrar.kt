@@ -1,5 +1,6 @@
 package com.xiao.boot.mybatis.annotation
 
+import com.xiao.boot.base.util.getBeanName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.configurationFactoryMethodName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceFactoryMethodName
 import com.xiao.boot.mybatis.database.BaseDatabase.Companion.dataSourceName
@@ -21,7 +22,6 @@ import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.core.type.AnnotationMetadata
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
 import org.springframework.util.StringUtils
-import util.getBeanDefinitionsByBeanClassName
 
 /**
  *
@@ -53,7 +53,7 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
             ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS
         )
 
-        val databaseBeanName = getDatabaseBeanName(importingClassMetadata, registry)
+        val databaseBeanName = registry.getBeanName(importingClassMetadata)
         val scanner = ClassPathMapperScanner(registry)
         val dataSourceBeanName = dataSourceName(name)
         val sqlSessionFactoryBeanName = sqlSessionFactoryName(name)
@@ -84,16 +84,6 @@ class KtSpringDatabaseRegistrar : ImportBeanDefinitionRegistrar {
             scanner.resourceLoader as ResourcePatternResolver,
             registry
         )
-    }
-
-    private fun getDatabaseBeanName(
-        importingClassMetadata: AnnotationMetadata,
-        registry: BeanDefinitionRegistry
-    ): String {
-        val beanClassName = importingClassMetadata.className
-        val beanNames = registry.getBeanDefinitionsByBeanClassName(beanClassName).keys
-        check(beanNames.size == 1)
-        return beanNames.first()
     }
 
     private fun registerMapperBeanDefinitions(

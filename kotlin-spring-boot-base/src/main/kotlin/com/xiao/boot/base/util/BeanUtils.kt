@@ -1,4 +1,4 @@
-package util
+package com.xiao.boot.base.util
 
 import com.xiao.boot.base.env.ProfileType
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition
@@ -6,6 +6,7 @@ import org.springframework.beans.factory.config.BeanDefinition
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.boot.web.context.WebServerApplicationContext
 import org.springframework.core.env.Environment
+import org.springframework.core.type.AnnotationMetadata
 import org.springframework.util.ClassUtils
 import org.springframework.util.StringUtils
 
@@ -84,4 +85,11 @@ fun BeanDefinitionRegistry.doByBeanClassFilter(
                 }
             }
         }
+}
+
+fun BeanDefinitionRegistry.getBeanName(annotationMetadata: AnnotationMetadata): String {
+    val beanClassName = annotationMetadata.className
+    val beanNames = this.getBeanDefinitionsByBeanClassName(beanClassName).keys
+    check(beanNames.size == 1)
+    return beanNames.first()
 }

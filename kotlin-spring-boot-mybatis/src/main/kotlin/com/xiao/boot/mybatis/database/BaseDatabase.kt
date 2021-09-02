@@ -11,6 +11,7 @@ import org.apache.ibatis.session.LocalCacheScope
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.Resource
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
+import util.checkMethod
 import javax.sql.DataSource
 
 /**
@@ -97,16 +98,7 @@ abstract class BaseDatabase(
         fun dataSourceName(name: String) = "${name}DataSource"
         fun transactionManagerName(name: String) = "${name}TransactionManager"
         fun transactionServiceName(name: String) = "${name}TransactionService"
-        fun dataSourceFactoryMethodName(): String = getDatabaseMethodName("createDataSource")
-        fun configurationFactoryMethodName(): String = getDatabaseMethodName("createConfiguration")
-
-        private fun getDatabaseMethodName(name: String): String {
-            val methods = BaseDatabase::class.java.methods
-                .filter { method ->
-                    method.name == name
-                }
-            check(methods.size == 1)
-            return methods.first().name
-        }
+        fun dataSourceFactoryMethodName(): String = BaseDatabase::class.java.checkMethod("createDataSource")
+        fun configurationFactoryMethodName(): String = BaseDatabase::class.java.checkMethod("createConfiguration")
     }
 }

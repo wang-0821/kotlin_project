@@ -58,3 +58,12 @@ fun Type.isMap() = run {
 fun Char.isViewable() = run {
     this.toInt() in 33..126
 }
+
+fun Class<*>.checkMethod(name: String): String {
+    val methods = this.methods
+        .filter { method ->
+            method.name == name
+        }
+    check(methods.size == 1)
+    return methods.first().name
+}
