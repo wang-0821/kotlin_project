@@ -1,6 +1,7 @@
 package com.xiao.boot.server.base.annotations
 
 import com.xiao.boot.base.thread.KtThreadPool
+import com.xiao.boot.base.util.getBeanDefinitionsByType
 import com.xiao.boot.server.base.mvc.KtServerArgs
 import com.xiao.boot.server.base.mvc.KtWebMvcRegistrations
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory
@@ -12,7 +13,6 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProce
 import org.springframework.beans.factory.support.GenericBeanDefinition
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication
 import org.springframework.core.Ordered
-import util.getBeanDefinitionsByType
 
 /**
  * Allow servlet web application use coroutine.

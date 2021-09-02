@@ -3,10 +3,10 @@ package com.xiao.boot.base.listener
 import com.xiao.boot.base.env.DefaultEnvInfoProvider
 import com.xiao.boot.base.env.EnvInfoProvider
 import com.xiao.boot.base.env.ProfileType
+import com.xiao.boot.base.util.serverName
 import org.springframework.boot.web.context.WebServerApplicationContext
 import org.springframework.context.ApplicationListener
 import org.springframework.context.event.ContextRefreshedEvent
-import util.serverName
 
 /**
  * @author lix wang

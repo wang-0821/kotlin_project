@@ -22,6 +22,7 @@ class DemoDatabase(properties: DemoDatabaseProperties) : BaseDatabase(
 ) {
     companion object {
         const val NAME = "demo"
+        // equals to transactionServiceName(NAME)
         const val transactionServiceName = "demoTransactionService"
     }
 }

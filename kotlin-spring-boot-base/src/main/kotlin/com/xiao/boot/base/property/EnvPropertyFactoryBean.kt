@@ -3,11 +3,11 @@ package com.xiao.boot.base.property
 import com.xiao.boot.base.env.ProfileType
 import com.xiao.boot.base.parser.StringValueParseResolver
 import com.xiao.boot.base.util.SecureUtils
+import com.xiao.boot.base.util.activeProfileType
 import org.springframework.beans.factory.FactoryBean
 import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
 import org.springframework.util.ReflectionUtils
-import util.activeProfileType
 import java.lang.reflect.Field
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.javaField
