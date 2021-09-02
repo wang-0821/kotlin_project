@@ -3,12 +3,14 @@ package com.xiao.boot.redis.config
 import com.xiao.boot.redis.annotation.KtSpringRedis
 import com.xiao.boot.redis.annotation.RedisClientMode
 import com.xiao.boot.redis.client.BaseRedis
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Component
 
 /**
  *
  * @author lix wang
  */
+@Lazy
 @Component
 @KtSpringRedis(
     name = DemoClusterRedis.NAME,
