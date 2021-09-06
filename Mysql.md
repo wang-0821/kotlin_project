@@ -932,4 +932,44 @@ User Record 用户记录即行记录，Free Space 空闲空间，Page Directory 
          undo：事务有时需要撤销，这时需要undo。对数据库修改时，数据库不但会产生redo，还会产生undo。undo放在
              数据库内部的一个特殊段(segment)称为undo段，undo段位于共享表空间内。
              
-             
+         逻辑日志：可以简单理解为记录的是sql语句。
+         物理日志：记录的是数据页的变更。
+
+### redo log
+&emsp;&emsp; 重做日志(redo log)用来保证事务的持久性，即ACID中的D。重做日志可以分为两种类型，物理redo日志，
+逻辑redo日志。大部分情况下redo是物理日志，记录数据页的物理变化，逻辑日志不是记录页面的实际修改，
+而是记录修改页面的一类操作，如新建页面。redo log是InnoDB层。
+
+        重做日志主要用于数据库的崩溃恢复。重做日志流程：
+            1，先从磁盘中读取数据到内存中。
+            2，事务修改数据的内存拷贝。
+            3，生成一条重做日志，写入到redo log buffer中，记录的事数据被修改后的值。
+            4，当事务commit时，将redo log buffer内容刷新到redo log file中，对redo log file采用追加写的方式。
+            5，定期将内存中修改的data buffer数据刷新到磁盘data中。
+            
+        InnoDB innodb_flush_log_at_trx_commit参数，默认为1，表示每次事务提交时都执行一次fsync操作，
+            将重做日志写入到磁盘中，如果设置为2，则事务提交时只执行write操作，只保证将redo log buffer写入到系统的页面缓冲中，
+            此时如果MySQL宕机不会丢失事务，但是操作系统宕机会导致事务丢失。
+        
+        事务             内存         1      磁盘
+        update -----> data buffer <------- data
+                 2        |       -------->
+                          |             5
+                          V 3       4
+                    redo log buffer ----> redo log file
+
+### undo log
+&emsp;&emsp; undo log主要记录的是数据的逻辑变化，用于事务的回滚和MVCC。在执行事务时，undo log会记录对应语句的反操作语句。
+在发生错误时，能回滚到事务之前的数据状态。
+
+### binlog
+&emsp;&emsp; binlog用于记录数据库执行的写入性操作，以二进制的形式保存在磁盘中，binlog是逻辑日志，由server层进行记录，
+任何存储引擎的mysql数据库都会记录binlog日志。binlog使用的场景有两个：主从复制和数据恢复。
+
+    主从复制：在master端开启binlog，然后将binlog发送到各个slave端，slave端重放binlog从而达到主从数据一致。
+    数据恢复：通过使用mysqlbinlog工具来恢复数据。
+    
+    binlog日志有三种格式：STATMENT、ROW、MIXED。
+        STATMENT: 基于SQL语句的复制，每条会修改数据的sql语句都会记录到binlog中。
+        ROW：基于行的复制，仅记录哪条数据被修改了。
+        MIXED：基于STATMENT和ROW，一般的复制使用STATMENT保存binlog，对于STATMENT无法复制的操作使用ROW模式保存binlog。
