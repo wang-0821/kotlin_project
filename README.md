@@ -12,7 +12,7 @@
 * [10.代码规范及测试](#10)
 
 <h2 id="1">1.项目简介</h2>
-&emsp;&emsp; 本项目中包含一些源码阅读笔记和技术书阅读笔记。本项目分为12个子模块，两个大类，一类单纯做了一些功能，
+&emsp;&emsp; 本项目中包含一些源码阅读笔记和技术书阅读笔记。本项目分为两个大类，一类单纯做了一些功能，
 没有集成SpringBoot，另一类是基于SpringBoot实现了一些功能。本项目最终目标是全面运用kotlin协程，
 包括：数据库交互、RPC调用、HttpServlet处理、Redis交互，凡是涉及到IO的地方都希望能使用Kotlin协程。
 
@@ -44,6 +44,12 @@
                 
             kotlin-redis：
                 基于Lettuce实现支持Kotlin协程的RedisService，IO多路复用使用Epoll或KQueue，并且实现基于Redis的分布式锁。
+                
+            kotlin-spring-boot-admin-client-demo:
+                SpringBootAdmin Client使用用例，SpringBootAdmin可以监控和管理SpringBoot应用程序。
+                
+            kotlin-spring-boot-admin-server-demo：
+                SpringBootAdmin Server使用用例，用来监控注册到该Server的各SpringBoot应用程序。
             
             kotlin-spring-boot-base：
                 实现基于注解的环境变量配置，自定义以下Bean：AutoConfigurationImportFilter 处理自动配置、
@@ -55,6 +61,10 @@
                 基于MyBatis和SpringBoot @Import，实现数据源自动配置，基于注解和Flyway实现数据自动迁移，
                 改造测试环境MyBatis的XMLLanguageDriver及SqlSource，实现自动监控缺失的数据迁移。
                 
+            kotlin-spring-boot-redis：
+                自定义注解@KtSpringRedis，通过@Import 加载ImportBeanDefinitionRegistrar的方式，
+                简化Redis client Bean的注入。可以很方便的配置多Redis数据源，并支持Redis集群模式。
+                
             kotlin-spring-boot-servre-base：
                 提供了WebServer支持Kotlin协程的能力，利用@RestControllerAdvice实现了全局异常处理，
                 自定义RequestMappingHandlerAdapter、ServletInvocableHandlerMethod，实现支持Http Servlet协程执行。
@@ -62,6 +72,9 @@
             kotlin-spring-boot-server-undertow：
                 利用全局线程池替换掉Undertow默认的线程池，用来提升性能。自定义WebServerFactoryCustomizer
                 和UndertowRootInitialHttpHandler，实现利用Kotlin协程来执行请求。
+                
+            kotlin-spring-boot-server-demo：
+                SpringBoot Web Server 使用用例，基于Spring MVC和Undertow。
 
 ### Kotlin协程是什么？解决了什么问题？
 &emsp;&emsp; Kotlin协程基于状态机的原理实现，将协程挂起恢复后要执行的逻辑，都封装到了resumeWith方法中，根据不同的状态执行不同的逻辑。
@@ -159,6 +172,53 @@ abstract class NettyDirectArray<T>(
             )
         }
         return totalCapacity.toInt()
+    }
+}
+```
+
+基于Int类型的堆外基本数据类型数组：
+```kotlin
+class UnsafeDirectIntArray(capacity: Int) : UnsafeDirectArray<Int>(capacity, Unsafe.ARRAY_INT_INDEX_SCALE) {
+    override fun get(index: Int): Int {
+        check(index < capacity)
+        return UnsafeUtils.UNSAFE.getInt(address + getOffset(index))
+    }
+
+    override fun set(index: Int, value: Int) {
+        check(index < capacity)
+        UnsafeUtils.UNSAFE.putInt(address + getOffset(index), value)
+    }
+
+    fun writeTo(dest: IntArray, destIndex: Int, srcIndex: Int, len: Int) {
+        check(srcIndex + len <= capacity)
+        UnsafeUtils.UNSAFE.copyMemory(
+            null,
+            address + getOffset(srcIndex),
+            dest,
+            Unsafe.ARRAY_INT_BASE_OFFSET + getOffset(destIndex),
+            getOffset(len)
+        )
+    }
+}
+```
+
+堆外基本数据类型使用用例：
+```kotlin
+class UnsafeDirectIntArrayTest : KtTestBase() {
+    @Test
+    fun `test direct int array`() {
+        val capacity = 5
+        UnsafeDirectIntArray(capacity).use { unsafeDirectIntArray -> 
+            (0 until capacity).forEach { index -> 
+                unsafeDirectIntArray.set(index, index) 
+            }
+
+            Assertions.assertTrue {
+                (0 until capacity).all { index ->
+                    unsafeDirectIntArray.get(index) == index
+                }
+            }
+        }
     }
 }
 ```
@@ -331,41 +391,110 @@ fun <T> CoroutineScope.deferred(block: () -> T): SafeDeferred<T> {
 由于这里使用了runBlocking，因此还是会有部分阻塞，可以参考DispatcherServlet执行流程，
 在WebServer处理链最顶层实现一个类DispatcherServlet的协程化处理模型，进而实现全局协程化。
 
-Undertow协程简单实现：
+通过改造Undertow的Root HttpHandler 为UndertowInitialHttpHandler，实现监控每个请求的执行状态：
+```kotlin
+open class UndertowInitialHttpHandler(
+    applicationContext: ApplicationContext,
+    val httpHandler: HttpHandler
+) : HttpHandler {
+    private val undertowHandlers = applicationContext.getBeansOfType(UndertowInterceptor::class.java)
+        .values.toList()
+
+    override fun handleRequest(exchange: HttpServerExchange) {
+        val requestUuid = UUID.randomUUID().toString()
+        prepareAttachment(exchange, requestUuid)
+        exchange.dispatchExecutor = getExecutor(exchange, requestUuid)
+        httpHandler.handleRequest(exchange)
+    }
+
+    protected fun prepareAttachment(exchange: HttpServerExchange, requestUuid: String) {
+        exchange.putAttachment(
+            UNDERTOW_SERVLET_ATTACHMENT,
+            UndertowExchangeAttachment()
+                .apply {
+                    interceptors = undertowHandlers
+                    this.requestUuid = requestUuid
+                }
+        )
+    }
+
+    protected fun executeTask(runnable: Runnable, exchange: HttpServerExchange) {
+        undertowHandlers.forEach { it.beforeHandle(exchange) }
+        runnable.run()
+        undertowHandlers.forEach { it.afterCompletion(exchange) }
+    }
+
+    private fun getExecutor(exchange: HttpServerExchange, requestUuid: String): Executor {
+        return Executor { runnable ->
+            val requestInfo = UndertowRequestInfo()
+                .apply {
+                    requestStartMills = System.currentTimeMillis()
+                    this.requestUuid = requestUuid
+                }
+            val executor = exchange.dispatchExecutor ?: exchange.connection.worker
+            executor.execute {
+                threadLocal.set(requestInfo)
+                ThreadContext.put(KEY_LOG_X_REQUEST_UUID, requestInfo.requestUuid)
+                try {
+                    executeTask(runnable, exchange)
+                } finally {
+                    threadLocal.set(null)
+                    ThreadContext.remove(KEY_LOG_X_REQUEST_UUID)
+                }
+            }
+        }
+    }
+
+    companion object {
+        val threadLocal = KtFastThreadLocal<UndertowRequestInfo>()
+            .apply {
+                RequestContainer.register(
+                    RequestInfo.KEY,
+                    UndertowThreadLocalRequestInfo(this)
+                )
+            }
+    }
+}
+```
+
+Undertow协程简单实现，继承自UndertowInitialHttpHandler：
 ```kotlin
 class UndertowCoroutineInitialHttpHandler(
     applicationContext: ApplicationContext,
     httpHandler: HttpHandler,
     private val ktServerArgs: KtServerArgs
 ) : UndertowInitialHttpHandler(applicationContext, httpHandler) {
-    private val defaultExecutor = Executor { runnable ->
-        ktServerArgs.coroutineScope!!.launch(
-            createCoroutineThreadLocal()
-        ) {
-            runnable.run()
-        }
-    }
-
     // TODO improve handleRequest by replace exchange dispatchTask.
     override fun handleRequest(exchange: HttpServerExchange) {
         // Use global executor instead of undertow taskPool.
-        prepareAttachment(exchange)
-        exchange.dispatchExecutor = defaultExecutor
+        val requestUuid = UUID.randomUUID().toString()
+        prepareAttachment(exchange, requestUuid)
+        exchange.dispatchExecutor = getExecutor(exchange, requestUuid)
         httpHandler.handleRequest(exchange)
     }
 
-    private fun createCoroutineThreadLocal(): CoroutineThreadLocal<UndertowRequestInfo> {
+    private fun getExecutor(exchange: HttpServerExchange, requestUuid: String): Executor {
+        return Executor { runnable ->
+            ktServerArgs.coroutineScope!!.launch(
+                createCoroutineContext(requestUuid)
+            ) {
+                executeTask(runnable, exchange)
+            }
+        }
+    }
+
+    private fun createCoroutineContext(requestUuid: String): CoroutineContext {
         val requestInfo = UndertowRequestInfo()
             .apply {
                 requestStartMills = System.currentTimeMillis()
-                requestUuid = UUID.randomUUID().toString()
+                this.requestUuid = requestUuid
             }
         return CoroutineThreadLocal(
             threadLocal,
             requestInfo
         ).apply {
             requestInfo.threadContextElement = this
-        }
+        } + CoroutineLogContext(requestInfo.requestUuid!!)
     }
 }
 ```
@@ -655,6 +784,89 @@ class RedisClusterClientTest : KtTestBase() {
     }
 }
 ````
+
+### 自定义注解实现Redis Service Bean的注入
+&emsp;&emsp; 我们自定义了@KtSpringRedis注解，实现基于@Import的Bean注入方式，
+通过注解来简化Redis Client配置，并且可以支持主从模式、哨兵模式、集群模式。
+
+自定义Redis配置注解：
+```kotlin
+@Inherited
+@Retention(AnnotationRetention.RUNTIME)
+@Target(AnnotationTarget.CLASS)
+@Import(RedisBeanRegistrar::class)
+annotation class KtSpringRedis(
+    val name: String,
+    val mode: RedisClientMode = RedisClientMode.DEFAULT
+)
+```
+
+基于Redis集群的配置用例：
+```kotlin
+@Lazy
+@Component
+@KtSpringRedis(
+    name = DemoClusterRedis.NAME,
+    mode = RedisClientMode.CLUSTER
+)
+class DemoClusterRedis : BaseRedis(*CLUSTER_URIS) {
+    companion object {
+        const val NAME = "demo"
+        const val CLUSTER_SERVICE_NAME = "${NAME}RedisClusterService"
+        const val CLUSTER_ASYNC_SERVICE_NAME = "${NAME}RedisClusterAsyncService"
+        val CLUSTER_URIS = arrayOf(
+            "redis://localhost:6381",
+            "redis://localhost:6382",
+            "redis://localhost:6383",
+            "redis://localhost:6384",
+            "redis://localhost:6385",
+            "redis://localhost:6386"
+        )
+    }
+}
+```
+
+Redis集群模式测试用例，Redis Client 支持同步、异步、kotlin协程调用：
+```kotlin
+@SpringBootTest(classes = [SpringRedisAutoConfiguration::class])
+class RedisClusterClientTest : KtSpringTestBase() {
+    @Autowired
+    @Qualifier(DemoClusterRedis.CLUSTER_SERVICE_NAME)
+    lateinit var redisClusterService: RedisClusterService
+
+    @Autowired
+    @Qualifier(DemoClusterRedis.CLUSTER_ASYNC_SERVICE_NAME)
+    lateinit var redisClusterAsyncService: RedisClusterAsyncService
+
+    @Test
+    fun `test redis cluster service`() {
+        redisClusterService.del(KEY)
+        redisClusterService.set(KEY, VALUE)
+        Assertions.assertEquals(redisClusterService.get(KEY), VALUE)
+    }
+
+    @Test
+    fun `test redis cluster async service`() {
+        redisClusterAsyncService.del(KEY).get()
+        redisClusterAsyncService.set(KEY, VALUE).get()
+        Assertions.assertEquals(redisClusterAsyncService.get(KEY).get(), VALUE)
+    }
+
+    @Test
+    fun `test redis cluster coroutine async service`() {
+        runBlocking {
+            redisClusterAsyncService.del(KEY).suspend().awaitNanos()
+            redisClusterAsyncService.set(KEY, VALUE).suspend().awaitNanos()
+            Assertions.assertEquals(redisClusterAsyncService.get(KEY).suspend().awaitNanos(), VALUE)
+        }
+    }
+
+    companion object {
+        const val KEY = "hello"
+        const val VALUE = "world"
+    }
+}
+```
 
 <h2 id="7">7.SpringBootApplication协程实现</h2>
 &emsp;&emsp; SpringBoot 的@EnableAutoConfiguration是通过@Import的方式来实现了Bean的注入。
