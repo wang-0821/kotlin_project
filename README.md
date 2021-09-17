@@ -7,7 +7,7 @@
 * [5.Spring事务](#5)
 * [6.Redis](#6)
 * [7.SpringBootApplication协程实现](#7)
-* [8.数据源的注入](#8)
+* [8.MySQL数据库](#8)
 * [9.SpringBootAdmin项目监控及配置管理](#9)
 * [10.代码规范及测试](#10)
 
@@ -968,7 +968,7 @@ class CoroutineDemoControllerTest : KtSpringTestBase() {
 }
 ```
 
-<h2 id="8">8.数据源的注入</h2>
+<h2 id="8">8.MySQL数据库</h2>
 &emsp;&emsp; 采用@Import的方式进行数据源注入。
 
 ```kotlin
