@@ -10,7 +10,7 @@ dependencyManagement {
         dependency "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2"
 
         // tools
-        dependency "com.fasterxml.jackson.core:jackson-databind:2.11.2"
+        dependency "com.fasterxml.jackson.core:jackson-databind:2.12.4"
         dependency "joda-time:joda-time:2.10.10"
         dependency "com.github.ben-manes.caffeine:caffeine:3.0.0"
         dependency "org.apache.commons:commons-lang3:3.12.0"
@@ -37,7 +37,7 @@ dependencyManagement {
         dependency "com.zaxxer:HikariCP:3.4.5"
 
         // netty
-        dependencySet(group: "io.netty", version: "4.1.56.Final") {
+        dependencySet(group: "io.netty", version: "4.1.66.Final") {
             entry "netty-handler"
             entry "netty-buffer"
             entry "netty-transport-native-epoll"
@@ -48,13 +48,13 @@ dependencyManagement {
         dependency "io.lettuce:lettuce-core:6.0.2.RELEASE"
 
         //spring boot
-        dependencySet(group: "org.springframework.boot", version: "2.5.0") {
+        dependencySet(group: "org.springframework.boot", version: "2.5.4") {
             entry "spring-boot-starter"
             entry "spring-boot-starter-test"
             entry "spring-boot-starter-undertow"
         }
         // spring framework
-        dependencySet(group: "org.springframework", version: "5.3.7") {
+        dependencySet(group: "org.springframework", version: "5.3.9") {
             entry "spring-jdbc"
             entry "spring-webmvc"
         }
