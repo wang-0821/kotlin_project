@@ -78,9 +78,9 @@
 
 ### Kotlin协程是什么？解决了什么问题？
 &emsp;&emsp; Kotlin协程基于状态机的原理实现，将协程挂起恢复后要执行的逻辑，都封装到了resumeWith方法中，根据不同的状态执行不同的逻辑。
-Java异步导致的问题在于：异步执行一个方法，后续等待获取结果时，通常使用Future.get()，这个方法会使CPU自旋等待异步任务结束，
+Java异步导致的问题在于：异步执行一个方法，后续等待获取结果时，通常使用Future.get()，这个方法会使CPU阻塞等待异步任务结束，
 这会导致CPU执行效率会降低。如果想要解决这个问题，可以每一步都采用callback回调，但Java中全局使用callback回调，会导致代码非常复杂。
-Kotlin协程通过挂起和恢复简化了回调的复杂度，并且Kotlin是完全非阻塞的，不会导致CPU自旋，从而来提升CPU效率。
+Kotlin协程通过挂起和恢复简化了回调的复杂度，并且Kotlin是完全非阻塞的，不会导致CPU阻塞，从而来提升CPU效率。
 
 <h2 id="2">2.IO</h2>
 &emsp;&emsp; Redis客户端Lettuce、Undertow、HttpClient都采用了IO多路复用，Selector.select()会去遍历
@@ -371,7 +371,7 @@ class CoroutineThreadLocal<T>(
 ```
 
 <h2 id="4">4.Kotlin协程</h2>
-&emsp;&emsp; 协程是非阻塞的，我们可以在会发生CPU自旋的地方使用协程。利用异步回调的思想，
+&emsp;&emsp; 协程是非阻塞的，我们可以在会发生CPU阻塞的地方使用协程。利用异步回调的思想，
 可以很简单的将阻塞线程转化为非阻塞的Kotlin协程。可以利用CompletableDeferred将非suspend lambda块转化为协程执行。
 
 ```kotlin
