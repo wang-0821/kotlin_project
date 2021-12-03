@@ -6,7 +6,7 @@
 
 <h2 id="1">1.概述</h2>
 &emsp;&emsp; 协程是以状态机的形式运行在线程池中的，通过resumeWith回调的方式来实现非阻塞。以Future为例，异步任务在Future.get()方法执行时，
-会使用while(true)自旋来判断异步任务是否已经执行完毕，Future.get()的这种方式本质上是同步阻塞，这种方式会降低CPU的执行效率。Future.get()可以
+会判断异步任务是否已经执行完毕，并阻塞等待结果产生，Future.get()的这种方式本质上是同步阻塞，这种方式会降低CPU的执行效率。Future.get()可以
 通过callback回调的方式来实现非阻塞，例如ForkJoinPool。但是callback多层嵌套会容易导致代码结构混乱，Kotlin的协程本质上是提供了一种简洁的异步非阻塞编程
 的方式。
 
@@ -18,7 +18,7 @@
             return report(s);
     }
     
-    // 这里实际上是自旋阻塞等待异步任务执行完毕
+    // 这里实际上是阻塞等待异步任务执行完毕
     private int awaitDone(boolean timed, long nanos)
             throws InterruptedException {
             final long deadline = timed ? System.nanoTime() + nanos : 0L;
