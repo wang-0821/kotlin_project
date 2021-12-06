@@ -1,5 +1,7 @@
 package com.xiao.databse.annotation
 
+import com.xiao.database.annotation.KtTestDatabase
+
 /**
  *
  * @author lix wang

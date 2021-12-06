@@ -54,7 +54,7 @@ class Response : Closeable {
         this.status = status
         this.headers = headers
         this.content = content
-        this.headerMap = headers.groupBy { it.name.toUpperCase() }
+        this.headerMap = headers.groupBy { it.name.uppercase() }
         this.listener = listener
         this.socket = socket
     }

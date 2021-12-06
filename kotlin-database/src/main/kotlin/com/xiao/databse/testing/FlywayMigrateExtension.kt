@@ -3,8 +3,8 @@ package com.xiao.databse.testing
 import com.xiao.base.logging.KtLogger
 import com.xiao.base.logging.LoggerType
 import com.xiao.base.logging.Logging
+import com.xiao.database.annotation.KtTestDatabase
 import com.xiao.databse.BaseDatabase
-import com.xiao.databse.annotation.KtTestDatabase
 import com.xiao.databse.annotation.KtTestDatabases
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.extension.BeforeAllCallback

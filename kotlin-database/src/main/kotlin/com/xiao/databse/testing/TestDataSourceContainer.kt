@@ -1,7 +1,7 @@
 package com.xiao.databse.testing
 
+import com.xiao.database.annotation.KtTestDatabase
 import com.xiao.databse.BaseDatabase
-import com.xiao.databse.annotation.KtTestDatabase
 import kotlin.reflect.KClass
 
 /**

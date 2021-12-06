@@ -63,15 +63,16 @@ class EnvPropertyFactoryBean<T : Any>(
     }
 
     private fun getEnvProperty(field: Field, profileType: ProfileType): EnvProperty? {
-        val envPropertyList = field.getAnnotationsByType(EnvProperty::class.java)?.toList() ?: listOf()
-        val envProperties = field.getAnnotationsByType(EnvProperties::class.java)
-            ?.flatMap {
-                it.value.toList()
-            } ?: listOf()
+        var envPropertyList = field.getAnnotationsByType(EnvProperty::class.java)?.toList() ?: listOf()
+        if (envPropertyList.isEmpty()) {
+            envPropertyList = field.getAnnotationsByType(EnvProperties::class.java)
+                ?.flatMap {
+                    it.value.toList()
+                } ?: listOf()
+        }
 
-        val totalEnvProperties = envProperties + envPropertyList
-        val result = totalEnvProperties.filter { it.profiles.contains(profileType) }
-        if ((envProperties.isNotEmpty() || envPropertyList.isNotEmpty()) && result.isEmpty()) {
+        val result = envPropertyList.filter { it.profiles.contains(profileType) }
+        if (envPropertyList.isNotEmpty() && result.isEmpty()) {
             throw IllegalStateException("Field ${field.name} not found env property for ${profileType.profileName}.")
         }
         check(result.size <= 1) {

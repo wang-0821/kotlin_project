@@ -30,7 +30,7 @@ class SafeCompletableDeferred<T>(
         deferred.cancel()
     }
 
-    @ExperimentalCoroutinesApi
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun getCompleted(): T {
         return deferred.getCompleted()
     }

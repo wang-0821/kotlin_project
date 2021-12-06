@@ -70,7 +70,7 @@ class KtMySqlTablesMigrationExtension : BeforeAllCallback {
         val databases1 = testClass.getAnnotationsByType(TestKtSpringDatabase::class.java)
         val databases2 = testClass.getAnnotationsByType(TestKtSpringDatabases::class.java)
             .flatMap {
-                it.databases.toList()
+                it.value.toList()
             }
         return (databases1 + databases2)
             .associate { testDatabase ->

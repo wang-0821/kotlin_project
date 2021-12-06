@@ -1,9 +1,9 @@
 package com.xiao.database
 
+import com.xiao.database.annotation.KtTestDatabase
 import com.xiao.database.database.DemoDatabase
 import com.xiao.database.mybatis.mapper.common.UserMapper
 import com.xiao.database.mybatis.mapper.common.UserMapperV2
-import com.xiao.databse.annotation.KtTestDatabase
 import com.xiao.databse.testing.KtTestDataSourceBase
 import com.xiao.databse.testing.TestDataSourceContainer
 import org.apache.ibatis.session.SqlSessionFactory

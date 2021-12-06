@@ -24,6 +24,7 @@ import kotlin.system.measureTimeMillis
  *
  * @author lix wang
  */
+@ExperimentalCoroutinesApi
 class ShareMutableState {
     suspend fun massiveRun(action: suspend () -> Unit) {
         val n = 100
