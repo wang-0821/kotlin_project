@@ -1,11 +1,31 @@
 package com.xiao.base.util
 
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
 
 /**
  *
  * @author lix wang
  */
+object ClassUtils {
+    @JvmStatic
+    fun makeAccessible(field: Field) {
+        if ((!Modifier.isPublic(field.modifiers) ||
+                !Modifier.isPublic(field.declaringClass.modifiers) ||
+                Modifier.isFinal(field.modifiers)) && !field.isAccessible) {
+            field.isAccessible = true
+        }
+    }
+
+    @JvmStatic
+    fun setFieldValue(instance: Any, fieldName: String, fieldValue: Any) {
+        val field = instance::class.java.getDeclaredField(fieldName)
+        makeAccessible(field)
+        field.set(instance, fieldValue)
+    }
+}
+
 fun KClass<*>.packageName(): String {
     val name = this.java.name
     val lastDotIndex: Int = name.lastIndexOf(".")

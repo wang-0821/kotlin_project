@@ -33,7 +33,7 @@ class GlobalRestControllerAdvice(
 
     // expected exceptions
     @ExceptionHandler(value = [KtServerException::class])
-    fun handleCutomException(
+    fun handleCustomException(
         response: HttpServletResponse,
         ex: KtServerException
     ): KtExceptionResponse {
