@@ -7,6 +7,7 @@
 * [7.键盘操作](#7)
 * [8.权限](#8)
 * [9.进程](#9)
+* [10.shell环境](#10)
 
 <h2 id="1">1.Shell概述</h2>
 &emsp;&emsp; bash是Bourne Again SHell的首字母缩写，bash是最初Unix上由Steve Bourne写成
@@ -317,6 +318,14 @@ kill命令和killall命令一样，都必须拥有超级用户权限才能给不
         vmstat      输出一个系统资源使用快照，包括内存、交换分区、磁盘I/O。 vmstat 5表示：每5秒更新一次。
         xload       一个图形界面程序，可以画出系统负载随时间变化的图形。
         tload       与xload相似，但是在终端中画出图形，使用Ctrl-c来终止输出。
+
+<h2 id="10">10.shell环境</h2>
+&emsp;&emsp; shell在shell会话中保存大量信息，这些信息被称为shell的环境。
+
+        printenv        打印部分或所有的环境变量
+        set             设置shell选项
+        export          导出环境变量，让随后执行的程序知道
+        alias           创建命令别名
 
 
         pwd (print working directory): 显示当前工作目录。
