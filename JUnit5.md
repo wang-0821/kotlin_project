@@ -2,6 +2,7 @@
 * [2.注解](#2)
 * [3.测试类与测试方法](#3)
 * [4.@SpringBootTest](#4)
+* [5.NodeTestTask](#5)
 
 <h2 id="1">1.JUnit5组成</h2>
 &emsp;&emsp; JUnit5由JUnit Platform、JUnit Jupiter、JUnit Vintage三部分组成。JUnit Platform提供了运行单元测试的能力，定义了TestEngine API，
@@ -391,6 +392,109 @@ BeforeEachCallback、AfterEachCallback、BeforeTestExecutionCallback、AfterTest
                                     |
                                     V
                          TestContextManager创建完毕
-                                    
 
+<h2 id="1">1.JUnit5组成</h2>
+&emsp;&emsp; Junit5最终执行的是NodeTestTask，NodeTestTask中的Node分为：ClassBasedTestDescriptor、
+DynamicNodeTestDescriptor、JupiterEngineDescriptor、JupiterTestDescriptor、TestMethodTestDescriptor、
+TestTemplateTestDescriptor六种。
+
+        NodeTestTask执行顺序：
+            1，NodeTestTask.node.prepare(NodeTestTask.parentcontext)，准备上下文生成NodeTestTask.context。
+            2，NodeTestTask.node.shouldBeSkipped(NodeTestTask.context)，检查是否需要跳过执行。如跳过不执行步骤3。
+            3.1，NodeTestTask.node.before(NodeTestTask.context)。
+            3.2，NodeTestTask.context = NodeTestTask.node.execute(NodeTestTask.context, DefaultDynamicTestExecutor)。
+            3.3，NodeTestTask.testDescriptor.children.map(descriptor -> NodeTestTask(taskContext, descriptor))，
+                执行HierarchicalTestExecutorService.invokeAll([NodeTestTask])。
+            3.4，执行DefaultDynamicTestExecutor.awaitFinished()。
+            3.5，执行NodeTestTask.node.after(NodeTestTask.context)。
+            4，执行NodeTestTask.node.cleanUp(NodeTestTask.context)。
+            5，执行NodeTestTask.node.nodeSkipped(NodeTestTask.context, testDescriptor, skipResult) 和
+                NodeTestTask.taskContext.getListener().executionSkipped(testDescriptor, reason) 或者
+                NodeTestTask.node.nodeFinished(context, testDescriptor, testExecutionResult) 和
+                NodeTestTask.taskContext.getListener().executionFinished(testDescriptor, testExecutionResult)。
+
+
+            1，JupiterEngineDescriptor.prepare(JupiterEngineExecutionContext)。
+                注册了Extension，构建了ExtensionRegistry和ExtensionContext。
+                Extension包含：DisabledCondition、TempDirectory、TimeoutExtension、
+                    RepeatedTestExtension、TestInfoParameterResolver、TestReporterParameterResolver。
+
+            2，JupiterEngineDescriptor.shouldBeSkipped(JupiterEngineExecutionContext)。都不跳过。
+                
+            3，JupiterEngineDescriptor.before(JupiterEngineExecutionContext)。返回原来的JupiterEngineExecutionContext。
+
+            4，JupiterEngineDescriptor.execute(JupiterEngineExecutionContext, DefaultDynamicTestExecutor)。 没有执行。
+
+            5，ClassTestDescriptor.prepare(JupiterEngineExecutionContext)。
+                1，从当前Class上的@ExtendWith注解获取Extension，并注册到ExtensionRegistry中，生成一个新的ExtensionRegistry。
+                2，从当前Class及SuperClass及interface上获取DeclaredFields，且这些Fields是static被@RegisterExtension注解，
+                    如果这些Fields的值是Extension，那么将这些Extension注册到ExtensionRegistry中。
+                3，获取ExtensionRegistry中的TestInstanceFactory类型的Extension作为testInstanceFactory，如果多于一个那么会报错。
+                4，获取Class上被@BeforeEach注解的Method集合，Method必须是void且不是静态方法。注册该方法为一个Extension。
+                5，获取Class上被@AfterEach注解的Method集合，Method必须是void且不是静态方法。注册该方法为一个Extension。
+                6，构建ClassExtensionContext对象。
+                6，获取Class上被@BeforeAll注解的Method集合，如果lifecycle是PER_METHOD，那么要求是static。
+                7，获取Class上被@AfterAll注解的Method集合，如果lifecycle是PER_METHOD，那么要求是static。
+                8，构建TestInstancesProvider、ExtensionRegistry、ExtensionContext、ThrowableCollector。
+            
+            6，ClassTestDescriptor.shouldBeSkipped(JupiterEngineExecutionContext)，计算是否会跳过执行。
+
+            7，ClassTestDescriptor.before(JupiterEngineExecutionContext)。
+                1，如果是PER_CLASS Lifecycle，执行TestInstancesProvider.getInstances(extensionRegistry, throwableCollector)，
+                    获取到TestInstances对象，并设置ClassExtensionContext.testInstances。
+                2，获取TestInstances时，如果TestInstanceFactory不为空，那么执行TestInstanceFactory.createTestInstance()，
+                    如果为空，那么使用Class constructor来构建TestInstances对象。
+                3，从ExtensionRegistry中获取TestInstancePostProcessor Extension集合，
+                    执行TestInstancePostProcessor.postProcessTestInstance(instance, ClassExtensionContext)。
+                    这一步会执行SpringExtension.postProcessTestInstance(instance, ClassExtensionContext)。
+                4，从当前Class及SuperClass及interface上获取DeclaredFields，且这些Fields不是static被@RegisterExtension注解，
+                    如果这些Fields的值是Extension，那么将这些Extension注册到ExtensionRegistry中。
+                5，获取ExtensionRegistry中的BeforeAllCallback Extension集合，执行BeforeAllCallback.beforeAll(ClassExtensionContext)。
+                6，获取beforeAllMethods集合，执行beforeAll。
+
+            8，ClassTestDescriptor.execute(JupiterEngineExecutionContext)，没有执行。
+
+            9，TestMethodTestDescriptor.prepare(JupiterEngineExecutionContext)，获取testMethod上的@ExtendWith注解，
+                将Extension注册到ExtensionRegistry中。
+
+            10，TestMethodTestDescriptor.shouldBeSkipped(JupiterEngineExecutionContext)，计算是否跳过执行。
         
+            11，TestMethodTestDescriptor.before(JupiterEngineExecutionContext)，没有执行。
+
+            12，TestMethodTestDescriptor.execute(JupiterEngineExecutionContext, DynamicTestExecutor)。
+                1，执行BeforeEachCallback.beforeEach(JupiterEngineExecutionContext)。
+                2，执行BeforeEachMethodAdapter.invokeBeforeEachMethod(MethodExtensionContext, ExtensionRegistry)。
+                3，执行BeforeTestExecutionCallback.beforeTestExecution(MethodExtensionContext)。
+                4，执行invokeTestMethod。
+                5，执行AfterTestExecutionCallback.afterTestExecution(MethodExtensionContext)。
+                6，执行AfterEachMethodAdapter.invokeAfterEachMethod(MethodExtensionContext, ExtensionRegistry)。
+                7，执行AfterEachCallback.afterEach(MethodExtensionContext)。
+
+            13，执行DynamicTestExecutor.awaitFinished()。
+        
+            14，执行TestMethodTestDescriptor.after(JupiterEngineExecutionContext)，没有执行。
+
+            15，执行TestMethodTestDescriptor.cleanUp(JupiterEngineExecutionContext)。
+                1，如果是PER_METHOD，执行TestInstancePreDestroyCallback.preDestroyTestInstance(MethodExtensionContext)。
+                2，执行MethodExtensionContext.close()。
+
+            16，执行TestMethodTestDescriptor.nodeFinished(JupiterEngineExecutionContext, TestMethodTestDescriptor, TestExecutionResult)。
+    
+            17，执行ClassTestDescriptor.after(JupiterEngineExecutionContext)。
+                1，执行afterAllMethods。
+                2，执行AfterAllCallback.afterAll(ClassExtensionContext)。
+                3，如果是PER_CLASS，执行TestInstancePreDestroyCallback.preDestroyTestInstance(ClassExtensionContext)。
+
+            18，执行ClassTestDescriptor.cleanUp(JupiterEngineExecutionContext)。
+                1，执行ClassExtensionContext.close()。
+
+            19，执行ClassTestDescriptor.nodeFinished(JupiterEngineExecutionContext, ClassTestDescriptor, TestExecutionResult)。
+                
+            20，执行JupiterEngineDescriptor.after(JupiterEngineExecutionContext)。没有执行。
+
+            21，执行JupiterEngineDescriptor.cleanUp(JupiterEngineExecutionContext)。
+                1，执行JupiterEngineExtensionContext.close()。
+
+            22，执行JupiterEngineDescriptor.nodeFinished(JupiterEngineExecutionContext, JupiterEngineDescriptor, TestExecutionResult)。
+
+                
