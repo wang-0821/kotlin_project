@@ -1,4 +1,4 @@
-## TLS1.3
+## TLS
 
 &emsp;&emsp; TLS1.3包括3个子协议：alert、handshake、record。层级关系为：HTTP -> handshake/alert -> record。
 
@@ -37,3 +37,30 @@
 &emsp;&emsp; 所有握手阶段的报文，都是由record协议层进行加解密、分片、填充、转发的。在这个过程中，如果发生了任何错误，则会发送一个alert报文，
 转交给alert协议层进行错误处理。
 
+### SSLSocket建立过程
+
+    1，构建SSLSocketFactory。
+        1.1，首先构建TrustManager：
+            val factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
+            factory.init(null as KeyStore?)
+            factory!!.trustManagers[0] as X509TrustManager
+        1.2，根据TrustManager构建SSLSocketFactory：
+            val sslContext = SSLContext.getInstance("TLS")
+            sslContext.init(null, arrayOf(SslTrustManagerFactorySelector.select().trustManager()), null)
+            val sslSocketFactory = sslContext.socketFactory
+    
+    2，建立Socket连接。
+        Socket().connect(InetSocketAddress address, int connectTimeout)
+
+    3，创建SSLSocket。
+        sslSocketFactory!!.createSocket(socket, host, port, true) as SSLSocket
+
+    4，配置SSLSocket。
+        sslSocket.setEnabledProtocols(specToApply.tlsVersions) 设置tls版本。
+        sslSocket.setEnabledCipherSuites(specToApply.cipherSuites) 设置加密套件。
+        SSLParameters.setApplicationProtocols(String[] protocols) 设置协议类型："http/1.1"，"h2"。
+
+    5，握手。
+        sslSocket.startHandshake()
+
+    

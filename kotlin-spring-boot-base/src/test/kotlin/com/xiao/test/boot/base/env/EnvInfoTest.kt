@@ -22,5 +22,6 @@ class EnvInfoTest : KtSpringTestBase() {
     fun `test env info bean`() {
         Assertions.assertEquals(envInfoProvider.port(), 8088)
         Assertions.assertEquals(envInfoProvider.profile(), ProfileType.TEST)
+        println(System.currentTimeMillis())
     }
 }
