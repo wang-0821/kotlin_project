@@ -36,35 +36,32 @@ class TablesMigrateExtension : BeforeEachCallback {
     }
 
     private fun migrate(database: BaseDatabase, dataSetPath: String, tables: Set<String>) {
-        val connection = database.dataSource().connection
-        try {
+        database.dataSource().connection.use { conn ->
             val sqlFiles = PathResourceScanner.scanFileResourcesWithSuffix(dataSetPath, ".sql")
                 .filter {
                     tables.contains(it.file.nameWithoutExtension)
                 }
             if (sqlFiles.size != tables.size) {
                 val lackSqlFileNames = tables.toMutableSet()
-                lackSqlFileNames.removeAll(sqlFiles.map { it.file.nameWithoutExtension })
+                lackSqlFileNames.removeAll(sqlFiles.map { it.file.nameWithoutExtension }.toSet())
                 throw IllegalStateException(
                     "Lack of migrate sql files of [${lackSqlFileNames.joinToString(", ")}]."
                 )
             }
 
-            val scriptRunner = ScriptRunner(connection)
+            val scriptRunner = ScriptRunner(conn)
             scriptRunner.setLogWriter(null)
             sqlFiles
                 .forEach { ktFileResource ->
                     val fileName = ktFileResource.file.nameWithoutExtension
                     // clear data grip of the table
-                    connection
+                    conn
                         .createStatement()
                         .executeUpdate("DELETE FROM $fileName;")
                     scriptRunner.runScript(InputStreamReader(FileInputStream(ktFileResource.file)))
                     TestDataSourceContainer.addMigratedTable(database.name(), fileName)
                 }
             log.info("Migrate database: ${database.name()}, sql files: [${tables.joinToString(", ")}] succeed.")
-        } finally {
-            connection?.close()
         }
     }
 
