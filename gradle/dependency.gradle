@@ -46,7 +46,6 @@ dependencyManagement {
 
         //redis
         dependency "io.lettuce:lettuce-core:6.0.2.RELEASE"
-        dependency "org.springframework.data:spring-data-redis:2.1.3.RELEASE"
 
         //spring boot
         dependencySet(group: "org.springframework.boot", version: "2.5.4") {

@@ -2,5 +2,4 @@ dependencies {
     api project(":kotlin-redis")
     api project(":kotlin-spring-boot-base")
     api "io.lettuce:lettuce-core"
-    api "org.springframework.data:spring-data-redis"
 }
