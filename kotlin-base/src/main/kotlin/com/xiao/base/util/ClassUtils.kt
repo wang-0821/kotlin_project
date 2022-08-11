@@ -11,9 +11,12 @@ import kotlin.reflect.KClass
 object ClassUtils {
     @JvmStatic
     fun makeAccessible(field: Field) {
-        if ((!Modifier.isPublic(field.modifiers) ||
+        if ((
+            !Modifier.isPublic(field.modifiers) ||
                 !Modifier.isPublic(field.declaringClass.modifiers) ||
-                Modifier.isFinal(field.modifiers)) && !field.isAccessible) {
+                Modifier.isFinal(field.modifiers)
+            ) && !field.isAccessible
+        ) {
             field.isAccessible = true
         }
     }
