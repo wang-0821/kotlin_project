@@ -65,5 +65,7 @@ dependencyManagement {
             entry "spring-boot-admin-starter-client"
         }
         dependency "org.jolokia:jolokia-core:1.7.0"
+
+        dependency "org.apache.httpcomponents.client5:httpclient5:5.1.3"
     }
 }

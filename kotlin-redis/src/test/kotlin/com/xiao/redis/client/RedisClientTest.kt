@@ -10,6 +10,7 @@ import io.lettuce.core.protocol.Command
 import io.lettuce.core.protocol.CommandType
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.nio.ByteBuffer
 
@@ -17,6 +18,7 @@ import java.nio.ByteBuffer
  *
  * @author lix wang
  */
+@Disabled
 class RedisClientTest : KtTestBase() {
     @Test
     fun `test redis sync commands`() {
