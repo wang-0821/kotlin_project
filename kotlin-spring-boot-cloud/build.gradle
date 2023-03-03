@@ -1,0 +1,4 @@
+dependencies {
+    api "com.alibaba.csp:sentinel-core"
+    api "com.alibaba.csp:sentinel-transport-simple-http"
+}
