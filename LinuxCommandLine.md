@@ -436,3 +436,120 @@ kill命令和killall命令一样，都必须拥有超级用户权限才能给不
             11      SEGV    段错误(segmentation violation)，如果程序非法使用内存就会发送这个信号。
             20      TSTP    终端停止(terminal stop)，当按下Ctrl-z，终端会发送这个信号。
             28      WINCH   改变窗口大小(window change)，改变窗口大小时，系统会发送这个信号。
+
+### 内存分析
+&emsp;&emsp; 我们通常使用jmap来查看内存详情。
+
+    top命令的使用方式 top [-d number] | top [-bnp]
+        -d number   表示top命令显示的页面更新一次的间隔，默认是5s
+        -b          以批次的方式执行top
+        -n          与-b配合使用，表示需要进行几次top命令的输出结果
+        -p          指定特定的pid进程号进行观察
+
+
+    top命令显示的页面还可以输入以下按键执行相应的功能
+        ?           显示在top中可以输入的命令
+        P           以CPU的使用资源排序显示
+        M           以内存的使用资源排序显示
+        N           以pid排序显示
+        T           由进程使用的时间累计排序显示
+        k           给某一个pid信号，可以用来杀死进程
+        r           给某一个pid重新定制一个nice值，即优先级
+        q           退出top，用ctrl + c 也可以退出
+
+    拿到java进程的pid后，我们可以查看进程内存占用top n的对象
+        /Library/Java/JavaVirtualMachines/jdk1.8.0_311.jdk/Contents/Home/bin/jmap -histo ${pid} | head -n 50
+
+    dump内存信息
+        ./jmap -dump:format=b,file=/tmp/mem.hprof ${pid}
+
+    使用Eclipse Memory Analyzer 导入hprof文件，可分析内存占用情况
+
+### GC分析
+
+    采集到的gc log可以使用gcviewer来进行gc情况分析
+
+### 火焰图分析
+
+    
+### JVM参数
+&emsp;&emsp; Java启动参数分为三类：1，标准参数(-)，所有的JVM都必须实现这些参数的功能，而且向后兼容。
+2，非标准参数(-X)，默认JVM实现这些参数的功能，但不保证所有JVM实现都满足，且不保证向后兼容。
+3，非Stable参数(-XX)，此类参数各个jvm实现会有所不同，将来可能会随时取消，需要谨慎使用。
+
+    非稳态选项使用说明
+        -XX:+<option>               启用选项
+        -XX:-<option>               不启用选项
+        -XX:<option>=<number>       给选项设置一个数字类型值，可跟单位，如32K，1024m，2g
+        -XX:<option>=<string>       给选项设置一个字符串值，如-XX:HeapDumpPath=./dump.core
+
+    行为选项：
+        -XX:-AllowUserSignalHandlers        限于Linux和Solaris，默认不启用       允许Java进程安装信号处理器
+        -XX:-DisableExplicitGC              默认不启用                           禁止在运行期显式地调用System.gc()
+        -XX:-RelaxAccessControlCheck        默认你不启用                          在Class检验器中，放松对访问控制的检查
+        -XX:-UseConcMarkSweepGC             默认不启用                           启用CMS低停顿垃圾收集器
+        -XX:-UseParallelGC                  -server时启用，其他情况默认不启用       策略为新生代使用并行清除，老年代使用单线程Mark-Sweep-Compact垃圾收集器
+        -XX:-UseParallelOldGC               默认不启用                           策略为老年代和新生代都使用并行清除的垃圾收集器
+        -XX:-UseSerialGC                    -client时启用，其他默认不启用          使用串行垃圾收集器
+        -XX:+UseSplitVerifier               java6默认启用                        使用新的Class类型校验器
+        -XX:+FailOverToOldVerifier          java6默认启用                        如果新的Class校验器检查失败，则使用老的校验器
+        -XX:+HandlePromotionFailure         java6默认启用                       关闭新生代收集担保
+        -XX:+UseSpinning                    java6默认启用                       启用多线程自旋锁优化 关联选项 -XX:PreBlockSpin=10
+        -XX:PreBlockSpin=10       UseSpinning需先启用，默认启用，默认自旋10次       控制多线程自旋锁优化的自旋次数
+        -XX:+ScavengeBeforeFullGC           默认启用                            在Full GC前触发一次Minor GC
+        -XX:+UseGCOverheadLimit             默认启用                            限制GC的运行时间，如果GC耗时过长，抛OOM
+        -XX:+UseTLAB                  使用-client时，默认不启用，其他默认启用       启用线程本地缓存区
+        -XX:+UseThreadPriorities            默认启用                            使用本地线程的优先级
+        -XX:+UseAltSigs                  限于Solaris，默认启用                   允许使用候补信号替代SIGUSR1和SIGUSR2
+        -XX:+UseBoundThreads             限于Solaris，默认启用                   绑定所有用户线程到内核线程，减少线程进入饥饿状态
+        -XX:+UseLWPSynchronization       限于Solaris，默认启用                   使用轻量级进程(内核线程)替换线程同步
+        -XX:+MaxFDLimit                  限于Solaris，默认启用                   设置Java进程可用文件描述符为操作系统允许的最大值
+        -XX:+UseVMInterruptibleIO	     限于Solaris，默认启用                   在solaris中，允许运行时中断线程
+
+    性能选项：
+        -XX:+AggressiveOpts             JDK6默认启用                启用JVM团队最新的调优成果，如编译优化、偏向锁、并行老年代收集等
+        -XX:CompileThreshold=10000      默认值1000                  通过JIT编译器，将方法编译成机器码的触发阈值，可以理解为调用方法的次数
+        -XX:LargePageSizeInBytes=4m     默认4m                      设置堆内存的内存页大小
+        -XX:MaxHeapFreeRatio=70         默认70                      GC后，如果发现空闲堆内存占整个预估上限值的70%，则收缩预估上限值
+        -XX:MaxNewSize=size             Sparc: 32m x86: 2.5m       新生代占整个堆内存的最大值
+        -XX:MaxPermSize=64m             默认值64m                   方法区占整个堆内存的最大值
+        -XX:MinHeapFreeRatio            默认值40                    GC后，如果发现空闲堆内存占到整个预估上限值的40%，则增大上限值
+        -XX:NewRatio=2                  默认2                       新生代和老年代的堆内存占用比例
+        -XX:newSize=2.125m              默认2.125m                  新生代预估上限的默认值
+        -XX:ReservedCodeCacheSize=32m   默认32m                     设置代码缓存的最大值，编译时用
+        -XX:SurvivorRatio=8             默认8                       Eden与Survivor的占用比例，8表示一个Survivor占1/8 Eden内存
+        -XX:TargetSurvivorRatio=50      默认50                      实际使用的Survivor空间大小占比，默认50%，最高90%
+        -XX:ThreadStackSize=512         默认512                     线程堆栈大小
+        -XX:+UseBiasedLocking           JDK6默认启用                 启用偏向锁
+        -XX:+UseFastAccessorMethods     默认启用                     优化原始类型的getter方法性能
+        -XX:-UseISM                     默认启用                     启用Solaris的ISM
+        -XX:+UseLargePages              JDK6默认启用                 启用大内存分页
+        -XX:+UseMPSS                    默认启用                     启用solaris的MPSS，不能与ISM同时使用
+        -XX:+StringCache                默认启用                     启用字符串缓存
+        -XX:AllocatePrefetchLines=1     1                           与机器码指令预读相关的一个选项
+        -XX:AllocatePrefetchStyle       1                           与机器码指令预读相关的一个选项
+
+    调试选项：
+        -XX:-CITime                             默认启用                    打印JIT编译器编译耗时
+        -XX:ErrorFile=./hs_err_pid<pid>.log     Java6引入                  如果JVM崩溃，将错误日志输出到指定文件路径
+        -XX:-ExtendedDTraceProbes               默认不启用                  启用dtrace诊断
+        -XX:HeapDumpPath=./java_pid<pid>.hprof  默认是Java进程启动位置       堆内存快照的存储文件路径，OOM或崩溃被OS终止后会生成文件
+        -XX:-HeapDumpOnOutOfMemoryError         默认不启用                  在OOM时，输出一个dump.core文件，记录当时的堆内存快照
+        -XX:OnError=”<cmd args>;<cmd args>”	    1.4.2引入                  每抛出一个ERROR时，运行指定命令行指令集
+        -XX:OnOutOfMemoryError="<cmd args>;<cmd args>" java6引入           当第一次发生OOM时，运行指定命令行指令集
+        -XX:-PrintClassHistogram                默认不启用                  Linux下执行kill -3时，打印class柱状图
+        -XX:-PrintConcurrentLocks               默认不启用                  在thread dump的同时，打印concurrent的锁状态
+        -XX:-PrintCommandLineFlags              默认不启用                  Java启动时，忘stdout打印当前启用的非稳态JVM options
+        -XX:-PrintCompilation                   默认不启用                  往stdout打印方法被JIT编译时的信息
+        -XX:-PrintGC                            默认不启用                  开启GC日志打印
+        -XX:-PrintGCDetails                     默认不启用                  打印GC回收的细节
+        -XX:-PrintGCTimeStamps                  默认不启用                  打印GC停顿耗时
+        -XX:-PrintTenuringDistribution          默认不启用                  打印对象的存活期限信息
+        -XX:-TraceClassLoading                  默认不启用                  打印class装载信息到stdout
+        -XX:-TraceClassLoadingPreorder          默认不启用                  按class的引用/依赖顺序，打印类装载信息到stdout
+        -XX:-TraceClassResolution               默认不启用                  打印所有的静态类，常量的代码引用位置
+        -XX:-TraceClassUnloading                默认不启用                  打印class的卸载信息到stdout
+        -XX:-TraceLoaderConstraints             默认不启用                  打印class的装载策略变化信息到stdout
+        -XX:+PerfSaveDataToFile                 默认启用                    当Java进程因OOM或者崩溃被强制终止后，生成一个堆快照文件
+    
+        

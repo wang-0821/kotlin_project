@@ -65,5 +65,11 @@ dependencyManagement {
             entry "spring-boot-admin-starter-client"
         }
         dependency "org.jolokia:jolokia-core:1.7.0"
+
+        // cloud
+        dependencySet(group: "com.alibaba.csp", version: "1.8.6") {
+            entry "sentinel-core"
+            entry "sentinel-transport-simple-http"
+        }
     }
 }
