@@ -9,7 +9,6 @@ import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRuleManager
 import com.alibaba.csp.sentinel.slots.block.degrade.circuitbreaker.CircuitBreakerStrategy
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRule
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager
-import org.junit.jupiter.api.Test
 import kotlin.math.min
 
 /**
@@ -17,7 +16,6 @@ import kotlin.math.min
  * @author lix wang
  */
 class SentinelDemo {
-    @Test
     fun doTestFlowRule() {
         initFlowRules()
         while (true) {
@@ -33,7 +31,6 @@ class SentinelDemo {
         }
     }
 
-    @Test
     fun doTestDegradeRule() {
         initDegradeRules()
         (0..Long.MAX_VALUE).forEach {
@@ -85,6 +82,6 @@ class SentinelDemo {
 fun main() {
     SentinelDemo().run {
         doTestFlowRule()
-//        doTestDegradeRule()
+        doTestDegradeRule()
     }
 }
