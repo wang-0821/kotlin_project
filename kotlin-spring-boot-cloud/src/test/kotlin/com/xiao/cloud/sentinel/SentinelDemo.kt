@@ -50,7 +50,6 @@ class SentinelDemo {
         }
     }
 
-
     companion object {
         const val RESOURCE_NAME = "HelloWorld"
 
