@@ -470,7 +470,74 @@ kill命令和killall命令一样，都必须拥有超级用户权限才能给不
     采集到的gc log可以使用gcviewer来进行gc情况分析
 
 ### 火焰图分析
+&emsp;&emsp; perf性能事件主要分三类：1，Hardware Event由PMU部件产生，在特定条件下探测性能事件是否发生以及发生的次数。
+2，Software Event是内核产生的事件，分布在各个功能模块中，统计和操作系统相关性能事件。3，TracePoint Event是内核中静态
+tracepoint所触发的事件，这些tracepoint用来判断程序运行期间内核的行为细节。
 
+    火焰图的采集分三步：
+        1，采集栈信息
+        2，折叠栈信息
+        3，flamegraph.pl
+
+    栈信息采集工具：
+        Linux:  perf、eBPF、SystemTap、ktap
+        FreeBSD: DTrace
+        Mac OS X: Instruments
+        Windows: Xperf.exe、WPA、PerfView
+
+    perf使用：
+        1，先安装perf           apt install linux-tools-common
+        2，测试perf是否可用      perf record -F 99 -a -g -- sleep 10 执行完会在执行目录产生perf.data
+
+    perf命令:
+        perf bench      perf内置的benchmark，包含两套针对调度器和内存管理子系统的benchmark
+        perf list       查看当前软硬件环境支持的性能事件 主要三类：Hardware Event、Software Event、Tracepoint Event。
+        perf stat       通过精简的方式提供被调试程序运行的整体情况和汇总数据
+        perf top        实时显示当前系统的性能统计信息。
+        perf record     记录单个函数级别的统计信息，并使用perf report来显示统计结果
+        perf report     读取perf record生成的perf.data文件，并显示分析数据
+        perf probe      能够动态地在想查看的地方插入动态监测点
+        perf sched      提供了许多工具来分析内核CPU调度器的行为，可用来识别和量化调度器延迟的问题
+        perf sched map  显示了所有CPU和上下文切换事件
+        perf sched script   显示调度相关的事件
+        perf sched replay   重放perf.data文件中记录的调度场景
+        perf probe      用于定义动态检查点
+
+    使用perf来抽取60S 99赫兹 栈样本，包括用户和内核栈，所有的进程：
+        perf record -F 99 -a -g -- sleep 60
+
+    perf record:
+        -a          --all-cpus  收集全局的统计信息
+        -p          --pid=      收集指定PID的统计信息
+        -t          --tid=      收集指定线程ID的统计信息
+        -u          --uid=      收集指定USER ID的统计信息
+        -c          --count=    采样的事件数
+        -F          --freq=     采样的频率
+        -r          --realtime= 采集使用CPU实时调度策略的进程
+        -g          --call-graph 收集调用栈
+        -e          --event=    收集指定事件
+        --sleep     采集时间多少秒
+
+    折叠栈 ./stackcollapse-perf.pl out.perf > out.folded
+        stackcollapse.pl                用于DTrace栈
+        stackcollapse-perf.pl           用于Linux perf script的输出
+        stackcollapse-pmc.pl            用于FreeBSD pmcstat -G 栈
+        stackcollapse-stap.pl           用于SystemTap 栈
+        stackcollapse-instrument.pl     用于XCode Instruments
+        stackcollapse-vtune.pl          用于Intel VTune 
+        stackcollapse-ljp.pl            用于Lightweight Java Profiler
+        stackcollapse-jstack.pl         用于Java jstack(1) 输出
+        stackcollapse-gdb.pl            用于gdb(1) 栈
+        stackcollapse-go.pl             用于Golang pprof 栈
+        stackcollapse-vsprof.pl         用于Microsoft Visual Studio
+        stackcollapse-wcp.pl            用于wallClockProfiler 输出
+
+    使用flamegraph.pl 渲染折叠栈信息为一个SVG
+        ./flamegraph.pl out.kern_folded > kernel.svg
+        grep cpuid out.kern_folded | ./flamegraph.pl > cpuid.svg
+
+        gunzip -c example-perf-stacks.txt.gz | ./stackcollapse-perf.pl --all | ./flamegraph.pl --color=java --hash > example-perf.svg
+    
     
 ### JVM参数
 &emsp;&emsp; Java启动参数分为三类：1，标准参数(-)，所有的JVM都必须实现这些参数的功能，而且向后兼容。
