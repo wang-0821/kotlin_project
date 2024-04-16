@@ -12,10 +12,11 @@ import org.junit.jupiter.api.Test
 class SecureUtilsTest : KtTestBase() {
     @Test
     fun `test aes encrypt and decrypt`() {
-        val content = "112312413241242352341241"
+        val content = "meituanmain3"
         val encryptKey = SecureUtils.genAesRandomKey()
         val encryptedContent = SecureUtils.aesEncrypt(content, encryptKey)
         val decryptedContent = SecureUtils.aesDecrypt(encryptedContent, encryptKey)
+        println(encryptedContent)
         Assertions.assertEquals(content, decryptedContent)
     }
 }
