@@ -188,7 +188,34 @@
             connectTimeout, HttpVersionPolicy, FutureCallback<ManagedAsyncClientConnection>)
                                                 |
                                                 V
-            
+        DefaultAsyncClientConnectionOperator.connect(DefaultConnectingIOReactor, HttpHost, null, connectTimeout, 
+            HttpVersionPolicy attachment, FutureCallback<ManagedAsyncClientConnection> callback)
+                                                |
+                                                V
+        DefaultAsyncClientConnectionOperator.sessionRequester.connect(DefaultConnectingIOReactor, HttpHost, null, null,
+            connectTimeout, HttpVersionPolicy attachment, FutureCallback<IOSession> callback)
+                                                |
+                                                V dns域名解析获取ip www.xxx.com
+                        MultihomeIOSessionRequester.dnsResolver.resolve(hostName)
+                                                |
+                                                V
+            DefaultConnectingIOReactor.connect(HttpHost, InetSocketAddress remoteAddress, null, timeout, 
+                    HttpVersionPolicy, FutureCallback<IOSession> callback)
+                                                |
+                                                V
+            DefaultConnectingIOReactor.workerSelector.next().connect(HttpHost, InetSocketAddress remoteAddress, 
+                    null, timeout, HttpVersionPolicy, FutureCallback<IOSession> callback)
+                                                |
+                                                V
+    new IOSessionRequest(HttpHost, InetSocketAddress remoteAddress, null, timeout, HttpVersionPolicy, FutureCallback<IOSession> callback)
+                                                | 这一步将请求添加到了SingleCoreIoReactor的队列中
+                        SingleCoreIOReactor.requestQueue.add(IOSessionRequest)   
+                                                |
+                                                V
+                                SingleCoreIOReactor.selector.wakeup()
+                                                |
+                                                V
+                                
 
 
 
@@ -329,8 +356,91 @@
                                                 V
                                     SingleCoreIOReactor.doExecute()
                                                 |
-                                                V 默认1S
+                                                V 默认1S 获取目前已经ready的IO事件数量
                         int readyCount = SingleCoreIOReactor.selector.select(this.selectTimeoutMillis)
                                                 |
+                                                V中间还有拉events，清理关闭的session等操作
+                            SingleCoreIOReactor.processPendingConnectionRequests()
+                                                | 循环处理requestQueue中的请求，单次最多处理10000条
                                                 V
-                        
+                            SocketChannel socketChannel = SocketChannel.open()
+                                                |
+                                                V
+                SingleCoreIOReactor.processConnectionRequest(SocketChannel, IOSessionRequest)
+                                                |
+                                                V
+                
+                        SingleCoreIOReactor.prepareSocket(socketChannel.socket())
+                                                |
+                                                V
+                        socket.setTcpNoDelay(this.reactorConfig.isTcpNoDelay())
+                        socket.setKeepAlive(this.reactorConfig.isSoKeepalive())
+                        socket.setSendBufferSize(this.reactorConfig.getSndBufSize())
+                        socket.setReceiveBufferSize(this.reactorConfig.getRcvBufSize())
+                        socket.setTrafficClass(this.reactorConfig.getTrafficClass())
+                        socket.setSoLinger(true, linger)
+                                                |
+                                                V
+                        socketChannel.connect(IOSessionRequest.remoteAddress)
+                                                |
+                                                V 一个selectionKey由一组selector + socketChannel + ops(目前是9)确定
+            socketChannel.register(this.selector, SelectionKey.OP_CONNECT | SelectionKey.OP_READ)
+                                                |
+                                                V
+            new InternalConnectChannel(SelectionKey, socketChannel, sessionRequest, new InternalDataChannelFactory())
+                                                |
+                                                V
+                            SelectionKey.attach(InternalConnectChannel)
+                                                |
+                                                V
+                                    IOSessionRequest.assign(channel)
+                                                | SingleCoreIOReactor会循环执行selector.select，监听ready的事件并处理
+                                                V
+                    SingleCoreIOReactor.processEvents(Set<SelectionKey> selectedKeys)
+                                                |
+                                                V
+                    SelectionKey.attachment().handleIOEvent(SelectionKey.readyOps())
+                                                |
+                                                V 建连首次收到的是8
+                            InternalConnectChannel.onIOEvent(readyOps)
+                                                |
+                                                V 校验now - InternalConnectChannel.initTime <= requestConfig.connectTimeout
+                    InternalConnectChannel.checkTimeout(System.currentTimeMillis())
+                                                |
+                                                V 创建InternalDataChannel
+        InternalConnectChannel.dataChannelFactory.create(SelectionKey, SocketChannel,NamedEndpoint,Object attachment)
+                                                |
+                                                V
+                    InternalConnectChannel.sessionRequest.completed(InternalDataChannel)
+                                                |
+                                                V
+                DefaultAsyncClientConnectionOperator.FutureCallback<IOSession>.completed(InternalDataChannel)
+                                                |
+                                                V 创建DefaultManagedAsyncClientConnection
+                        DefaultManagedAsyncClientConnection(InternalDataChannel)
+                                                |
+                                                V handshakeTimeout = connectTimeout
+        DefaultAsyncClientConnectionOperator.tlsStrategy.upgrade(DefaultManagedAsyncClientConnection, HttpHost, 
+            SocketAddress localAddress, SocketAddress remoteAddress, HttpVersionPolicy attachment, Timeout handshakeTimeout)
+                                                |
+                                                V
+                    DefaultManagedAsyncClientConnection.startTls(SSLContext, HttpHost, )
+                                                |
+                                                V
+    PoolingAsyncClientConnectionManager.FutureCallback<ManagedAsyncClientConnection>.completed(DefaultManagedAsyncClientConnection)
+                                                |
+                                                V 这一步设置poolEntry的connRef、validityDeadline、expiryDeadline
+                    PoolEntry.assignConnection(DefaultManagedAsyncClientConnection)
+                                                |
+                                                V
+        InternalHttpAsyncExecRuntime.FutureCallback<AsyncConnectionEndpoint>.completed(AsyncConnectionEndpoint)
+                                                |
+                                                V
+            AsyncConnectExec.FutureCallback<AsyncExecRuntime>.completed(InternalHttpAsyncExecRuntime)
+                                                |
+                                                V
+        AsyncConnectExec.proceedToNextHop(State, BasicHttpRequest, AsyncEntityProducer entityProducer, 
+            AsyncExecChain.Scope, AsyncExecChain, AsyncExecCallback asyncExecCallback)
+                                                |
+                                                V
+                
