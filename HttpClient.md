@@ -443,4 +443,66 @@
             AsyncExecChain.Scope, AsyncExecChain, AsyncExecCallback asyncExecCallback)
                                                 |
                                                 V
-                
+        AsyncExecChainElement.AsyncExecChain.proceed(BasicHttpRequest, AsyncEntityProducer entityProducer, 
+            AsyncExecChain.Scope, AsyncExecCallback)
+                                                |
+                                                V
+            HttpAsyncMainClientExec.execute(BasicHttpRequest, AsyncEntityProducer entityProducer, 
+                AsyncExecChain.Scope, AsyncExecCallback)
+                                                |
+                                                V 创建AsyncClientExchangeHandler
+            AsyncClientExchangeHandler internalExchangeHandler = new AsyncClientExchangeHandler()
+                                                |
+                                                V
+        InternalHttpAsyncExecRuntime.execute(String exchangeId, internalExchangeHandler, HttpClientContext)
+                                                |
+                                                V
+                AsyncConnectionEndpoint.setSocketTimeout(requestConfig.getResponseTimeout())
+                                                |
+                                                V
+    PoolingAsyncClientConnectionManager.execute(String exchangeId, AsyncClientExchangeHandler, null, HttpClientContext)
+                                                |
+                                                V
+            ManagedAsyncClientConnection connection = getValidatedPoolEntry().getConnection()
+                                                |
+                                                V
+                connection.submitCommand(RequestExecutionCommand, Command.Priority.NORMAL)
+                                                |
+                                                V
+            InternalDataChannel.enqueue(RequestExecutionCommand, Command.Priority.IMMEDIATE)
+                                                |
+                                                V
+    InternalDataChannel.currentSessionRef.get().enqueue(RequestExecutionCommand, Command.Priority.IMMEDIATE)
+                                                |
+                                                V
+                    IOSessionImpl.commandQueue.addFirst(RequestExecutionCommand)
+                                                |
+                                                V OP_WRITE值为4 InternalConnectChannel.sessionRequest.completed执行完毕
+            IOSessionImpl.key.interestOps(this.key.interestOps() | SelectionKey.OP_WRITE)
+                                                |
+                                                V SelectionKey.OP_CONNECT值为8
+                        InternalDataChannel.handleIOEvent(SelectionKey.OP_CONNECT)
+                                                |
+                                                V 设置IOSessionImpl.lastWriteTime、lastEventTime为currentTimeMillis
+                                    IOSessionImpl.updateWriteTime()
+                                                |
+                                                V
+                            IOEventHandler.outputReady(IOSessionImpl)
+                                                |
+                                                V 设置socketTimeout = session.SocketTimeout  session.SocketTimeout = connectTimeout
+                                SSLIOSession.initialize(SSLIOSession)
+                                                |
+                                                V
+                        SSLIOSession.initializer.initialize(HttpHost, sslEngine)
+                                                |
+                                                V
+                            SSLIOSession.doHandshake(SSLIOSession)
+                                                |
+                                                V
+                    SSLIOSession.doWrap(EMPTY_BUFFER, ByteBuffer outEncryptedBuf)
+                                                |
+                                                V
+                            SSLIOSession.doUnwrap(ByteBuffer, ByteBuffer)
+                                                |
+                                                V 做完ssl handshake后会执行以下方法
+                        SSLIOSession.ensureHandler().connected(SSLIOSession)
