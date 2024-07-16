@@ -506,3 +506,49 @@
                                                 |
                                                 V 做完ssl handshake后会执行以下方法
                         SSLIOSession.ensureHandler().connected(SSLIOSession)
+                                                |
+                                                V
+                        ClientHttpProtocolNegotiator.connected(SSLIOSession)
+                                                |
+                                                V
+                            ClientHttpProtocolNegotiator.startHttp1()
+                                                |
+                                                V
+            ClientHttpProtocolNegotiator.startProtocol(ClientHttp1IOEventHandler, ByteBuffer null)
+                                                |
+                                                V
+                        ClientHttp1IOEventHandler.connected(InternalDataChannel)
+                                                |
+                                                V
+                                ClientHttp1StreamDuplexer.onConnect()
+                                                |
+                                                V 从InternalDataChannel中poll() Command
+                            ClientHttp1StreamDuplexer.processCommands()
+                                                |
+                                                V
+                        ClientHttp1StreamDuplexer.execute(RequestExecutionCommand)
+                                                |
+                                                V
+                                ClientHttp1StreamHandler.produceOutput()
+                                                |
+                                                V
+                    ClientHttp1StreamHandler.exchangeHandler.produceRequest(RequestChannel)
+                                                |
+                                                V
+        HttpAsyncMainClientExec.AsyncClientExchangeHandler.produceRequest(RequestChannel, HttpClientContext)
+                                                |
+                                                V
+        RequestChannel.sendRequest(BasicHttpRequest, EntityDetails asyncEntityProducer, HttpClientContext)
+                                                |
+                                                V 以此为H2RequestContent、H2RequestTargetHost、H2RequestConnControl 处理request headers
+        DefaultHttpProcessor.[HttpRequestInterceptor].process(BasicHttpRequest, asyncEntityProducer, HttpClientContext)
+                                                |
+                                                V 这里根据有没有请求体(asyncEntityProducer)，会走不同的路，这里是GET
+            ClientHttp1StreamHandler.outputChannel.submit(BasicHttpRequest, endStream true, FlushMode.IMMEDIATE)
+                                                |
+                                                V
+            ClientHttp1StreamDuplexer.commitMessageHead(BasicHttpRequest, endStream true, FlushMode.IMMEDIATE)
+                                                |
+                                                V 结束这个方法，这一步会发起请求
+                        SSLIOSession.ensureHandler().connected(SSLIOSession)
+            
