@@ -3,6 +3,7 @@
 * [1.执行流程](#1)
 
 <h2 id="1">1.执行流程</h2>
+
 ### CloseableHttpAsyncClient execute请求的流程
 &emsp;&emsp; 目前我们在执行RPC时，通常使用异步请求避免阻塞，提高RPC性能。
 
@@ -543,12 +544,115 @@
                                                 V 以此为H2RequestContent、H2RequestTargetHost、H2RequestConnControl 处理request headers
         DefaultHttpProcessor.[HttpRequestInterceptor].process(BasicHttpRequest, asyncEntityProducer, HttpClientContext)
                                                 |
-                                                V 这里根据有没有请求体(asyncEntityProducer)，会走不同的路，这里是GET
+                                                V 
             ClientHttp1StreamHandler.outputChannel.submit(BasicHttpRequest, endStream true, FlushMode.IMMEDIATE)
                                                 |
-                                                V
+                                                V 写header
             ClientHttp1StreamDuplexer.commitMessageHead(BasicHttpRequest, endStream true, FlushMode.IMMEDIATE)
                                                 |
-                                                V 结束这个方法，这一步会发起请求
+                                                V
+                    HttpAsyncMainClientExec.internalExchangeHandler.produce(DataStreamChannel)
+                                                |
+                                                V
+                        InternalAbstractHttpAsyncClient.produce(DataStreamChannel)
+                                                |
+                                                V
+                            SimpleRequestProducer.produce(DataStreamChannel)
+                                                |
+                                                V 这一步会向outputStream中写数据
+                        BasicAsyncEntityProducer.produce(DataStreamChannel)
+                                                |
+                                                V
+                                             ......
+                                                |
+                                                V 结束这个方法，这一步会执行发请求
                         SSLIOSession.ensureHandler().connected(SSLIOSession)
-            
+                                                |
+                                                V InternalDataChannel.onIOEvent 在监听到1 read事件后，会执行以下方法
+                    SSLIOSession.internalEventHandler.inputReady(SSLIOSession, null)
+                                                |
+                                                V
+                        ClientHttp1IOEventHandler.streamDuplexer.onInput(ByteBuffer)
+                                                |
+                                                V
+                        ClientHttp1StreamDuplexer.parseMessageHead(endOfStream false)
+                                                |
+                                                V 这一步会解析response头和response header
+                        DefaultHttpResponseParser.parse(SessionInputBufferImpl, false)
+                                                |
+                                                V
+                ClientHttp1StreamDuplexer.consumeHeader(BasicHttpResponse, IncomingEntityDetails)
+                                                |
+                                                V
+                ClientHttp1StreamHandler.consumeHeader(BasicHttpResponse, IncomingEntityDetails)
+                                                |
+                                                V 这一步HttpResponseInterceptor为空，实际不执行
+            DefaultHttpProcessor.process(BasicHttpResponse, IncomingEntityDetails, HttpClientContext)
+                                                |
+                                                V
+        HttpAsyncMainClientExec.consumeResponse(BasicHttpResponse, IncomingEntityDetails, HttpClientContext)
+                                                |
+                                                V
+                InternalAbstractHttpAsyncClient.responseConsumer.consumeResponse(BasicHttpResponse, 
+                    IncomingEntityDetails, HttpClientContext, FutureCallback)
+                                                |
+                                                V
+        SimpleAsyncEntityConsumer.streamStart(IncomingEntityDetails, FutureCallback<T> resultCallback)
+                                                |
+                                                V
+                        ContentType.parse(IncomingEntityDetails.getContentType())
+                                                |
+                                                V
+                        SimpleAsyncEntityConsumer.streamStart(ContentType)
+                                                |
+                                                V
+                        ClientHttp1StreamDuplexer.consumeData(ByteBuffer src)
+                                                |
+                                                V
+                HttpAsyncMainClientExec.internalExchangeHandler.consume(ByteBuffer src)
+                                                |
+                                                V
+                            SimpleResponseConsumer.consume(ByteBuffer src)
+                                                |
+                                                V
+                            SimpleAsyncEntityConsumer.consume(ByteBuffer src)
+                                                |
+                                                V 这一步会将返回的response写入到SimpleAsyncEntityConsumer的buffer中
+                    SimpleAsyncEntityConsumer.data(ByteBuffer src, endOfStream false)
+                                                |
+                                                V
+                    ClientHttp1StreamDuplexer.dataEnd(List<? extends Header> trailers)
+                                                |
+                                                V
+                    SimpleResponseConsumer.streamEnd(List<? extends Header> trailers)
+                                                |
+                                                V
+                    SimpleAsyncEntityConsumer.streamEnd(List<? extends Header> trailers)
+                                                |
+                                                V
+                        SimpleAsyncEntityConsumer.data(EMPTY, endOfStream true)
+                                                |
+                                                V
+                                SimpleAsyncEntityConsumer.completed()
+                                                |
+                                                V
+                        AbstractAsyncResponseConsumer.completed(byte[])
+                                                |
+                                                V 构造SimpleHttpResponse
+            SimpleResponseConsumer.buildResult(BasicHttpResponse, byte[], ContentType)
+                                                |
+                                                V
+                    SimpleHttpResponseFutureCallback.completed(SimpleHttpResponse)
+                                                |
+                                                V
+                    HttpAsyncMainClientExec.asyncExecCallback.completed()
+                                                |
+                                                V validDuration为requestConfig中的connectionKeepAlive
+        PoolingAsyncClientConnectionManager.release(InternalConnectionEndpoint, state, validDuration)
+                                                |
+                                                V 后续处理下一次请求
+                                             ......
+
+    
+
+                    
