@@ -469,6 +469,18 @@ kill命令和killall命令一样，都必须拥有超级用户权限才能给不
 
     采集到的gc log可以使用gcviewer来进行gc情况分析
 
+### CPU分析
+    
+    1，使用 top -H -p ${pid} 查看CPU占用最多的线程 此时PID就是线程ID
+    2，printf "%x\n" ${tid} 使用线程ID，转换为16进制，得到tid的16进制
+    3，./jstack ${pid} | grep -A 50 ${tid十六进制} --color  根据16进制的tid，查看线程详情
+
+    或者直接使用arthas
+    1，curl -O https://arthas.aliyun.com/arthas-boot.jar
+    2，./java -jar arthas-boot.jar --repo-mirror aliyun --use-http
+    3，进入arthas
+    4，thread 查看所有线程，默认根据CPU占用排名。thread 
+
 ### 火焰图分析
 &emsp;&emsp; perf性能事件主要分三类：1，Hardware Event由PMU部件产生，在特定条件下探测性能事件是否发生以及发生的次数。
 2，Software Event是内核产生的事件，分布在各个功能模块中，统计和操作系统相关性能事件。3，TracePoint Event是内核中静态
